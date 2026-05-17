@@ -214,23 +214,6 @@
       ]
     },
     {
-      "id": "tshirt-with-hangtag",
-      "title": "T-shirt — with hangtag",
-      "tags": [
-        "product",
-        "fashion",
-        "has-tag"
-      ],
-      "aspect_ratio": "3:4",
-      "prompt": "Add a clear paper price tag with a visible barcode and a price label, dangling on a thin string from the neckline of this white t-shirt. The tag should be naturally lit and clearly visible against the shirt. Photorealistic, preserve the rest of the image, no other changes.",
-      "url": "https://8b72080bbbd80302c40de95d14ca24ca.r2.cloudflarestorage.com/runflow-general/072369a8-5e3f-4d90-8cdd-7508e696cc3b/5f29892bb2fc08b2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e29feb89bdce9df26fc23f73dcd457ff%2F20260507%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260507T092144Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=29ef3c2a2c09361a93bc2b0cf584118d807cdacc8aad60227707bc190c62d440",
-      "width": 896,
-      "height": 1200,
-      "recommendedWorkflows": [
-        "tag-removal"
-      ]
-    },
-    {
       "id": "samba-on-foot-with-tag",
       "title": "Adidas Samba — on-foot with hangtag",
       "tags": [

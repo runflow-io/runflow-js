@@ -224,6 +224,31 @@ export function StudioCanvas({
           {Icon.compare}
           <span className="rfs-canvas-compare-btn-label">Compare</span>
         </button>
+        {/* Mobile-only info chip — tap the "?" to surface resolution
+            + aspect + raw dimensions. Replaces the hover-only desktop
+            tools row on phones where hover doesn't exist. <details>
+            handles the toggle natively, no React state needed. */}
+        {imageWidth && imageHeight ? (
+          <details className="rfs-canvas-info">
+            <summary className="rfs-canvas-info-btn" aria-label="Show image details">
+              ?
+            </summary>
+            <div className="rfs-canvas-info-popover" role="status">
+              {(() => {
+                const bucket = displayBucket(imageWidth, imageHeight, requestedResolution);
+                return (
+                  <span className={`rfs-canvas-info-pill rfs-canvas-res-${bucket.toLowerCase()}`}>
+                    {bucket}
+                  </span>
+                );
+              })()}
+              <span className="rfs-canvas-info-pill">{aspectRatioLabel(imageWidth, imageHeight)}</span>
+              <span className="rfs-canvas-info-dim">
+                {imageWidth}×{imageHeight}
+              </span>
+            </div>
+          </details>
+        ) : null}
         {/* Info + extra actions — hover-only, bottom-right.
             Resolution + aspect pills, Copy link, Download. Compare is
             no longer in this row (it's the persistent button above). */}

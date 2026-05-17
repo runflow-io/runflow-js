@@ -149,7 +149,30 @@ export function StudioShell() {
   //   - There's no global "running" flag — multiple Applies can be in
   //     flight at once.
   const [toasts, setToasts] = useState<StudioToast[]>([]);
+  // On phones (<= 768px) the asset rail and workflows panel act as
+  // overlays rather than grid columns. `leftCollapsed=true` on mobile
+  // hides the slide-over drawer (matches the desktop semantics of the
+  // same flag — column-width 0). `rightOpenMobile` is the bottom-sheet
+  // toggle; desktop ignores it because the panel always lives in the grid.
   const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightOpenMobile, setRightOpenMobile] = useState(false);
+  const isMobileRef = useRef(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const sync = (e: { matches: boolean }) => {
+      isMobileRef.current = e.matches;
+      if (e.matches) {
+        setLeftCollapsed(true);
+        setRightOpenMobile(false);
+      } else {
+        setLeftCollapsed(false);
+        setRightOpenMobile(false);
+      }
+    };
+    sync(mq);
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
   const [sentinelOpen, setSentinelOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
@@ -445,6 +468,9 @@ export function StudioShell() {
   const onSelectAsset = (id: string) => {
     setActiveId(id);
     resetSelection();
+    // Auto-close the assets drawer on phones after a pick — the user
+    // tapped to switch images, they want the canvas back.
+    if (isMobileRef.current) setLeftCollapsed(true);
   };
 
   // ---------- Generate panel ----------
@@ -706,7 +732,27 @@ export function StudioShell() {
       setEditedPackageCreativePickId(null);
       setEditedPackageCreativeValue("");
     }
+    // Mobile: workflows that need a canvas interaction (place a pin or
+    // paint a mask) need the canvas, not the sheet. Drop the bottom
+    // sheet so the user can see the image. The Edits FAB shows a
+    // "Configure" label so they're one tap away from coming back.
+    // For pin workflows we reopen the sheet automatically once a pin
+    // is placed (see effect below); for mask workflows the user comes
+    // back via the FAB after painting.
+    if (
+      isMobileRef.current &&
+      (wf.kind === "pin" || wf.kind === "mask-only" || wf.kind === "mask-ref")
+    ) {
+      setRightOpenMobile(false);
+    }
   };
+
+  // Mobile: when the user places a pin for a pin-style workflow, slide
+  // the sheet back up so they can describe the change and tap Apply.
+  useEffect(() => {
+    if (!isMobileRef.current) return;
+    if (selectedWf?.kind === "pin" && pin) setRightOpenMobile(true);
+  }, [pin, selectedWf]);
 
   // Single workflow-execution path used by both card flow (onApply) and
   // chat flow (studioHandle.runWorkflow). Synchronously creates a
@@ -1239,6 +1285,7 @@ export function StudioShell() {
       addToast({ kind: "error", title: "Pick a photo first", body: "No active asset to replay onto." });
       return;
     }
+    if (isMobileRef.current) setRightOpenMobile(false);
     if (custom.steps.length === 0) {
       addToast({ kind: "error", title: "Empty custom edit", body: "Nothing to run." });
       return;
@@ -1427,6 +1474,10 @@ export function StudioShell() {
 
   const onApply = async () => {
     if (!selectedWf || !active || !currentVersion) return;
+    // Mobile: tapping Apply means "go" — drop the sheet so the user
+    // sees the canvas where the new version is spinning up. The sheet
+    // would otherwise stay open hiding the result of their action.
+    if (isMobileRef.current) setRightOpenMobile(false);
     // Packages run a chain of existing workflows. Pass the user's
     // (possibly reordered/trimmed) edited steps; if for some reason
     // they're empty fall back to the preset.
@@ -1943,7 +1994,9 @@ export function StudioShell() {
   ) : null;
 
   return (
-    <div className={`rfs-root${leftCollapsed ? " is-rail-collapsed" : ""}`}>
+    <div
+      className={`rfs-root${leftCollapsed ? " is-rail-collapsed" : ""}${rightOpenMobile ? " is-right-open" : ""}`}
+    >
       <header className="rfs-header">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <button
@@ -2304,6 +2357,51 @@ export function StudioShell() {
         onRunCustom={runCustomWorkflow}
         onSelectAsset={onSelectAsset}
       />
+
+      {/* Mobile-only floating CTA: opens the workflows/chat bottom sheet.
+          Sits on the canvas so the user can reach Edits with one thumb.
+          Hidden by CSS on desktop and while the sheet itself is open. */}
+      <button
+        type="button"
+        className="rfs-mobile-fab rfs-mobile-fab-tools"
+        onClick={() => setRightOpenMobile(true)}
+        aria-label="Open edits panel"
+      >
+        {Icon.workflows}
+        <span>{selected ? "Configure" : "Edits"}</span>
+      </button>
+
+      {/* Backdrops + close affordances for the mobile overlays. The
+          left drawer and bottom sheet share the same dismiss pattern:
+          tap outside to close. */}
+      {!leftCollapsed ? (
+        <button
+          type="button"
+          className="rfs-mobile-backdrop rfs-mobile-backdrop-left"
+          aria-label="Close assets"
+          onClick={() => setLeftCollapsed(true)}
+        />
+      ) : null}
+      {rightOpenMobile ? (
+        <>
+          <button
+            type="button"
+            className="rfs-mobile-backdrop rfs-mobile-backdrop-right"
+            aria-label="Close edits panel"
+            onClick={() => setRightOpenMobile(false)}
+          />
+          <button
+            type="button"
+            className="rfs-sheet-close"
+            aria-label="Close edits panel"
+            onClick={() => setRightOpenMobile(false)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </>
+      ) : null}
 
       <Toasts toasts={toasts} onDismiss={dismissToast} />
 
