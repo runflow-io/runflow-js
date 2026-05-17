@@ -43,6 +43,7 @@ interface Modality {
     | "prompt"
     | "color"
     | "select"
+    | "pin"
     | "text-to-image";
   model: string;
   body: Record<string, unknown>;
@@ -93,7 +94,7 @@ const MODALITIES: Modality[] = [
   },
   {
     name: "pin — ai-edit (positional prompt)",
-    modality: "simple",
+    modality: "pin",
     model: "google/nano-banana-pro/edit",
     body: {
       input: {
