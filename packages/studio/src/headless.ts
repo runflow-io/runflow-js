@@ -1,23 +1,12 @@
 /**
- * Headless primitives — for callers who want their own UI but want
- * the SDK's tool catalogue, the state reducer, and default styles.
- *
- * This is the "option C" escape hatch from the original brainstorm.
+ * Headless primitives — for callers building their own UI on top of
+ * Runflow's tool catalogue, dispatcher, and sentinel client.
  */
 
-export { BUILTIN_TOOLS, findTool } from "./tools/index.js";
-export type {
-  StudioOptions,
-  StudioSample,
-  StudioInstance,
-  StudioTheme,
-  AnyTool,
-} from "./types.js";
-export { DEFAULT_SAMPLES } from "./types.js";
-export {
-  type StudioState,
-  type StudioAction,
-  type Version,
-  reducer,
-  initialState,
-} from "./state.js";
+export { WORKFLOWS, type Workflow, type WorkflowInput, type WorkflowKind, type WorkflowGroup } from "./data/workflows.js";
+export { SAMPLES, type SampleAsset } from "./data/samples.js";
+export { runWorkflow, type RunProgress, type RunResult, type RunStatus, type DispatchInputs } from "./lib/runflow.js";
+export { evaluate as sentinelEvaluate, taskDescription as sentinelTaskDescription } from "./lib/sentinel.js";
+export type { Judge, SentinelResult } from "./lib/sentinel.js";
+export { setStudioUrls, URLS } from "./lib/urls.js";
+export type { StudioUrls } from "./lib/urls.js";

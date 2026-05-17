@@ -1,77 +1,75 @@
 /**
  * @runflow/studio — Embeddable Runflow Studio.
  *
- * @example npm
+ * The mount API is intentionally tiny — the heavy lifting (state,
+ * dispatch, sentinel, chat, packages) lives in the StudioShell and the
+ * lib/ modules.
+ *
+ * @example
  * ```ts
  * import { mount } from "@runflow/studio";
- * import "@runflow/studio/styles.css";
- *
- * const studio = mount("#studio", { baseUrl: "/api/runflow" });
- * ```
- *
- * @example script tag (CDN)
- * ```html
- * <link rel="stylesheet" href="https://cdn.runflow.io/studio.css" />
- * <script src="https://cdn.runflow.io/studio.js"></script>
- * <div id="studio"></div>
- * <script>
- *   RunflowStudio.mount('#studio', { baseUrl: '/api/runflow' });
- * </script>
+ * const studio = mount("#studio", {
+ *   urls: { runflowProxy: "/api/runflow" },
+ *   theme: "auto",
+ * });
  * ```
  */
 
 import { createRoot, type Root } from "react-dom/client";
 import { createElement } from "react";
 import { StudioShell } from "./components/StudioShell.js";
+import { setStudioUrls, type StudioUrls } from "./lib/urls.js";
 import { injectStyles } from "./styles.js";
-import { BUILTIN_TOOLS } from "./tools/index.js";
-import { DEFAULT_SAMPLES, type StudioInstance, type StudioOptions } from "./types.js";
 
-/**
- * Mount the Studio into the given target. Returns an instance with
- * `unmount()` and `update()` controls.
- */
+export interface ThemeOverrides {
+  accent?: string;
+  bg0?: string;
+  bg1?: string;
+  bg2?: string;
+  bg3?: string;
+  ink0?: string;
+  ink1?: string;
+  ink2?: string;
+  ink3?: string;
+}
+
+export interface StudioMountOptions {
+  /** Endpoint overrides. See `StudioUrls` for the full shape. */
+  urls?: Partial<StudioUrls>;
+  /** `light` | `dark` | `auto` | per-token overrides. Default `dark`. */
+  theme?: "light" | "dark" | "auto" | ThemeOverrides;
+  /** Inject the default stylesheet into <head>. Default true. */
+  injectStyles?: boolean;
+}
+
+export interface StudioInstance {
+  unmount(): void;
+}
+
 export function mount(
   target: string | HTMLElement,
-  options: StudioOptions = {},
+  options: StudioMountOptions = {},
 ): StudioInstance {
   const el = resolveTarget(target);
   if (!el) {
-    throw new Error(`@runflow/studio: target ${JSON.stringify(target)} not found in DOM.`);
+    throw new Error(`@runflow/studio: target ${JSON.stringify(target)} not found.`);
   }
+  if (options.urls) setStudioUrls(options.urls);
   if (options.injectStyles !== false) {
     injectStyles(el.ownerDocument ?? document);
   }
-  el.classList.add("rfs-root");
-  el.setAttribute("data-theme", resolveThemeMode(options.theme));
-
+  applyThemeAttribute(el, options.theme);
   applyThemeOverrides(el, options.theme);
 
   const root = createRoot(el);
-  let current: StudioOptions = options;
-  render(root, current);
+  root.render(createElement(StudioShell));
 
   return {
     unmount() {
       root.unmount();
-      el.classList.remove("rfs-root");
       el.removeAttribute("data-theme");
     },
-    update(next) {
-      current = { ...current, ...next };
-      if (next.theme !== undefined) {
-        el.setAttribute("data-theme", resolveThemeMode(next.theme));
-        applyThemeOverrides(el, next.theme);
-      }
-      render(root, current);
-    },
   };
-}
-
-function render(root: Root, options: StudioOptions) {
-  const tools = options.tools ?? BUILTIN_TOOLS;
-  const samples = options.samples ?? DEFAULT_SAMPLES;
-  root.render(createElement(StudioShell, { options, tools, samples }));
 }
 
 function resolveTarget(target: string | HTMLElement): HTMLElement | null {
@@ -79,22 +77,23 @@ function resolveTarget(target: string | HTMLElement): HTMLElement | null {
   return target;
 }
 
-function resolveThemeMode(theme: StudioOptions["theme"]): "dark" | "light" {
-  if (theme === "light") return "light";
-  if (theme === "dark" || theme === undefined) return "dark";
-  if (theme === "auto") {
-    return typeof window !== "undefined" &&
+function applyThemeAttribute(el: HTMLElement, theme: StudioMountOptions["theme"]): void {
+  let mode: "dark" | "light" = "dark";
+  if (theme === "light") mode = "light";
+  else if (theme === "auto") {
+    mode =
+      typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-color-scheme: light)").matches
-      ? "light"
-      : "dark";
+        ? "light"
+        : "dark";
   }
-  // Object overrides — they layer on top of the dark base.
-  return "dark";
+  el.setAttribute("data-theme", mode);
 }
 
-function applyThemeOverrides(el: HTMLElement, theme: StudioOptions["theme"]) {
+function applyThemeOverrides(el: HTMLElement, theme: StudioMountOptions["theme"]): void {
   if (!theme || typeof theme === "string") return;
-  const map: Array<[keyof typeof theme, string]> = [
+  const map: Array<[keyof ThemeOverrides, string]> = [
+    ["accent", "--rfs-accent"],
     ["bg0", "--rfs-bg-0"],
     ["bg1", "--rfs-bg-1"],
     ["bg2", "--rfs-bg-2"],
@@ -102,13 +101,14 @@ function applyThemeOverrides(el: HTMLElement, theme: StudioOptions["theme"]) {
     ["ink0", "--rfs-ink-0"],
     ["ink1", "--rfs-ink-1"],
     ["ink2", "--rfs-ink-2"],
-    ["accent", "--rfs-accent"],
+    ["ink3", "--rfs-ink-3"],
   ];
   for (const [key, cssVar] of map) {
-    const value = theme[key];
-    if (typeof value === "string") el.style.setProperty(cssVar, value);
+    const v = theme[key];
+    if (typeof v === "string") el.style.setProperty(cssVar, v);
   }
 }
 
-export type { StudioOptions, StudioInstance, StudioSample, StudioTheme } from "./types.js";
-export { BUILTIN_TOOLS, findTool } from "./tools/index.js";
+export { StudioShell } from "./components/StudioShell.js";
+export { setStudioUrls, URLS } from "./lib/urls.js";
+export type { StudioUrls } from "./lib/urls.js";

@@ -1,0 +1,256 @@
+{
+  "generatedAt": "2026-05-13T00:20:27.301Z",
+  "images": [
+    {
+      "id": "sneaker-white",
+      "title": "Sneaker — studio",
+      "tags": [
+        "product",
+        "footwear"
+      ],
+      "aspect_ratio": "1:1",
+      "prompt": "Premium minimalist white leather sneaker centered on a clean off-white seamless backdrop, soft top-down studio lighting with a subtle natural shadow underneath, e-commerce catalog hero shot, ultra-detailed fabric and stitching, photorealistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a66/8YuTT7o8iAEI5FuH3u81m_2e00493442924f0f9a654023c4eda645.jpg",
+      "width": 1024,
+      "height": 1024,
+      "recommendedWorkflows": [
+        "background-color",
+        "ai-scene"
+      ]
+    },
+    {
+      "id": "watch-leather",
+      "title": "Wristwatch — leather strap",
+      "tags": [
+        "product",
+        "accessories"
+      ],
+      "aspect_ratio": "1:1",
+      "prompt": "Modern minimalist wristwatch with brown leather strap on a pale beige surface, soft diffused window light from the left, slight cast shadow, three-quarter angle, e-commerce hero shot, ultra-realistic, sharp dial detail.",
+      "url": "https://v3b.fal.media/files/b/0a991a67/WK4AAoEW-WP8uTMRHEBEv_b7b616e0f2e94cb8b9d1d98be0317e12.jpg",
+      "width": 1024,
+      "height": 1024,
+      "recommendedWorkflows": [
+        "ai-scene",
+        "product-isolation"
+      ]
+    },
+    {
+      "id": "perfume-bottle",
+      "title": "Perfume bottle — glass",
+      "tags": [
+        "product",
+        "beauty"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Tall clear glass perfume bottle with amber liquid and a brushed-gold cap, on an off-white pedestal, soft studio softbox lighting from above, faint reflection on the surface, premium beauty product photography, ultra-realistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a67/wspXRxZt1H_09O0vv1_88_8c0fd4daa8444042b2df13df274e0f6a.jpg",
+      "width": 960,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "ai-scene",
+        "smart-resize"
+      ]
+    },
+    {
+      "id": "headphones-matte",
+      "title": "Headphones — matte black",
+      "tags": [
+        "product",
+        "electronics"
+      ],
+      "aspect_ratio": "1:1",
+      "prompt": "Wireless over-ear headphones in matte charcoal with subtle metallic accents, centered on a clean light-grey background, slight diffuse shadow underneath, premium electronics product shot, photorealistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a68/uT_0eO6uBMe5AZg49cS7G_80a503a1793e4c3d9287bed4cb415536.jpg",
+      "width": 1024,
+      "height": 1024,
+      "recommendedWorkflows": [
+        "background-color",
+        "ai-scene"
+      ]
+    },
+    {
+      "id": "mug-ceramic",
+      "title": "Coffee mug — ceramic",
+      "tags": [
+        "product",
+        "home"
+      ],
+      "aspect_ratio": "1:1",
+      "prompt": "Hand-thrown ceramic coffee mug with subtle warm-grey glaze on a white surface, slight steam, professional product photography, soft directional shadow, photorealistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a68/nqAR5JqAVZCOw25wd7M9y_b18bcdf7466b4512ad09e7b426dfc537.jpg",
+      "width": 1024,
+      "height": 1024,
+      "recommendedWorkflows": [
+        "ai-scene",
+        "background-color"
+      ]
+    },
+    {
+      "id": "handbag-tan",
+      "title": "Handbag — tan leather",
+      "tags": [
+        "product",
+        "fashion"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Tan leather structured handbag with gold hardware on a clean off-white background, soft directional studio lighting, hero product photography, ultra-realistic, fine grain texture.",
+      "url": "https://v3b.fal.media/files/b/0a991a6a/N-5PhbmJhvdGU-IcaD4Js_8bd7e4674772414f82eac3b234f8bf31.jpg",
+      "width": 960,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "background-removal",
+        "ai-scene",
+        "ai-edit"
+      ]
+    },
+    {
+      "id": "tshirt-ghost",
+      "title": "T-shirt — ghost mannequin",
+      "tags": [
+        "product",
+        "fashion"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Crisp white cotton crew-neck t-shirt photographed with the ghost-mannequin technique on a pure white background, even studio lighting, no model, fashion ecommerce, sharp seams visible.",
+      "url": "https://v3b.fal.media/files/b/0a991a6a/l0yiYavqEPhEmk2wDsiwF_d52aba1a7c0c4e30bc513ad00919596b.jpg",
+      "width": 960,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "reference-inpaint",
+        "ai-edit"
+      ]
+    },
+    {
+      "id": "chair-lounge",
+      "title": "Lounge chair — wooden",
+      "tags": [
+        "product",
+        "furniture"
+      ],
+      "aspect_ratio": "4:5",
+      "prompt": "Modern wooden lounge chair with woven cane back and bouclé cushion on a clean off-white seamless backdrop, studio lighting, furniture catalog photography, photorealistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a6a/jTPKtTYCY295QhLdrIV-U_59c834f1d66c4bf69386196b11d7dc80.jpg",
+      "width": 1024,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "smart-resize",
+        "ai-scene"
+      ]
+    },
+    {
+      "id": "skincare-serum",
+      "title": "Skincare serum — glass",
+      "tags": [
+        "product",
+        "beauty"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Clear glass skincare serum bottle with a cream label and matte black dropper top, on a soft beige surface, dappled morning light, dermal product photography, photorealistic.",
+      "url": "https://v3b.fal.media/files/b/0a991a6b/ut47U5xpJqHmZ_ut6Bp3f_301b63a9cfc24d1baf2044babd6110f8.jpg",
+      "width": 960,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "ai-scene",
+        "background-color"
+      ]
+    },
+    {
+      "id": "model-cream-sweater",
+      "title": "On-model — cream sweater",
+      "tags": [
+        "on-model",
+        "fashion"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Editorial fashion photo of a woman wearing an oversized cream cashmere sweater and tan trousers, on a soft cream studio backdrop, natural soft lighting, three-quarter view, fashion ecommerce, ultra-realistic skin and fabric detail.",
+      "url": "https://v3b.fal.media/files/b/0a991a6c/0-Btj1TAMxreL6zgRQefW_a01b77fd2d374d4796333fce556abcd6.jpg",
+      "width": 960,
+      "height": 1280,
+      "recommendedWorkflows": [
+        "skin-fix",
+        "model-removal",
+        "reference-inpaint"
+      ]
+    },
+    {
+      "id": "lifestyle-sneaker",
+      "title": "Lifestyle — sneaker on cobble",
+      "tags": [
+        "lifestyle",
+        "footwear"
+      ],
+      "aspect_ratio": "16:9",
+      "prompt": "Editorial product photo of a white sneaker resting on a sun-dappled cobblestone street, Mediterranean morning light, cinematic shallow depth of field, ultra-realistic textures, e-commerce campaign style.",
+      "url": "https://v3b.fal.media/files/b/0a991a6d/c9XlFqybKQu11rLKkCRLd_b3c1ad06be904e4b8f74acd9bac16fdd.jpg",
+      "width": 1344,
+      "height": 768,
+      "recommendedWorkflows": [
+        "smart-resize",
+        "outpaint",
+        "product-isolation"
+      ]
+    },
+    {
+      "id": "tshirt-tiger-front",
+      "title": "T-shirt — tiger front (mannequin + tag)",
+      "tags": [
+        "product",
+        "fashion",
+        "ghost-mannequin",
+        "has-tag",
+        "has-logo"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Front view of a crisp white cotton crew-neck t-shirt fitted on a smooth beige tailor's mannequin torso with a wooden neck stand visible. The shirt has a small chest pocket on the right chest. Just above the pocket, an embroidered orange-and-black tiger head emblem the size of the pocket itself, around 4cm tall, sharply detailed thread texture, the brand identity of the shirt. A clearly visible white paper retail hangtag dangles from a thin natural-string loop attached to the inside of the neckline, falling forward over the upper left chest. The hangtag is rectangular, about 4cm by 7cm, and has its own printed branding: a stylized geometric monogram in dark grey at the top (a simple shape, not the tiger), the brand wordmark in a small serif below it, and the price \"$29\" in clean sans-serif at the bottom. Both logos must be sharply readable: the embroidered tiger on the chest AND the printed monogram on the hangtag. Plain warm-grey seamless studio backdrop, soft even studio lighting, gentle shadow under the mannequin base. Photoreal e-commerce ghost-mannequin photography, ultra-detailed fabric weave, no people, 3:4 portrait framing.",
+      "url": "https://8b72080bbbd80302c40de95d14ca24ca.r2.cloudflarestorage.com/runflow-general/ed5bb328-a3e5-4f12-a3ae-693640bccdc9/98c7e3a1445ce422.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e29feb89bdce9df26fc23f73dcd457ff%2F20260513%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260513T002020Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=d12bb4d0c2245ff0b635c2241edc54d386ebb739fd97e344dfb7558bd6aea9f9",
+      "width": 1792,
+      "height": 2400,
+      "recommendedWorkflows": [
+        "zalando-package",
+        "omnichannel-pack",
+        "campaign-pack",
+        "tag-removal"
+      ]
+    },
+    {
+      "id": "tshirt-with-hangtag",
+      "title": "T-shirt — with hangtag",
+      "tags": [
+        "product",
+        "fashion",
+        "has-tag"
+      ],
+      "aspect_ratio": "3:4",
+      "prompt": "Add a clear paper price tag with a visible barcode and a price label, dangling on a thin string from the neckline of this white t-shirt. The tag should be naturally lit and clearly visible against the shirt. Photorealistic, preserve the rest of the image, no other changes.",
+      "url": "https://8b72080bbbd80302c40de95d14ca24ca.r2.cloudflarestorage.com/runflow-general/072369a8-5e3f-4d90-8cdd-7508e696cc3b/5f29892bb2fc08b2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e29feb89bdce9df26fc23f73dcd457ff%2F20260507%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260507T092144Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=29ef3c2a2c09361a93bc2b0cf584118d807cdacc8aad60227707bc190c62d440",
+      "width": 896,
+      "height": 1200,
+      "recommendedWorkflows": [
+        "tag-removal"
+      ]
+    },
+    {
+      "id": "samba-on-foot-with-tag",
+      "title": "Adidas Samba — on-foot with hangtag",
+      "tags": [
+        "on-model",
+        "footwear",
+        "has-tag",
+        "has-logo"
+      ],
+      "aspect_ratio": "4:5",
+      "prompt": "Photoreal editorial product photograph of an Adidas Samba OG sneaker worn on a person's right foot, three-quarter view from a slight low angle. The shoe is the classic colorway: white leather upper, black leather T-toe overlay and three-stripes on the lateral side, white \"adidas\" wordmark above the stripes, gum rubber outsole. A paper retail hangtag with the Adidas trefoil printed on cream cardstock dangles from the top eyelet of the laces on a thin twine loop, clearly visible in frame, catching soft light. The model wears cropped grey trousers; only the lower leg from mid-shin down is visible, no socks. Set: muted warm-grey seamless paper backdrop, soft key light from camera-left, gentle floor contact shadow. Sharp focus on the shoe, especially the three-stripes and the hangtag. Editorial product photography, true colors, no extra text or graphics in frame. 4:5 portrait framing.",
+      "url": "https://8b72080bbbd80302c40de95d14ca24ca.r2.cloudflarestorage.com/runflow-general/03bc298c-cbc2-48b8-9994-2d172f60ea45/45018803e83e69d9.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=e29feb89bdce9df26fc23f73dcd457ff%2F20260512%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260512T222938Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=b1435b4780d47b9179d69098041749adc67702dd2079c3530cf8d2658b9b9eea",
+      "width": 1856,
+      "height": 2304,
+      "recommendedWorkflows": [
+        "lifestyle-pack",
+        "omnichannel-pack",
+        "zalando-package",
+        "tag-removal",
+        "model-removal"
+      ]
+    }
+  ]
+}
