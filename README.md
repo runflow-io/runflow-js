@@ -1,42 +1,66 @@
-# RunFlow Studio
+# runflow-js
 
-Embeddable JavaScript SDK for adding RunFlow Studio to any website in minutes.
+The JavaScript surface for [Runflow](https://runflow.io) — SDK, embeddable Studio, and server proxy.
 
-## Install
+## Packages
 
-**Script tag** (no build step):
+| Package | Description |
+|---------|-------------|
+| [`@runflow/sdk`](./packages/sdk) | Typed HTTP client for the Runflow API. Isomorphic — runs in Node, Bun, Deno, browsers, workers. |
+| [`@runflow/studio`](./packages/studio) | Embeddable Studio UI. Drop into any website via `<script>` tag or `npm install`. |
+| [`@runflow/proxy`](./packages/proxy) | Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side. |
 
-```html
-<script src="https://cdn.runflow.io/studio.js"></script>
-<script>
-  RunflowStudio.mount('#studio', { apiKey: 'pk_...' });
-</script>
-```
+## Quick start
 
-**npm**:
+**Embed Studio on your site** (the 3-line integration):
 
 ```bash
-npm install @runflow/studio
+bun add @runflow/studio @runflow/proxy
 ```
 
 ```ts
-import { mount } from '@runflow/studio';
-
-mount('#studio', { apiKey: 'pk_...' });
+// app/api/runflow/[...path]/route.ts (Next.js App Router)
+import { runflowProxy } from "@runflow/proxy";
+export const { GET, POST } = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY! });
 ```
 
-## Configuration
+```html
+<div id="studio"></div>
+<script type="module">
+  import { mount } from "@runflow/studio";
+  mount("#studio");
+</script>
+```
 
-| Option   | Type     | Description                            |
-| -------- | -------- | -------------------------------------- |
-| `apiKey` | `string` | Publishable key from the RunFlow dashboard. |
-| `theme`  | `'light' \| 'dark' \| 'auto'` | Optional. Defaults to `auto`. |
-| `onEvent`| `(event) => void` | Optional. Listen for Studio events. |
+## Repository layout
 
-## Links
+```
+runflow-js/
+├── packages/
+│   ├── sdk/         → @runflow/sdk
+│   ├── studio/      → @runflow/studio
+│   └── proxy/       → @runflow/proxy
+├── examples/
+│   └── e2e-proof/                end-to-end integration test
+└── tooling/
+    └── tsconfig/                 shared TS presets
+```
 
-- [Documentation](https://docs.runflow.io/studio)
-- [Dashboard](https://app.runflow.io)
+## Development
+
+```bash
+bun install
+bun run build      # build all packages
+bun run test       # run all tests
+bun run typecheck  # type-check all packages
+bun run lint       # biome check
+```
+
+Add a changeset for every user-visible change:
+
+```bash
+bun changeset
+```
 
 ## License
 
