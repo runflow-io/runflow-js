@@ -1,6 +1,6 @@
 {
   "name": "@runflow-io/sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Typed HTTP client and tool DSL for the Runflow API. Isomorphic.",
   "license": "MIT",
   "homepage": "https://github.com/runflow-io/runflow-js/tree/main/packages/sdk#readme",
