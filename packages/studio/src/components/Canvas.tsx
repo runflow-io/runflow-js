@@ -5,7 +5,7 @@
 // `image-frame` wrapper so absolute children share the image's exact
 // bounding box (no off-by-letterbox drift on pin clicks).
 
-import { type Ref, useState } from "react";
+import { type ReactNode, type Ref, useState } from "react";
 import { Icon } from "./icons";
 import { displayBucket, aspectRatioLabel } from "../lib/resolution";
 import { usePendingPhrase } from "../lib/workflow-progress";
@@ -71,7 +71,10 @@ export function StudioCanvas({
   onBrushSize: (n: number) => void;
   maskCoverage: number;
   onClearMask: () => void;
-  hint: string | null;
+  /** Free-text or JSX. Renders as React children (NEVER raw HTML) — the
+   *  chat-driven hint comes from agent output and must not be parsed as
+   *  markup. Trusted local hints are passed as JSX. */
+  hint: ReactNode;
   pending: boolean;
   pendingLabel: string | null;
   pendingWorkflowId: string | null;
@@ -355,7 +358,7 @@ export function StudioCanvas({
       {hint ? (
         <div className="rfs-stage-hint">
           <span className="rfs-stage-hint-dot" />
-          <span dangerouslySetInnerHTML={{ __html: hint }} />
+          <span>{hint}</span>
         </div>
       ) : null}
 
