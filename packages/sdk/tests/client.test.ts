@@ -118,6 +118,93 @@ describe("models.run + runs.wait", () => {
   });
 });
 
+describe("models.run + runs.get — path encoding", () => {
+  it("encodes each model id segment", async () => {
+    let seenUrl = "";
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch((req) => {
+        seenUrl = req.url;
+        return new Response(JSON.stringify({ id: "r", status_code: "queued" }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
+    });
+    await rf.models.run("space owner/has spaces/runs slug", {});
+    expect(seenUrl).toMatch(
+      /\/v1\/models\/space%20owner\/has%20spaces\/runs%20slug\/runs/,
+    );
+  });
+
+  it("rejects model id with empty / dot / dot-dot segments", async () => {
+    const rf = new Runflow({ apiKey: "rf_live_x", fetch: mockFetch(() => new Response("")) });
+    await expect(rf.models.run("runflow//background-removal", {})).rejects.toThrow(/invalid model id/);
+    await expect(rf.models.run("runflow/../secret", {})).rejects.toThrow(/invalid model id/);
+    await expect(rf.models.run("./foo", {})).rejects.toThrow(/invalid model id/);
+  });
+
+  it("rejects empty model id", async () => {
+    const rf = new Runflow({ apiKey: "rf_live_x", fetch: mockFetch(() => new Response("")) });
+    await expect(rf.models.run("", {})).rejects.toThrow(/required/);
+  });
+
+  it("rejects run id with `/` or empty", async () => {
+    const rf = new Runflow({ apiKey: "rf_live_x", fetch: mockFetch(() => new Response("")) });
+    await expect(rf.runs.get("foo/bar")).rejects.toThrow(/invalid run id/);
+    await expect(rf.runs.get("")).rejects.toThrow(/required/);
+  });
+});
+
+describe("tools.run — type-contract enforcement", () => {
+  it("throws when buildRequest returns a non-plain object", async () => {
+    const { defineTool, imageInput, imageOutput } = await import("../src/tools/index.js");
+    const tool = defineTool({
+      id: "bad-body",
+      name: "Bad body",
+      model: "runflow/background-removal",
+      inputs: { image: imageInput({ source: "runtime" }) },
+      output: { image: imageOutput() },
+      // @ts-expect-error — array is not a ToolRequestBody, but we want runtime guard too
+      buildRequest: () => [],
+    });
+    const rf = new Runflow({ apiKey: "rf_live_x", fetch: mockFetch(() => new Response("")) });
+    await expect(
+      rf.tools.run(tool, { image: "https://cdn/x.png" }, { pollIntervalMs: 1 }),
+    ).rejects.toThrow(/buildRequest must return a plain object/);
+  });
+
+  it("default extractor throws when no image URL is present in run.output", async () => {
+    const { defineTool, imageInput, imageOutput } = await import("../src/tools/index.js");
+    const tool = defineTool({
+      id: "missing-image",
+      name: "Missing image",
+      model: "runflow/background-removal",
+      inputs: { image: imageInput({ source: "runtime" }) },
+      output: { image: imageOutput() },
+      buildRequest: ({ image }) => ({ input: { image_url: image } }),
+      // intentionally no extractOutput — default extractor handles it
+    });
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch((req) => {
+        if (req.method === "POST") {
+          return new Response(JSON.stringify({ id: "run_e", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        // Run returns no image
+        return new Response(
+          JSON.stringify({ id: "run_e", status_code: "succeeded", output: { foo: "bar" } }),
+          { headers: { "Content-Type": "application/json" } },
+        );
+      }),
+    });
+    await expect(
+      rf.tools.run(tool, { image: "https://cdn/x.png" }, { pollIntervalMs: 1 }),
+    ).rejects.toThrow(/could not find an image URL/);
+  });
+});
+
 describe("tools.run", () => {
   it("merges presets and runtime args, then extracts output", async () => {
     const { defineTool, imageInput, textInput, imageOutput, extractFirstImageUrl } =

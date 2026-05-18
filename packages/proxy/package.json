@@ -1,8 +1,9 @@
 {
   "name": "@runflow-io/proxy",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side.",
   "license": "MIT",
+  "homepage": "https://github.com/runflow-io/runflow-js/tree/main/packages/proxy#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/runflow-io/runflow-js.git",
@@ -12,6 +13,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,7 +28,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",

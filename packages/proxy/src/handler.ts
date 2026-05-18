@@ -25,6 +25,8 @@ interface NormalizedConfig {
   upstreamTimeoutMs: number;
   fetcher: typeof fetch;
   allowedModelsFor: (auth: AuthResult | null) => ReadonlyArray<string>;
+  allowedOrigins: ReadonlyArray<string> | "same-origin" | false;
+  requireJsonContentType: boolean;
   authenticate?: ProxyConfig["authenticate"];
   rateLimit?: ProxyConfig["rateLimit"];
   onRun?: ProxyConfig["onRun"];
@@ -46,11 +48,59 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
     upstreamTimeoutMs: cfg.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS,
     fetcher: cfg.fetch ?? globalThis.fetch,
     allowedModelsFor,
+    allowedOrigins: cfg.allowedOrigins ?? "same-origin",
+    requireJsonContentType: cfg.requireJsonContentType ?? true,
     authenticate: cfg.authenticate,
     rateLimit: cfg.rateLimit,
     onRun: cfg.onRun,
     onError: cfg.onError,
   };
+}
+
+/**
+ * CSRF gate: a non-GET non-HEAD request must come from an allowed origin
+ * and (by default) declare `Content-Type: application/json`. The two
+ * checks together stop drive-by `fetch(..., {mode:"no-cors"})` from a
+ * third-party page from spending the customer's API key.
+ *
+ * `same-origin` (default) accepts when Origin's host matches the `Host`
+ * header. `false` opts out entirely (not recommended). An explicit
+ * array of origins is matched case-insensitively on scheme + host + port.
+ */
+function originAllowed(
+  req: Request,
+  policy: NormalizedConfig["allowedOrigins"],
+): boolean {
+  if (policy === false) return true;
+  const origin = req.headers.get("origin");
+  if (!origin) {
+    // No Origin: not a browser fetch with cross-origin intent. Server-
+    // to-server callers (curl, the SDK on the server) don't send Origin;
+    // CSRF only applies to browser-spoofable requests.
+    return true;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (policy === "same-origin") {
+    const host = req.headers.get("host");
+    if (!host) return false;
+    // Compare host:port portions. Origin always carries a port; Host may
+    // omit it when default. Normalize both via URL parsing.
+    const expected = new URL(`http://${host}`).host;
+    return parsed.host.toLowerCase() === expected.toLowerCase();
+  }
+  const target = `${parsed.protocol}//${parsed.host}`.toLowerCase();
+  return policy.some((allowed) => allowed.toLowerCase().replace(/\/+$/, "") === target);
+}
+
+function jsonContentTypeOK(req: Request): boolean {
+  const ct = req.headers.get("content-type") ?? "";
+  // Parameters allowed (e.g. `application/json; charset=utf-8`).
+  return /^application\/json\b/i.test(ct.trim());
 }
 
 /**
@@ -89,6 +139,17 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
 
   if (!isDispatch && !runId && !isHealth) {
     return json({ error: "Not allowed" }, 403);
+  }
+
+  // CSRF gate — must run before any authenticate hook so a malicious
+  // page can't drain cookie credentials into the customer's API key.
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    if (!originAllowed(req, c.allowedOrigins)) {
+      return json({ error: "Origin not allowed" }, 403);
+    }
+    if (c.requireJsonContentType && !jsonContentTypeOK(req)) {
+      return json({ error: "Content-Type must be application/json" }, 415);
+    }
   }
 
   // Run authenticate hook

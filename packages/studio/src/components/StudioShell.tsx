@@ -1822,15 +1822,28 @@ export function StudioShell() {
     return true;
   })();
 
-  const stageHint = (() => {
+  const stageHint: React.ReactNode = (() => {
     // Chat-driven hint takes precedence — it carries an explicit ask
-    // from the agent ("brush over the logo").
+    // from the agent ("brush over the logo"). It is rendered as plain
+    // React children (NOT raw HTML) so prompt-injected markup can't
+    // escape into the host page's DOM.
     if (chatStageHint) return chatStageHint;
-    if (isPinning && !pin) return "Click anywhere on the image to <b>pin</b> the spot you want to edit.";
+    if (isPinning && !pin)
+      return (
+        <>
+          Click anywhere on the image to <b>pin</b> the spot you want to edit.
+        </>
+      );
     if (isPainting && maskCoverage < 0.08)
-      return selectedWf?.kind === "mask-ref"
-        ? "Brush over the area to <b>replace</b>, then drop a reference image on the right."
-        : "Brush over the area you want <b>removed</b>.";
+      return selectedWf?.kind === "mask-ref" ? (
+        <>
+          Brush over the area to <b>replace</b>, then drop a reference image on the right.
+        </>
+      ) : (
+        <>
+          Brush over the area you want <b>removed</b>.
+        </>
+      );
     return null;
   })();
 
