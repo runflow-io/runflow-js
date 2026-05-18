@@ -1,0 +1,6 @@
+{
+  "name": "@runflow/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "files": ["lib.json", "react.json"]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@runflow-io/example-e2e-proof",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo 'no build needed'",
+    "test": "echo 'no test'"
+  },
+  "dependencies": {
+    "@runflow-io/sdk": "workspace:*",
+    "@runflow-io/proxy": "workspace:*",
+    "@runflow-io/studio": "workspace:*"
+  }
+}
