@@ -1,6 +1,6 @@
 {
   "name": "@runflow-io/proxy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side.",
   "license": "MIT",
   "repository": {
@@ -24,7 +24,10 @@
       "require": "./dist/node.cjs"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
