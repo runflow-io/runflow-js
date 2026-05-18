@@ -1,6 +1,6 @@
 {
   "name": "@runflow-io/studio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Embeddable Runflow Studio. Drop it on any website via script tag or npm install.",
   "license": "MIT",
   "repository": {
@@ -30,7 +30,10 @@
     },
     "./styles.css": "./dist/styles.css"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup && cp src/styles.css dist/styles.css",
     "dev": "tsup --watch",

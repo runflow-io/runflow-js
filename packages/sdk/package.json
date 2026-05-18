@@ -1,6 +1,6 @@
 {
   "name": "@runflow-io/sdk",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Typed HTTP client and tool DSL for the Runflow API. Isomorphic.",
   "license": "MIT",
   "repository": {
@@ -19,7 +19,10 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

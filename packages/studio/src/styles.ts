@@ -2435,6 +2435,93 @@ export const STUDIO_CSS = `/* Runflow AI Studio — flagship design system. Dark
   background: var(--rfs-bg-2);
 }
 
+/* Multi-slot reference gallery — used by mask-ref workflows that
+   accept up to N reference images per run. Tiles wrap onto two rows
+   on a narrow panel; the add button takes the slot after the last
+   filled tile and goes away once the cap is hit. */
+.rfs-ref-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.rfs-ref-tile {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--rfs-bg-2);
+  border: 1px solid var(--rfs-bg-3);
+}
+.rfs-ref-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rfs-ref-tile-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(9, 9, 11, 0.82);
+  border: 1px solid var(--rfs-bg-3);
+  color: var(--rfs-ink-0);
+  font-size: 0.875rem;
+  line-height: 1;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.rfs-ref-tile-remove:hover {
+  background: var(--rfs-danger);
+  border-color: var(--rfs-danger);
+}
+.rfs-ref-add {
+  width: 84px;
+  height: 84px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.375rem;
+  background: var(--rfs-bg-0);
+  border: 1px dashed var(--rfs-bg-3);
+  border-radius: 10px;
+  color: var(--rfs-ink-2);
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 120ms, color 120ms, background 120ms;
+}
+.rfs-ref-add:hover {
+  border-color: var(--rfs-accent);
+  color: var(--rfs-accent);
+  background: var(--rfs-accent-soft);
+}
+.rfs-ref-add input[type="file"] { display: none; }
+.rfs-ref-add-icon {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--rfs-ink-1);
+}
+.rfs-ref-add:hover .rfs-ref-add-icon { color: var(--rfs-accent); }
+.rfs-ref-cap-note {
+  align-self: center;
+  font-size: 0.6875rem;
+  color: var(--rfs-ink-3);
+  padding: 0 0.25rem;
+}
+
 /* Chat / history empty states */
 .rfs-empty {
   flex: 1;

@@ -28,7 +28,7 @@ import {
   type PackageCreativeDirection,
 } from "../data/workflows";
 import { SAMPLES } from "../data/samples";
-import { runWorkflow, type RunProgress } from "../lib/runflow";
+import { runWorkflow, uploadFile, type RunProgress } from "../lib/runflow";
 import { Toasts, type StudioToast } from "./Toasts";
 import { ComparePanel } from "./ComparePanel";
 import { evaluate as sentinelEvaluate, taskDescription as sentinelTaskDescription, type SentinelResult } from "../lib/sentinel";
@@ -56,6 +56,7 @@ import {
 import { WorkflowsPanel, type Version, type VersionRequest } from "./WorkflowsPanel";
 import { SentinelBadge, SentinelChip } from "./SentinelBadge";
 import { SettingsMenu } from "./SettingsMenu";
+import { ReferenceGallery } from "./ReferenceGallery";
 import { Icon } from "./icons";
 
 type AssetState = {
@@ -137,6 +138,12 @@ export function StudioShell() {
   const [editText, setEditText] = useState("");
   const [reference, setReference] = useState<File | null>(null);
   const [referencePreview, setReferencePreview] = useState<string | null>(null);
+  // Additional reference slots — primary `reference` is slot 0, extras
+  // fill slots 1..3 (cap of 4 total per workflow run to avoid Runflow
+  // upstream rejecting on cheaper models). Kept separate so existing
+  // single-ref code paths (chat agent, logo workflow) stay untouched.
+  const [extraReferences, setExtraReferences] = useState<File[]>([]);
+  const [extraReferencePreviews, setExtraReferencePreviews] = useState<string[]>([]);
   const [referencePrompt, setReferencePrompt] = useState("");
   const [brushSize, setBrushSize] = useState(45);
   const [maskCoverage, setMaskCoverage] = useState(0);
@@ -453,6 +460,9 @@ export function StudioShell() {
   };
 
   // ---------- Reference image upload ----------
+  // Max references per run. The Runflow upstream model schemas vary;
+  // 4 is a safe ceiling across the providers Runflow fans into.
+  const MAX_REFERENCES = 4;
   const onReferenceFile = (file: File | null) => {
     if (referencePreview) URL.revokeObjectURL(referencePreview);
     if (!file) {
@@ -462,6 +472,43 @@ export function StudioShell() {
     }
     setReference(file);
     setReferencePreview(URL.createObjectURL(file));
+  };
+  // Append additional reference files (e.g. the user picks multiple at
+  // once or drops a second image). Caps at MAX_REFERENCES total —
+  // primary slot + extras. Files beyond the cap are dropped silently
+  // since the multi-slot UI already shows the limit. Computes the
+  // new files / object URLs synchronously *outside* the React state
+  // updaters so React 19 strict-mode double-renders don't end up
+  // creating duplicate object URLs or duplicate entries.
+  const onAddReferenceFiles = (files: File[]) => {
+    if (files.length === 0) return;
+    const remaining = files.slice();
+    if (!reference && remaining.length > 0) {
+      const head = remaining.shift()!;
+      setReference(head);
+      setReferencePreview(URL.createObjectURL(head));
+    }
+    if (remaining.length === 0) return;
+    const room = MAX_REFERENCES - 1 - extraReferences.length;
+    if (room <= 0) return;
+    const accepted = remaining.slice(0, room);
+    const acceptedPreviews = accepted.map((f) => URL.createObjectURL(f));
+    setExtraReferences((prev) => [...prev, ...accepted]);
+    setExtraReferencePreviews((prev) => [...prev, ...acceptedPreviews]);
+  };
+  const onRemoveExtraReference = (index: number) => {
+    setExtraReferences((prev) => prev.filter((_, i) => i !== index));
+    setExtraReferencePreviews((prev) => {
+      const url = prev[index];
+      if (url) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+  const clearAllReferences = () => {
+    onReferenceFile(null);
+    extraReferencePreviews.forEach((u) => URL.revokeObjectURL(u));
+    setExtraReferences([]);
+    setExtraReferencePreviews([]);
   };
 
   // ---------- Asset management ----------
@@ -494,6 +541,10 @@ export function StudioShell() {
     aspectRatio: string;
     resolution: GenerationResolution;
     count: number;
+    /** Reference images for image-to-image generation. Uploaded once
+     * up front, then the same URL list is reused across every
+     * variation's dispatch so we don't pay the upload cost N times. */
+    references?: File[];
   }) => {
     const trimmedPrompt = params.prompt.trim();
     if (!trimmedPrompt) return;
@@ -549,15 +600,29 @@ export function StudioShell() {
     let firstResolvedIndex: number | null = null;
 
     // Dispatch all N runs in parallel, each with a different seed so
-    // the variations are visually distinct.
+    // the variations are visually distinct. Reference images (if any)
+    // are uploaded ONCE up front and reused — paying the upload cost
+    // per variation would be wasteful since the same URLs feed every
+    // run.
+    const refsPromise: Promise<string[]> =
+      params.references && params.references.length > 0
+        ? Promise.all(
+            params.references.map((f, i) =>
+              uploadFile(`generate-ref-${i + 1}.png`, f, f.type || "image/png"),
+            ),
+          )
+        : Promise.resolve([]);
+
     initialVersions.forEach((_, idx) => {
       const seed = Math.floor(Math.random() * 1_000_000);
       void (async () => {
+        const referenceUrls = await refsPromise;
         const result = await dispatchGeneration({
           prompt: trimmedPrompt,
           aspectRatio: params.aspectRatio,
           resolution: params.resolution,
           seed,
+          ...(referenceUrls.length > 0 ? { referenceUrls } : {}),
         });
 
         if (!result.ok) {
@@ -687,7 +752,7 @@ export function StudioShell() {
     setPin(null);
     setEditText("");
     setReferencePrompt("");
-    onReferenceFile(null);
+    clearAllReferences();
     clearMask();
     setEditedPackagePrep([]);
     setEditedPackageVariants([]);
@@ -702,7 +767,7 @@ export function StudioShell() {
     setPin(null);
     setEditText("");
     setReferencePrompt("");
-    onReferenceFile(null);
+    clearAllReferences();
     const defaults: Record<string, string> = {};
     for (const inp of wf.inputs ?? []) {
       if ("default" in inp && inp.default) defaults[inp.key] = inp.default;
@@ -773,6 +838,7 @@ export function StudioShell() {
       maskBlob?: Blob;
       maskCoverage?: number;
       referenceFile?: File;
+      referenceFiles?: File[];
       values: Record<string, string>;
       /** True when this is a non-final step in a chain (chat plan,
        * package chain, custom workflow replay). Default behaviour
@@ -1534,6 +1600,7 @@ export function StudioShell() {
           ? maskCoverage
           : undefined,
       referenceFile: reference ?? undefined,
+      referenceFiles: reference ? [reference, ...extraReferences] : extraReferences,
       values: { ...inputs },
     };
     // Fire-and-forget: kicks off the run in the background, returns a
@@ -1947,6 +2014,7 @@ export function StudioShell() {
           pin: captured.pin ?? undefined,
           maskBlob: captured.mask ?? undefined,
           referenceFile: captured.reference ?? undefined,
+          referenceFiles: captured.reference ? [captured.reference] : [],
           values: mergedParams,
           intermediate: !!opts?.intermediate,
         });
@@ -1966,6 +2034,10 @@ export function StudioShell() {
     onInputChange: (k, v) => setInputs((s) => ({ ...s, [k]: v })),
     referencePreview,
     onReferenceFile,
+    extraReferencePreviews,
+    onAddReferenceFiles,
+    onRemoveExtraReference,
+    maxReferences: MAX_REFERENCES,
     referencePrompt,
     onReferencePrompt: setReferencePrompt,
     maskCoverage,
@@ -2434,6 +2506,10 @@ function renderSelectedActionContent({
   onInputChange,
   referencePreview,
   onReferenceFile,
+  extraReferencePreviews,
+  onAddReferenceFiles,
+  onRemoveExtraReference,
+  maxReferences,
   referencePrompt,
   onReferencePrompt,
   maskCoverage,
@@ -2458,6 +2534,10 @@ function renderSelectedActionContent({
   onInputChange: (key: string, value: string) => void;
   referencePreview: string | null;
   onReferenceFile: (file: File | null) => void;
+  extraReferencePreviews: string[];
+  onAddReferenceFiles: (files: File[]) => void;
+  onRemoveExtraReference: (index: number) => void;
+  maxReferences: number;
   referencePrompt: string;
   onReferencePrompt: (v: string) => void;
   maskCoverage: number;
@@ -2573,30 +2653,21 @@ function renderSelectedActionContent({
           n="2"
           done={hasReference}
           active={hasMask && !hasReference}
-          title="Reference image"
-          sub="The model copies content/style from this image into the masked area."
+          title={`Reference image${maxReferences > 1 ? "s" : ""}`}
+          sub={
+            maxReferences > 1
+              ? `Drop in up to ${maxReferences} references — the model blends them into the masked area.`
+              : "The model copies content/style from this image into the masked area."
+          }
         />
-        {referencePreview ? (
-          <div className="rfs-ref-preview">
-            <img src={referencePreview} alt="Reference" />
-            <button className="rfs-link" onClick={() => onReferenceFile(null)}>
-              Remove
-            </button>
-          </div>
-        ) : (
-          <label className="rfs-drop">
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) onReferenceFile(f);
-                e.currentTarget.value = "";
-              }}
-            />
-            <span>Click to upload a reference (PNG, JPG, &lt; 5MB)</span>
-          </label>
-        )}
+        <ReferenceGallery
+          referencePreview={referencePreview}
+          extraReferencePreviews={extraReferencePreviews}
+          onReferenceFile={onReferenceFile}
+          onAddReferenceFiles={onAddReferenceFiles}
+          onRemoveExtraReference={onRemoveExtraReference}
+          maxReferences={maxReferences}
+        />
         {/* Optional prompt — third step, only "active" once mask + ref
             are both in place. Apply works without it; the prompt just
             steers the model further if you want a specific direction. */}

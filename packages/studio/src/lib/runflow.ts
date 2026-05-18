@@ -36,8 +36,12 @@ export type DispatchInputs = {
   pin?: { x: number; y: number };
   // For mask-only / mask-ref: a B&W mask blob the caller already rendered.
   maskBlob?: Blob;
-  // For mask-ref: the user-uploaded reference image.
+  // For mask-ref: the user-uploaded reference image. Singular form is
+  // kept for backwards compatibility with the chat agent and logo
+  // (prompt-ref) flow. Multi-ref mask workflows should populate
+  // `referenceFiles` (which includes the primary file as index 0).
   referenceFile?: File;
+  referenceFiles?: File[];
   // Generic key/value for select/text/color/textarea inputs.
   values: Record<string, string>;
 };
@@ -64,7 +68,7 @@ async function fetchSourceBlob(url: string): Promise<Blob> {
 // a deterministic 4xx (auth, payload-too-large, etc.) feel sluggish.
 const UPLOAD_RETRY_DELAYS_MS = [250, 750];
 
-async function uploadFile(name: string, body: Blob, fallbackType = "image/png"): Promise<string> {
+export async function uploadFile(name: string, body: Blob, fallbackType = "image/png"): Promise<string> {
   // Server only accepts PNG/JPEG/WebP. Rewrap if the blob lost its type
   // (e.g. some fetch responses arrive as application/octet-stream).
   const type = body.type && body.type.startsWith("image/") ? body.type : fallbackType;
@@ -184,24 +188,36 @@ async function buildBody(
   }
   if (wf.kind === "mask-ref") {
     if (!inputs.maskBlob) throw new Error("Mask is required");
-    if (!inputs.referenceFile) throw new Error("Reference image is required");
+    // Prefer the array (multi-slot UI) and fall back to the single
+    // referenceFile so the chat agent path keeps working unchanged.
+    const refs =
+      inputs.referenceFiles && inputs.referenceFiles.length > 0
+        ? inputs.referenceFiles
+        : inputs.referenceFile
+          ? [inputs.referenceFile]
+          : [];
+    if (refs.length === 0) throw new Error("Reference image is required");
     onProgress({ phase: "preparing", message: "Preparing files…" });
     const src = await fetchSourceBlob(sourceUrl);
     onProgress({ phase: "uploading", message: "Uploading files…" });
-    const [imageUrl, maskUrl, referenceUrl] = await Promise.all([
+    const [imageUrl, maskUrl, ...referenceUrls] = await Promise.all([
       uploadFile("photo.png", src),
       uploadFile("mask.png", inputs.maskBlob),
-      uploadFile("reference.png", inputs.referenceFile),
+      ...refs.map((f, i) => uploadFile(`reference-${i + 1}.png`, f)),
     ]);
     // The model accepts an optional `prompt` for steering — if the user
     // typed one in the optional Direction step, ship it. Otherwise the
-    // model runs reference-only.
+    // model runs reference-only. Send `reference_url` (singular, first
+    // ref) alongside `reference_urls` (full array) so older Runflow
+    // model schemas that only know the singular field still get the
+    // primary reference.
     const promptText = (inputs.prompt || inputs.values.prompt || "").trim();
     return {
       input: {
         image_url: imageUrl,
         mask_url: maskUrl,
-        reference_url: referenceUrl,
+        reference_url: referenceUrls[0],
+        reference_urls: referenceUrls,
         ...(promptText ? { prompt: promptText } : {}),
       },
     };

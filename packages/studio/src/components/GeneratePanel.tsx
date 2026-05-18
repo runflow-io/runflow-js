@@ -29,6 +29,7 @@ import {
   type GenerationResolution,
 } from "../lib/generation";
 import { Icon } from "./icons";
+import { ReferenceGallery } from "./ReferenceGallery";
 
 const ASPECT_OPTIONS: { value: string; label: string }[] = [
   { value: "1:1", label: "1:1 — square" },
@@ -41,11 +42,25 @@ const ASPECT_OPTIONS: { value: string; label: string }[] = [
 
 const RESOLUTION_OPTIONS: GenerationResolution[] = ["1K", "2K", "4K"];
 
+// Cap reference uploads at 4 — same defensive default as the studio's
+// mask-ref workflows, since Runflow's upstream model schemas vary
+// across tiers and 4 is a safe ceiling.
+const MAX_GENERATE_REFERENCES = 4;
+// Variations slider caps at 4 too — keeps the cost estimate tractable
+// (4 × 4K shots ≈ $0.24) and the canvas stripe scannable. Default 2
+// gives the user a quick A/B without spending a full batch up front.
+const MAX_VARIATIONS = 4;
+const DEFAULT_VARIATIONS = 2;
+
 export type GenerationFormValues = {
   prompt: string;
   aspectRatio: string;
   resolution: GenerationResolution;
   count: number;
+  /** Optional reference images the user dropped into the panel.
+   * Uploaded by the caller (StudioShell) ahead of dispatch so they
+   * land as URLs the nano-banana-pro `image_urls` field accepts. */
+  references: File[];
 };
 
 export function GeneratePanel({
@@ -73,18 +88,64 @@ export function GeneratePanel({
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [resolution, setResolution] = useState<GenerationResolution>("2K");
-  const [count, setCount] = useState(4);
+  const [count, setCount] = useState(DEFAULT_VARIATIONS);
+  // Reference images for image-to-image generation. Primary slot mirrors
+  // the studio's ReferenceGallery contract — kept separate from the
+  // extras array so the rest of the studio's single-ref code paths
+  // (chat, logo) don't need to change. The caller (StudioShell)
+  // assembles primary+extras into a flat array before dispatch.
+  const [reference, setReference] = useState<File | null>(null);
+  const [referencePreview, setReferencePreview] = useState<string | null>(null);
+  const [extraReferences, setExtraReferences] = useState<File[]>([]);
+  const [extraReferencePreviews, setExtraReferencePreviews] = useState<string[]>([]);
 
   const cost = estimateGenerationCost(resolution, count);
   const canGenerate = prompt.trim().length > 0;
 
+  const onReferenceFile = (file: File | null) => {
+    if (referencePreview) URL.revokeObjectURL(referencePreview);
+    if (!file) {
+      setReference(null);
+      setReferencePreview(null);
+      return;
+    }
+    setReference(file);
+    setReferencePreview(URL.createObjectURL(file));
+  };
+  const onAddReferenceFiles = (files: File[]) => {
+    if (files.length === 0) return;
+    const remaining = files.slice();
+    if (!reference && remaining.length > 0) {
+      const head = remaining.shift()!;
+      setReference(head);
+      setReferencePreview(URL.createObjectURL(head));
+    }
+    if (remaining.length === 0) return;
+    const room = MAX_GENERATE_REFERENCES - 1 - extraReferences.length;
+    if (room <= 0) return;
+    const accepted = remaining.slice(0, room);
+    const acceptedPreviews = accepted.map((f) => URL.createObjectURL(f));
+    setExtraReferences((prev) => [...prev, ...accepted]);
+    setExtraReferencePreviews((prev) => [...prev, ...acceptedPreviews]);
+  };
+  const onRemoveExtraReference = (index: number) => {
+    setExtraReferences((prev) => prev.filter((_, i) => i !== index));
+    setExtraReferencePreviews((prev) => {
+      const url = prev[index];
+      if (url) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const onSubmit = () => {
     if (!canGenerate) return;
+    const references = reference ? [reference, ...extraReferences] : extraReferences;
     onGenerate({
       prompt: prompt.trim(),
       aspectRatio,
       resolution,
       count,
+      references,
     });
     // Don't clear the form — the user can hit Generate again to
     // make another batch with the same params, or tweak inputs and
@@ -190,13 +251,32 @@ export function GeneratePanel({
 
         <div className="rfs-input-group">
           <label className="rfs-label">
+            Reference images
+            <span className="rfs-label-meta">optional</span>
+          </label>
+          <ReferenceGallery
+            referencePreview={referencePreview}
+            extraReferencePreviews={extraReferencePreviews}
+            onReferenceFile={onReferenceFile}
+            onAddReferenceFiles={onAddReferenceFiles}
+            onRemoveExtraReference={onRemoveExtraReference}
+            maxReferences={MAX_GENERATE_REFERENCES}
+          />
+          <div className="rfs-help">
+            Drop in up to {MAX_GENERATE_REFERENCES} shots the model should
+            take cues from — style, subject, framing.
+          </div>
+        </div>
+
+        <div className="rfs-input-group">
+          <label className="rfs-label">
             Variations
             <span className="rfs-label-meta">{count} image{count === 1 ? "" : "s"}</span>
           </label>
           <input
             type="range"
             min={1}
-            max={8}
+            max={MAX_VARIATIONS}
             value={count}
             onChange={(e) => setCount(parseInt(e.target.value, 10))}
             className="rfs-generate-count"

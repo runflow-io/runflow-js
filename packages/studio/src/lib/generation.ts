@@ -69,6 +69,11 @@ export type GenerationDispatchInput = {
   /** Optional seed — variations within one Generate call use
    * different seeds so the user sees distinct results. */
   seed?: number;
+  /** Optional reference image URLs for image-to-image generation.
+   * nano-banana-pro accepts these via `image_urls`; the model uses them
+   * as visual conditioning alongside the prompt. Already uploaded to a
+   * URL by the caller (StudioShell). */
+  referenceUrls?: string[];
 };
 
 export type GenerationResult =
@@ -103,6 +108,12 @@ export async function dispatchGeneration(
       num_images: 1,
       output_format: "jpeg",
       ...(inp.seed !== undefined ? { seed: inp.seed } : {}),
+      // nano-banana-pro accepts up to 4 input images via `image_urls`.
+      // Omit the field entirely when no references were supplied so a
+      // pure text-to-image dispatch keeps the same payload shape.
+      ...(inp.referenceUrls && inp.referenceUrls.length > 0
+        ? { image_urls: inp.referenceUrls }
+        : {}),
     },
     metadata: { source: "runflow-studio", action: "generate" },
   };
