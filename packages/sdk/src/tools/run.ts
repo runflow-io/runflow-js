@@ -1,11 +1,10 @@
 import type { Runflow } from "../client.js";
-import { RunFailedError } from "../errors.js";
+import { RunFailedError, RunflowError } from "../errors.js";
 import type { Run, WaitOptions } from "../types.js";
 import type { ToolDef } from "./define.js";
-import { mergeToolValues } from "./define.js";
+import { defaultExtract, mergeToolValues } from "./define.js";
 import type { AnyInput, RuntimeInputValues } from "./inputs.js";
 import type { AnyOutput, OutputValues } from "./outputs.js";
-import { extractFirstImageUrl } from "./outputs.js";
 
 /** Final result returned from a tool run. */
 export interface ToolRunResult<O extends Record<string, AnyOutput>> {
@@ -43,8 +42,14 @@ export class ToolsResource {
   ): Promise<ToolRunResult<O>> {
     const merged = mergeToolValues(tool, args);
     const body = tool.buildRequest(merged);
-    const enriched = {
-      ...(body as Record<string, unknown>),
+    if (!isPlainObject(body)) {
+      throw new RunflowError(
+        `Tool ${tool.id}: buildRequest must return a plain object (received ${describe(body)})`,
+        { code: "invalid_tool_request_body" },
+      );
+    }
+    const enriched: Record<string, unknown> = {
+      ...body,
       client_ref: opts.clientRef ?? `runflow-sdk-${tool.id}-${Date.now()}`,
       metadata: { ...opts.metadata, tool: tool.id, source: "runflow-sdk" },
     };
@@ -56,7 +61,8 @@ export class ToolsResource {
         { id: final.id, status: final.status_code, error: final.error },
       );
     }
-    const extracted = (tool.extractOutput ?? defaultSingleImageExtract)(final.output) as OutputValues<O>;
+    const extractor = tool.extractOutput ?? (defaultExtract as unknown as (raw: unknown) => OutputValues<O>);
+    const extracted = extractor(final.output);
     return { runId: final.id, status: "succeeded", output: extracted, raw: final };
   }
 
@@ -71,8 +77,14 @@ export class ToolsResource {
   ): Promise<{ runId: string; model: string }> {
     const merged = mergeToolValues(tool, args);
     const body = tool.buildRequest(merged);
-    const enriched = {
-      ...(body as Record<string, unknown>),
+    if (!isPlainObject(body)) {
+      throw new RunflowError(
+        `Tool ${tool.id}: buildRequest must return a plain object (received ${describe(body)})`,
+        { code: "invalid_tool_request_body" },
+      );
+    }
+    const enriched: Record<string, unknown> = {
+      ...body,
       client_ref: opts.clientRef ?? `runflow-sdk-${tool.id}-${Date.now()}`,
       metadata: { ...opts.metadata, tool: tool.id, source: "runflow-sdk" },
     };
@@ -81,6 +93,22 @@ export class ToolsResource {
   }
 }
 
-function defaultSingleImageExtract(raw: unknown): { image: string | null } {
-  return { image: extractFirstImageUrl(raw) };
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== "object") return false;
+  if (Array.isArray(value)) return false;
+  // Filter out built-in object types the SDK can't merge — FormData,
+  // Blob, ArrayBuffer, URLSearchParams, etc. — by requiring a plain
+  // Object prototype.
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function describe(value: unknown): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return "array";
+  if (typeof value === "object") {
+    const ctor = (value as { constructor?: { name?: string } }).constructor?.name;
+    return ctor ? `${ctor} instance` : "non-plain object";
+  }
+  return typeof value;
 }

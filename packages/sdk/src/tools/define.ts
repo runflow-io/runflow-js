@@ -1,6 +1,16 @@
+import { RunflowError } from "../errors.js";
 import type { AllInputValues, AnyInput, RuntimeInputValues } from "./inputs.js";
 import type { AnyOutput, OutputValues } from "./outputs.js";
 import { extractFirstImageUrl } from "./outputs.js";
+
+/**
+ * Shape that `buildRequest` must return. It's an object the SDK
+ * spreads onto the upstream POST body, so it cannot be `null`, an
+ * array, a string, or `FormData`. The optional `input` field is the
+ * conventional location for model parameters; arbitrary top-level
+ * fields (e.g. `metadata`, `client_ref` from the SDK) are merged in.
+ */
+export type ToolRequestBody = Record<string, unknown>;
 
 /**
  * A declarative tool that binds a Runflow model to:
@@ -31,9 +41,18 @@ export interface ToolDef<
   inputs: I;
   /** Output schema — the named values clients should expect. */
   output: O;
-  /** Build the request body sent to `POST /v1/models/{model}/runs`. */
-  buildRequest: (values: AllInputValues<I>) => unknown;
-  /** Pull named outputs from the raw `run.output`. Defaults to a single `image` field via {@link extractFirstImageUrl}. */
+  /**
+   * Build the request body sent to `POST /v1/models/{model}/runs`.
+   * Must return a plain object — the SDK merges `client_ref` and
+   * `metadata` onto the result before dispatch.
+   */
+  buildRequest: (values: AllInputValues<I>) => ToolRequestBody;
+  /**
+   * Pull named outputs from the raw `run.output`. Required for any
+   * tool whose `output` schema is not exactly `{ image: imageOutput() }`;
+   * for image-only outputs the default extractor pulls the first URL
+   * and throws if none is present.
+   */
   extractOutput?: (rawRunOutput: unknown) => OutputValues<O>;
   /** Returned by the Studio so a UI can hint applicability per sample. */
   applicableHint?: (tags: ReadonlyArray<string>) => { ok: boolean; reason?: string };
@@ -93,7 +112,18 @@ export function mergeToolValues<I extends Record<string, AnyInput>>(
   return out as AllInputValues<I>;
 }
 
-/** Default output extractor used when a tool omits `extractOutput`. */
-export function defaultExtract(raw: unknown): { image: string | null } {
-  return { image: extractFirstImageUrl(raw) };
+/**
+ * Default output extractor for tools whose `output` schema is exactly
+ * `{ image: imageOutput() }`. Throws if no image URL can be pulled from
+ * the run output — silent empty-string returns let bad results ship.
+ */
+export function defaultExtract(raw: unknown): { image: string } {
+  const image = extractFirstImageUrl(raw);
+  if (!image) {
+    throw new RunflowError(
+      "Default tool extractor could not find an image URL in run.output. Provide a custom extractOutput on the tool.",
+      { code: "output_parse_error" },
+    );
+  }
+  return { image };
 }
