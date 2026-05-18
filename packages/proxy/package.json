@@ -1,5 +1,5 @@
 {
-  "name": "@runflow/proxy",
+  "name": "@runflow-io/proxy",
   "version": "0.0.1",
   "description": "Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side.",
   "license": "MIT",

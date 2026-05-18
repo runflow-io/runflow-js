@@ -12,16 +12,16 @@
       },
     },
     "examples/e2e-proof": {
-      "name": "@runflow/example-e2e-proof",
+      "name": "@runflow-io/example-e2e-proof",
       "version": "0.0.0",
       "dependencies": {
-        "@runflow/proxy": "workspace:*",
-        "@runflow/sdk": "workspace:*",
-        "@runflow/studio": "workspace:*",
+        "@runflow-io/proxy": "workspace:*",
+        "@runflow-io/sdk": "workspace:*",
+        "@runflow-io/studio": "workspace:*",
       },
     },
     "packages/proxy": {
-      "name": "@runflow/proxy",
+      "name": "@runflow-io/proxy",
       "version": "0.0.1",
       "devDependencies": {
         "@types/node": "^22.10.1",
@@ -31,7 +31,7 @@
       },
     },
     "packages/sdk": {
-      "name": "@runflow/sdk",
+      "name": "@runflow-io/sdk",
       "version": "0.0.1",
       "devDependencies": {
         "tsup": "^8.3.5",
@@ -40,13 +40,13 @@
       },
     },
     "packages/studio": {
-      "name": "@runflow/studio",
+      "name": "@runflow-io/studio",
       "version": "0.0.1",
       "dependencies": {
         "jszip": "^3.10.1",
       },
       "devDependencies": {
-        "@runflow/sdk": "^0.0.1",
+        "@runflow-io/sdk": "^0.0.1",
         "@types/jszip": "^3.4.1",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
@@ -239,13 +239,13 @@
 
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.60.4", "", { "os": "win32", "cpu": "x64" }, "sha512-QVTUovf40zgTqlFVrKA1uXMVvU2QWEFWfAH8Wdc48IxLvrJMQVMBRjuQyUpzZCDkakImib9eVazbWlC6ksWtJw=="],
 
-    "@runflow/example-e2e-proof": ["@runflow/example-e2e-proof@workspace:examples/e2e-proof"],
+    "@runflow-io/example-e2e-proof": ["@runflow-io/example-e2e-proof@workspace:examples/e2e-proof"],
 
-    "@runflow/proxy": ["@runflow/proxy@workspace:packages/proxy"],
+    "@runflow-io/proxy": ["@runflow-io/proxy@workspace:packages/proxy"],
 
-    "@runflow/sdk": ["@runflow/sdk@workspace:packages/sdk"],
+    "@runflow-io/sdk": ["@runflow-io/sdk@workspace:packages/sdk"],
 
-    "@runflow/studio": ["@runflow/studio@workspace:packages/studio"],
+    "@runflow-io/studio": ["@runflow-io/studio@workspace:packages/studio"],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 

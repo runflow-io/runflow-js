@@ -1,4 +1,4 @@
-import type { ToolDef } from "@runflow/sdk";
+import type { ToolDef } from "@runflow-io/sdk";
 
 /** A tool with its specific input/output generics erased — what the UI
  *  iterates over. The original generics survive when used directly via

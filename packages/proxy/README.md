@@ -1,4 +1,4 @@
-# @runflow/proxy
+# @runflow-io/proxy
 
 Web Standards proxy handler that forwards browser calls to the
 [Runflow](https://runflow.io) API with your API key injected server-side.
@@ -7,13 +7,13 @@ Web Standards proxy handler that forwards browser calls to the
 
 The Runflow API requires a secret key (`Authorization: Bearer rf_live_*`).
 You don't want that key in your client bundle. Mount this proxy on your
-own backend, point `@runflow/studio` (or `@runflow/sdk`) at it, and the
+own backend, point `@runflow-io/studio` (or `@runflow-io/sdk`) at it, and the
 key never leaves the server.
 
 ## Install
 
 ```bash
-bun add @runflow/proxy
+bun add @runflow-io/proxy
 ```
 
 ## Usage
@@ -22,7 +22,7 @@ bun add @runflow/proxy
 
 ```ts
 // app/api/runflow/[...path]/route.ts
-import { runflowProxy } from "@runflow/proxy";
+import { runflowProxy } from "@runflow-io/proxy";
 
 export const { GET, POST } = runflowProxy({
   apiKey: process.env.RUNFLOW_API_KEY!,
@@ -34,7 +34,7 @@ export const { GET, POST } = runflowProxy({
 Any framework that speaks Web Standards:
 
 ```ts
-import { runflowProxy } from "@runflow/proxy";
+import { runflowProxy } from "@runflow-io/proxy";
 const handler = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY! });
 
 // Hono
@@ -47,7 +47,7 @@ export default { fetch: (req: Request) => handler(req) };
 ### Express / Fastify / classic Node `(req, res)`
 
 ```ts
-import { runflowProxyNode } from "@runflow/proxy/node";
+import { runflowProxyNode } from "@runflow-io/proxy/node";
 
 app.use("/api/runflow", runflowProxyNode({
   apiKey: process.env.RUNFLOW_API_KEY!,

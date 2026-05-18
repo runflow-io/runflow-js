@@ -1,5 +1,5 @@
 {
-  "name": "@runflow/example-e2e-proof",
+  "name": "@runflow-io/example-e2e-proof",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,8 +8,8 @@
     "test": "echo 'no test'"
   },
   "dependencies": {
-    "@runflow/sdk": "workspace:*",
-    "@runflow/proxy": "workspace:*",
-    "@runflow/studio": "workspace:*"
+    "@runflow-io/sdk": "workspace:*",
+    "@runflow-io/proxy": "workspace:*",
+    "@runflow-io/studio": "workspace:*"
   }
 }

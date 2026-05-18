@@ -1,4 +1,4 @@
-# @runflow/sdk
+# @runflow-io/sdk
 
 Typed HTTP client and tool DSL for the [Runflow](https://runflow.io) API.
 Isomorphic — runs in Node, Bun, Deno, browsers, and edge workers.
@@ -6,7 +6,7 @@ Isomorphic — runs in Node, Bun, Deno, browsers, and edge workers.
 ## Install
 
 ```bash
-bun add @runflow/sdk
+bun add @runflow-io/sdk
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ bun add @runflow/sdk
 ### Server-side
 
 ```ts
-import { Runflow } from "@runflow/sdk";
+import { Runflow } from "@runflow-io/sdk";
 
 const rf = new Runflow({ apiKey: process.env.RUNFLOW_API_KEY! });
 
@@ -32,7 +32,7 @@ const rf = new Runflow({ baseUrl: "/api/runflow" });
 ```
 
 The browser SDK never sees your API key — it's injected by
-`@runflow/proxy` on your server.
+`@runflow-io/proxy` on your server.
 
 ## Tools
 
@@ -46,7 +46,7 @@ import {
   selectInput,
   imageOutput,
   extractFirstImageUrl,
-} from "@runflow/sdk";
+} from "@runflow-io/sdk";
 
 const sceneSwap = defineTool({
   id: "ai-scene",

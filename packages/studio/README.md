@@ -1,4 +1,4 @@
-# @runflow/studio
+# @runflow-io/studio
 
 Embeddable [Runflow](https://runflow.io) Studio for any website. Three
 lines to integrate; expressive enough to model every workflow Runflow
@@ -7,20 +7,20 @@ ships.
 ## Quick start
 
 ```bash
-bun add @runflow/studio @runflow/proxy
+bun add @runflow-io/studio @runflow-io/proxy
 ```
 
 ```ts
 // Server: mount the proxy. Your API key never leaves the server.
 // app/api/runflow/[...path]/route.ts
-import { runflowProxy } from "@runflow/proxy";
+import { runflowProxy } from "@runflow-io/proxy";
 export const { GET, POST } = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY! });
 ```
 
 ```ts
 // Browser: mount the Studio.
-import { mount } from "@runflow/studio";
-import "@runflow/studio/styles.css";
+import { mount } from "@runflow-io/studio";
+import "@runflow-io/studio/styles.css";
 
 mount("#studio");
 ```
@@ -70,7 +70,7 @@ mount("#studio", {
 ## Tools
 
 The Studio ships every workflow from the Runflow Studio app as a
-declarative `defineTool({...})`. They live in `@runflow/studio/tools`
+declarative `defineTool({...})`. They live in `@runflow-io/studio/tools`
 and can be imported individually:
 
 ```ts
@@ -80,7 +80,7 @@ import {
   backgroundColor, backgroundRemoval, tagRemoval,
   objectRemoval, modelRemoval, skinFix,
   topazUpscale,
-} from "@runflow/studio/tools";
+} from "@runflow-io/studio/tools";
 ```
 
 ### Define your own
@@ -89,7 +89,7 @@ import {
 import {
   defineTool, imageInput, textInput, selectInput, imageOutput,
   extractFirstImageUrl,
-} from "@runflow/sdk";
+} from "@runflow-io/sdk";
 
 export const myEdit = defineTool({
   id: "my-edit",
@@ -131,7 +131,7 @@ mount("#studio", { tools: [...BUILTIN_TOOLS, myEdit] });
 If you want the catalogue + state machine but not the UI:
 
 ```ts
-import { BUILTIN_TOOLS, reducer, initialState } from "@runflow/studio/headless";
+import { BUILTIN_TOOLS, reducer, initialState } from "@runflow-io/studio/headless";
 ```
 
 Bring your own renderer; call `runflow.tools.run(tool, args)` directly.

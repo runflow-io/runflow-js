@@ -16,8 +16,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Runflow, RunFailedError } from "@runflow/sdk";
-import { runflowProxy } from "@runflow/proxy";
+import { Runflow, RunFailedError } from "@runflow-io/sdk";
+import { runflowProxy } from "@runflow-io/proxy";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROOF_DIR = resolve(__dirname, "../../.proof");

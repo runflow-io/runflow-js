@@ -15,10 +15,10 @@ export default defineConfig([
     target: "es2022",
     treeshake: true,
     external: ["react", "react-dom", "react-dom/client", "react/jsx-runtime"],
-    // Inline @runflow/sdk so consumers don't need to install it as a
+    // Inline @runflow-io/sdk so consumers don't need to install it as a
     // separate dep. The cost is ~12 KB of duplicated bytes for users
     // who already use the SDK directly; the win is one-package install.
-    noExternal: ["@runflow/sdk"],
+    noExternal: ["@runflow-io/sdk"],
   },
   // CDN bundle — React bundled in, IIFE, exposes window.RunflowStudio.
   {

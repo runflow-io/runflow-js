@@ -1,5 +1,5 @@
 {
-  "name": "@runflow/sdk",
+  "name": "@runflow-io/sdk",
   "version": "0.0.1",
   "description": "Typed HTTP client and tool DSL for the Runflow API. Isomorphic.",
   "license": "MIT",

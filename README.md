@@ -6,28 +6,28 @@ The JavaScript surface for [Runflow](https://runflow.io) — SDK, embeddable Stu
 
 | Package | Description |
 |---------|-------------|
-| [`@runflow/sdk`](./packages/sdk) | Typed HTTP client for the Runflow API. Isomorphic — runs in Node, Bun, Deno, browsers, workers. |
-| [`@runflow/studio`](./packages/studio) | Embeddable Studio UI. Drop into any website via `<script>` tag or `npm install`. |
-| [`@runflow/proxy`](./packages/proxy) | Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side. |
+| [`@runflow-io/sdk`](./packages/sdk) | Typed HTTP client for the Runflow API. Isomorphic — runs in Node, Bun, Deno, browsers, workers. |
+| [`@runflow-io/studio`](./packages/studio) | Embeddable Studio UI. Drop into any website via `<script>` tag or `npm install`. |
+| [`@runflow-io/proxy`](./packages/proxy) | Web Standards proxy handler for forwarding browser calls to the Runflow API with your secret key server-side. |
 
 ## Quick start
 
 **Embed Studio on your site** (the 3-line integration):
 
 ```bash
-bun add @runflow/studio @runflow/proxy
+bun add @runflow-io/studio @runflow-io/proxy
 ```
 
 ```ts
 // app/api/runflow/[...path]/route.ts (Next.js App Router)
-import { runflowProxy } from "@runflow/proxy";
+import { runflowProxy } from "@runflow-io/proxy";
 export const { GET, POST } = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY! });
 ```
 
 ```html
 <div id="studio"></div>
 <script type="module">
-  import { mount } from "@runflow/studio";
+  import { mount } from "@runflow-io/studio";
   mount("#studio");
 </script>
 ```
@@ -37,9 +37,9 @@ export const { GET, POST } = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY!
 ```
 runflow-js/
 ├── packages/
-│   ├── sdk/         → @runflow/sdk
-│   ├── studio/      → @runflow/studio
-│   └── proxy/       → @runflow/proxy
+│   ├── sdk/         → @runflow-io/sdk
+│   ├── studio/      → @runflow-io/studio
+│   └── proxy/       → @runflow-io/proxy
 ├── examples/
 │   └── e2e-proof/                end-to-end integration test
 └── tooling/

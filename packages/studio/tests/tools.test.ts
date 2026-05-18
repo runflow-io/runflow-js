@@ -7,7 +7,7 @@ import {
   findTool,
   smartResize,
 } from "../src/tools/index.js";
-import { mergeToolValues } from "@runflow/sdk";
+import { mergeToolValues } from "@runflow-io/sdk";
 
 describe("builtin tools catalogue", () => {
   it("covers every original workflow", () => {

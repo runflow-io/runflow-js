@@ -1,5 +1,5 @@
 /**
- * @runflow/studio — Embeddable Runflow Studio.
+ * @runflow-io/studio — Embeddable Runflow Studio.
  *
  * The mount API is intentionally tiny — the heavy lifting (state,
  * dispatch, sentinel, chat, packages) lives in the StudioShell and the
@@ -7,7 +7,7 @@
  *
  * @example
  * ```ts
- * import { mount } from "@runflow/studio";
+ * import { mount } from "@runflow-io/studio";
  * const studio = mount("#studio", {
  *   urls: { runflowProxy: "/api/runflow" },
  *   theme: "auto",
@@ -52,7 +52,7 @@ export function mount(
 ): StudioInstance {
   const el = resolveTarget(target);
   if (!el) {
-    throw new Error(`@runflow/studio: target ${JSON.stringify(target)} not found.`);
+    throw new Error(`@runflow-io/studio: target ${JSON.stringify(target)} not found.`);
   }
   if (options.urls) setStudioUrls(options.urls);
   if (options.injectStyles !== false) {

@@ -33,7 +33,7 @@ interface NormalizedConfig {
 
 function normalize(cfg: ProxyConfig): NormalizedConfig {
   if (!cfg.apiKey) {
-    throw new Error("@runflow/proxy: `apiKey` is required.");
+    throw new Error("@runflow-io/proxy: `apiKey` is required.");
   }
   const allowed = cfg.allowedModels ?? DEFAULT_ALLOWED_MODELS;
   const allowedModelsFor =

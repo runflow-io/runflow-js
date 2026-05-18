@@ -23,7 +23,7 @@ import {
   referenceInput,
   selectInput,
   textInput,
-} from "@runflow/sdk";
+} from "@runflow-io/sdk";
 
 const extractImage = (raw: unknown) => ({ image: extractFirstImageUrl(raw) ?? "" });
 

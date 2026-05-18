@@ -1,14 +1,14 @@
 /**
- * @runflow/proxy — Web Standards proxy handler for the Runflow API.
+ * @runflow-io/proxy — Web Standards proxy handler for the Runflow API.
  *
  * Mounts in any modern framework that speaks Request/Response (Next.js
  * App Router, Hono, SvelteKit, Cloudflare Workers, Vercel Edge, Bun,
- * Deno). For classic Node `(req, res)` servers, see `@runflow/proxy/node`.
+ * Deno). For classic Node `(req, res)` servers, see `@runflow-io/proxy/node`.
  *
  * @example Next.js App Router
  * ```ts
  * // app/api/runflow/[...path]/route.ts
- * import { runflowProxy } from "@runflow/proxy";
+ * import { runflowProxy } from "@runflow-io/proxy";
  * export const { GET, POST } = runflowProxy({ apiKey: process.env.RUNFLOW_API_KEY! });
  * ```
  */

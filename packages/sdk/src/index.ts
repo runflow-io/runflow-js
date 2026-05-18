@@ -1,5 +1,5 @@
 /**
- * @runflow/sdk — Typed HTTP client and tool DSL for the Runflow API.
+ * @runflow-io/sdk — Typed HTTP client and tool DSL for the Runflow API.
  *
  * Isomorphic: runs in Node, Bun, Deno, browsers, workers. Uses Web
  * Standards fetch.
