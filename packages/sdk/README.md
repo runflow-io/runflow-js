@@ -72,7 +72,9 @@ const sceneSwap = defineTool({
       image_urls: [image],
     },
   }),
-  extractOutput: (raw) => ({ image: extractFirstImageUrl(raw) ?? "" }),
+  // extractOutput is optional for `{ image: imageOutput() }` schemas —
+  // the default extractor pulls the first image URL from run.output
+  // and throws RunflowError if none is present.
 });
 
 const { output } = await rf.tools.run(sceneSwap, {
@@ -104,13 +106,31 @@ information for `buildRequest` and the run helpers.
 
 ## API surface
 
-- `runflow.models.run(model, body)` — dispatch a run.
+- `runflow.models.run(model, body)` — dispatch a run. Model id segments
+  are URL-encoded; `..`/empty segments are rejected.
 - `runflow.runs.get(id)` / `runflow.runs.poll(id)` / `runflow.runs.wait(id)`
 - `runflow.tools.run(tool, args)` / `runflow.tools.dispatch(tool, args)`
 - `runflow.health.check()`
 
 All return well-typed promises; errors are `RunflowError`,
 `RunFailedError`, or `RunTimeoutError`.
+
+## Configuration
+
+```ts
+new Runflow({
+  apiKey?: string;        // server-side; sent as Authorization: Bearer
+  baseUrl?: string;       // browser; usually "/api/runflow" pointing at @runflow-io/proxy
+  apiBase?: string;       // override the upstream base; defaults to https://api.runflow.io
+  requestTimeoutMs?: number; // per-request timeout; default 30s
+  headers?: Record<string, string>;
+  fetch?: typeof fetch;
+});
+```
+
+Pass either `apiKey` (the request goes straight to `apiBase`) or `baseUrl`
+(the request goes through your proxy, which injects the key). If both are
+set, `baseUrl` wins — the bearer header is omitted.
 
 ## License
 
