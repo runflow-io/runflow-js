@@ -136,6 +136,160 @@ describe("runflowProxy — hooks", () => {
   });
 });
 
+describe("runflowProxy — CSRF gate", () => {
+  it("rejects POST with cross-origin Origin under default same-origin policy", async () => {
+    let upstreamCalled = false;
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      fetch: mockUpstream(() => {
+        upstreamCalled = true;
+        return new Response("");
+      }),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://attacker.example",
+          Host: "app",
+        },
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(upstreamCalled).toBe(false);
+  });
+
+  it("accepts POST with same-origin Origin", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      fetch: mockUpstream(
+        () =>
+          new Response(JSON.stringify({ id: "run_ok", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "http://app",
+          Host: "app",
+        },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("accepts POST with origin in allowedOrigins list", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      allowedOrigins: ["https://studio.runflow.io"],
+      fetch: mockUpstream(
+        () =>
+          new Response(JSON.stringify({ id: "run_ok", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://studio.runflow.io",
+        },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects POST without application/json under default requireJsonContentType", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      fetch: mockUpstream(() => new Response("")),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: '{"input":{}}',
+        headers: { "Content-Type": "text/plain" },
+      }),
+    );
+    expect(res.status).toBe(415);
+  });
+
+  it("accepts POST with application/json; charset=utf-8", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      fetch: mockUpstream(
+        () =>
+          new Response(JSON.stringify({ id: "run_ok", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("requireJsonContentType: false allows non-JSON bodies", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      requireJsonContentType: false,
+      fetch: mockUpstream(
+        () =>
+          new Response(JSON.stringify({ id: "run_ok", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: { "Content-Type": "text/plain" },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+
+  it("allowedOrigins: false opts out of the CSRF Origin check", async () => {
+    const proxy = runflowProxy({
+      apiKey: KEY,
+      allowedOrigins: false,
+      fetch: mockUpstream(
+        () =>
+          new Response(JSON.stringify({ id: "run_ok", status_code: "queued" }), {
+            headers: { "Content-Type": "application/json" },
+          }),
+      ),
+    });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/models/runflow/background-removal/runs", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: "https://attacker.example",
+        },
+      }),
+    );
+    expect(res.status).toBe(200);
+  });
+});
+
 describe("runflowProxy — limits", () => {
   it("returns 413 when body exceeds maxBodyBytes", async () => {
     const proxy = runflowProxy({

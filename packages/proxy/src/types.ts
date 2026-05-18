@@ -75,6 +75,27 @@ export interface ProxyConfig {
   /** Body size cap, bytes. Default: 32 KB. */
   maxBodyBytes?: number;
 
+  /**
+   * Origins that may submit non-GET requests. The proxy compares the
+   * incoming `Origin` header (case-insensitive, scheme + host + port)
+   * against this list and rejects mismatches with 403.
+   *
+   * Defaults to `"same-origin"`, which checks that `Origin`'s host
+   * equals the `Host` header — i.e. the request was made from the same
+   * site the proxy is mounted on. Pass an array of `https://example.com`
+   * strings to allow specific third-party origins, or `false` to opt
+   * out (NOT recommended — it leaves the proxy CSRF-able).
+   */
+  allowedOrigins?: ReadonlyArray<string> | "same-origin" | false;
+
+  /**
+   * When `true` (default), non-GET requests must declare
+   * `Content-Type: application/json` so they can't be sent as
+   * `text/plain` "simple" requests under CORS, which would otherwise
+   * be CSRF-able. Set `false` only if you proxy non-JSON workloads.
+   */
+  requireJsonContentType?: boolean;
+
   /** Upstream fetch timeout, ms. Default: 30 s. */
   upstreamTimeoutMs?: number;
 
