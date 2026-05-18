@@ -115,13 +115,18 @@ export class ModelsResource {
   /**
    * Dispatch a run against `<owner>/<slug>` (or a multi-segment slug like
    * `runflow/object-removal/prompt`). Returns immediately with a run id.
+   *
+   * Each `/`-separated segment is URL-encoded. Empty segments, `.`, and
+   * `..` are rejected so that a user-controlled model id can't escape
+   * the `/v1/models/.../runs` shape or hit a different upstream route.
    */
   async run(
     model: string,
     body: unknown,
     opts: { signal?: AbortSignal } = {},
   ): Promise<RunDispatched> {
-    return this.client.request<RunDispatched>("POST", `/v1/models/${model}/runs`, {
+    const encoded = encodeModelId(model);
+    return this.client.request<RunDispatched>("POST", `/v1/models/${encoded}/runs`, {
       body,
       signal: opts.signal,
     });
@@ -131,9 +136,10 @@ export class ModelsResource {
 export class RunsResource {
   constructor(private readonly client: Runflow) {}
 
-  /** Fetch the current state of a run. */
+  /** Fetch the current state of a run. Run id is URL-encoded. */
   async get(id: string, opts: { signal?: AbortSignal } = {}): Promise<Run> {
-    return this.client.request<Run>("GET", `/v1/runs/${id}`, { signal: opts.signal });
+    const encoded = encodeRunId(id);
+    return this.client.request<Run>("GET", `/v1/runs/${encoded}`, { signal: opts.signal });
   }
 
   /**
@@ -202,6 +208,43 @@ export class HealthResource {
 
 function stripTrailing(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+/**
+ * Validate + percent-encode a multi-segment model id (`owner/slug`,
+ * `owner/slug/subroute`). Each segment must be non-empty and not `.`
+ * or `..`. This blocks accidental path traversal — `models/x/../../secret`
+ * — when callers feed user/LLM input straight to the SDK.
+ */
+function encodeModelId(model: string): string {
+  if (typeof model !== "string" || model.length === 0) {
+    throw new RunflowError("models.run: model id is required", { code: "invalid_model_id" });
+  }
+  const parts = model.split("/");
+  for (const p of parts) {
+    if (p === "" || p === "." || p === "..") {
+      throw new RunflowError(`models.run: invalid model id segment ${JSON.stringify(p)} in ${JSON.stringify(model)}`, {
+        code: "invalid_model_id",
+      });
+    }
+  }
+  return parts.map(encodeURIComponent).join("/");
+}
+
+/**
+ * Validate + percent-encode a run id. Rejects path separators and empty
+ * strings so callers can't smuggle path segments through `runs.get`.
+ */
+function encodeRunId(id: string): string {
+  if (typeof id !== "string" || id.length === 0) {
+    throw new RunflowError("runs.get: run id is required", { code: "invalid_run_id" });
+  }
+  if (id.includes("/") || id === "." || id === "..") {
+    throw new RunflowError(`runs.get: invalid run id ${JSON.stringify(id)}`, {
+      code: "invalid_run_id",
+    });
+  }
+  return encodeURIComponent(id);
 }
 
 function sleep(ms: number): Promise<void> {
