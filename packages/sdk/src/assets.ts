@@ -27,16 +27,18 @@ export interface UploadedAsset {
   /** Asset id (uuid). The durable identifier — store THIS, not `url`. */
   id: string;
   /**
-   * Short-TTL signed HTTPS URL for the file. Pass it directly to model
-   * inputs (`image_url`, `image_urls`, `mask_url`, …) right away. Do not
-   * persist it — it expires; re-mint a fresh one with `rf.assets.get(id)`
-   * (allowed through the proxy by default).
+   * Short-TTL signed HTTPS URL for the file — for immediate browser use
+   * (previews, `<img>`, downloads). For model inputs prefer `ref`. If you
+   * do pass `url` somewhere, use it right away and never persist it — it
+   * expires; re-mint a fresh one with `rf.assets.get(id)`.
    */
   url: string;
   /**
-   * Canonical stable reference (`runflow://assets/{id}`). Accepted today by
-   * ComfyUI workflow file inputs; once the API resolves asset refs at model
-   * dispatch (RUN-418), prefer this over the expiring `url`.
+   * Canonical stable reference (`runflow://assets/{id}`) — the PREFERRED
+   * model input. Dispatch resolves it to a freshly signed URL server-side,
+   * so it never expires in your hands. Accepted by model media inputs
+   * (`image_url`, `image_urls`, `mask_url`, …) and ComfyUI file inputs
+   * alike. Store this (or `id`).
    */
   ref: string;
   /** Original filename. */
@@ -154,10 +156,10 @@ function mapAsset(asset: RawAsset): UploadedAsset {
  * const rf = new Runflow({ baseUrl: "/api/runflow" });
  * const asset = await rf.assets.upload(fileInput.files[0]);
  * await rf.models.run("google/nano-banana-pro/edit", {
- *   input: { prompt, image_urls: [asset.url] },
+ *   input: { prompt, image_urls: [asset.ref] }, // stable ref — never expires
  * });
- * // Later, if you stored asset.id and the signed url expired:
- * const fresh = await rf.assets.get(asset.id);
+ * // asset.url is a short-TTL signed https URL for previews/<img>;
+ * // re-mint one later with rf.assets.get(asset.id) if needed.
  * ```
  */
 export class AssetsResource {

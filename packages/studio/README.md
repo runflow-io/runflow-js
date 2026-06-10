@@ -190,7 +190,8 @@ mask.syncToDisplay(rect.width, rect.height, devicePixelRatio);
 // pointer events → beginStroke / strokeTo / endStroke; then:
 const blob = await mask.toMaskBlob(img.naturalWidth, img.naturalHeight);
 const asset = await rf.assets.upload(blob, { filename: "mask.png" });
-// → feed asset.url as mask_url to runflow/reference-inpaint etc.
+// → feed asset.ref (stable, never expires) as mask_url to
+//   runflow/reference-inpaint etc.
 ```
 
 A React state reducer for building a custom shell is tracked as a
