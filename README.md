@@ -62,6 +62,20 @@ Add a changeset for every user-visible change:
 bun changeset
 ```
 
+## End-to-end proof
+
+`bun run proof` exercises the real customer chain — browser SDK →
+`@runflow-io/proxy` → api.runflow.io — across every modality, including
+file upload via `rf.assets.upload` and the proxy allow-list. It needs
+`RUNFLOW_API_KEY` and spends real credits, so it's a local/manual gate
+(not CI). Results land in `.proof/`.
+
+For a worked example of a vertical fork (customize `<StudioShell>` via
+its `tools` / `source` / `sentinel` / `copy` props, or build a custom UI
+on `./headless`), see the
+[real-estate-studio-sdk](https://github.com/runflow-io/real-estate-studio-sdk)
+reference repo.
+
 ## License
 
 MIT

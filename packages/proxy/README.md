@@ -95,16 +95,43 @@ runflowProxy({
 
 ## Path contract
 
-The proxy accepts only these paths (configurable via `allowedModels`):
+The proxy accepts these paths out of the box:
 
-| Method | Path                              | Purpose          |
-|--------|-----------------------------------|------------------|
-| POST   | `/v1/models/{owner}/{slug…}/runs` | Dispatch a run.  |
-| GET    | `/v1/runs/{uuid}`                 | Poll a run.      |
-| GET    | `/v1/health`                      | Public health.   |
+| Method | Path                                    | Purpose                          |
+|--------|-----------------------------------------|----------------------------------|
+| POST   | `/v1/models/{owner}/{slug…}/runs`       | Dispatch a run.                  |
+| GET    | `/v1/runs/{uuid}`                       | Poll a run.                      |
+| GET    | `/v1/health`                            | Public health.                   |
+| POST   | `/v1/asset-uploads`                     | Create a presigned upload.       |
+| POST   | `/v1/asset-uploads/{id}/confirmations`  | Confirm it (`rf.assets.upload`). |
 
 Everything else returns `403 Not allowed`. Run IDs are validated as
-UUIDv4-shape to block path traversal.
+UUIDv4-shape to block path traversal. Dispatch is additionally gated by
+`allowedModels`.
+
+### Extending the allow-list: `allowedPaths`
+
+```ts
+runflowProxy({
+  apiKey: process.env.RUNFLOW_API_KEY!,
+  allowedPaths: [
+    { method: "GET", path: "/v1/runs" }, // run listing
+    { method: "GET", path: "/v1/billing/balance" }, // billing read
+  ],
+});
+```
+
+Rules are additive over the defaults and matched strictly — full path,
+segment by segment, no prefixes or wildcards. A `:param` segment matches
+exactly one non-empty segment and rejects traversal (`.`, `..`,
+percent-encoded forms). `method` takes a string or an array
+(`["GET", "DELETE"]`); the handler also exports `PUT`/`PATCH`/`DELETE`
+for framework route files.
+
+> **Security:** every matched request is forwarded with **your** API
+> key, so an allowed `GET /v1/runs` exposes org-wide run data to any
+> same-origin browser session. Opt into reads deliberately and pair
+> them with `authenticate` + `rateLimit` in production.
 
 ## License
 

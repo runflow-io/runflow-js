@@ -66,12 +66,31 @@ mount(target: string | HTMLElement, options?: {
   theme?: ThemeMode | ThemeOverrides;
   /** Inject the default <style> into <head>. Default: true. */
   injectStyles?: boolean;
+  /** Shell customization — see "Customizing the shell" below. */
+  props?: StudioShellProps;
 }): { unmount(): void };
 ```
 
-That is the entire option surface today. If you need event callbacks,
-custom tool catalogues, the source picker hidden, or `update()` to
-reconfigure at runtime, those are tracked as follow-ups.
+## Customizing the shell
+
+`<StudioShell>` (and `mount()`'s `props` option) takes four optional
+props; zero props renders the stock studio.
+
+```tsx
+<StudioShell
+  // The workflow catalogue: cards, chat-agent tools, package steps.
+  tools={WORKFLOWS.filter((w) => w.group === "cleanup")}
+  // A starting image URL, or SampleAsset[] to replace the samples.
+  source="https://cdn.example/listing.jpg"
+  // Disable quality evals, or re-template their task description.
+  sentinel={{ enabled: false }}
+  // Brand + labels, shallow-merged over the defaults.
+  copy={{ brandName: "Estates Studio", brandTag: "", assetsTitle: "Listings" }}
+/>
+```
+
+If you need event callbacks or `update()` to reconfigure at runtime,
+those are tracked as follow-ups.
 
 ## Companion endpoints
 
@@ -150,9 +169,24 @@ const { output } = await rf.tools.run(tool, { image: "https://cdn/x.png" });
 ```
 
 The headless entry also exports `WORKFLOWS`, `SAMPLES`, the prototype's
-`runWorkflow` dispatcher, the `sentinelEvaluate` client, and
-`setStudioUrls`. A React state reducer for building a custom shell is
-tracked as a follow-up.
+`runWorkflow` dispatcher, the `sentinelEvaluate` client, `setStudioUrls`,
+and `createMaskController` — the framework-free dual-canvas brush engine
+the shell uses for its mask workflows:
+
+```ts
+import { createMaskController } from "@runflow-io/studio/headless";
+
+const mask = createMaskController({ brushSize: 45 });
+mask.attach(overlayCanvas); // rendered over your image
+mask.syncToDisplay(rect.width, rect.height, devicePixelRatio);
+// pointer events → beginStroke / strokeTo / endStroke; then:
+const blob = await mask.toMaskBlob(img.naturalWidth, img.naturalHeight);
+const asset = await rf.assets.upload(blob, { filename: "mask.png" });
+// → feed asset.url as mask_url to runflow/reference-inpaint etc.
+```
+
+A React state reducer for building a custom shell is tracked as a
+follow-up.
 
 ## License
 

@@ -34,6 +34,42 @@ const rf = new Runflow({ baseUrl: "/api/runflow" });
 The browser SDK never sees your API key — it's injected by
 `@runflow-io/proxy` on your server.
 
+### Uploading files
+
+```ts
+const asset = await rf.assets.upload(fileInput.files[0]);
+await rf.models.run("google/nano-banana-pro/edit", {
+  input: { prompt: "remove the price tag", image_urls: [asset.url] },
+});
+```
+
+`upload()` runs the platform's presigned flow (create session → PUT the
+bytes to storage → confirm) and returns `{ id, url, ref, ... }`. `url`
+is a short-TTL **signed HTTPS URL** — pass it straight to any model's
+media inputs. `ref` is the stable `runflow://assets/{id}` reference.
+Works in the browser through `@runflow-io/proxy` (the upload endpoints
+are on its default allow-list). Raw `Blob`s need `{ filename }`; the
+cap is 50 MB.
+
+### Pin-based editing
+
+Edit models like `google/nano-banana-pro/edit` have no `pin_x`/`pin_y`
+inputs — the convention is a region phrase baked into the prompt.
+`composePinPrompt` is that convention, shared with the Studio shell:
+
+```ts
+import { composePinPrompt } from "@runflow-io/sdk";
+
+await rf.models.run("google/nano-banana-pro/edit", {
+  input: {
+    // {x,y} are normalized 0..1; thirds map to upper|middle|lower ×
+    // left|center|right ("upper-left" … "lower-right").
+    prompt: composePinPrompt({ x: 0.25, y: 0.2 }, "remove the price tag"),
+    image_urls: [sourceUrl],
+  },
+});
+```
+
 ## Tools
 
 Declarative model bindings with typed inputs, presets, and outputs:
@@ -109,8 +145,12 @@ information for `buildRequest` and the run helpers.
 - `runflow.models.run(model, body)` — dispatch a run. Model id segments
   are URL-encoded; `..`/empty segments are rejected.
 - `runflow.runs.get(id)` / `runflow.runs.poll(id)` / `runflow.runs.wait(id)`
+- `runflow.assets.upload(file, opts?)` — presigned upload; returns a
+  signed https `url` + stable `runflow://` `ref`.
 - `runflow.tools.run(tool, args)` / `runflow.tools.dispatch(tool, args)`
 - `runflow.health.check()`
+- `pinRegion(pin)` / `composePinPrompt(pin, instruction)` — the shared
+  pin→region prompt contract.
 
 All return well-typed promises; errors are `RunflowError`,
 `RunFailedError`, or `RunTimeoutError`.
