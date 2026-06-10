@@ -1,5 +1,6 @@
 import {
   DEFAULT_ALLOWED_MODELS,
+  DEFAULT_ALLOWED_PATHS,
   DEFAULT_BASE_PATH,
   DEFAULT_MAX_BODY_BYTES,
   DEFAULT_RUNFLOW_BASE,
@@ -7,6 +8,7 @@ import {
   UUID_RE,
 } from "./defaults.js";
 import type {
+  AllowedPath,
   AuthResult,
   OnRunArgs,
   ProxyConfig,
@@ -25,6 +27,7 @@ interface NormalizedConfig {
   upstreamTimeoutMs: number;
   fetcher: typeof fetch;
   allowedModelsFor: (auth: AuthResult | null) => ReadonlyArray<string>;
+  allowedPaths: ReadonlyArray<AllowedPath>;
   allowedOrigins: ReadonlyArray<string> | "same-origin" | false;
   requireJsonContentType: boolean;
   authenticate?: ProxyConfig["authenticate"];
@@ -48,6 +51,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
     upstreamTimeoutMs: cfg.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS,
     fetcher: cfg.fetch ?? globalThis.fetch,
     allowedModelsFor,
+    allowedPaths: [...DEFAULT_ALLOWED_PATHS, ...(cfg.allowedPaths ?? [])],
     allowedOrigins: cfg.allowedOrigins ?? "same-origin",
     requireJsonContentType: cfg.requireJsonContentType ?? true,
     authenticate: cfg.authenticate,
@@ -120,10 +124,19 @@ function jsonContentTypeOK(req: Request): boolean {
 export function runflowProxy(cfg: ProxyConfig): ProxyHandler & {
   GET: ProxyHandler;
   POST: ProxyHandler;
+  PUT: ProxyHandler;
+  PATCH: ProxyHandler;
+  DELETE: ProxyHandler;
 } {
   const c = normalize(cfg);
   const handler: ProxyHandler = async (req) => handle(c, req);
-  return Object.assign(handler, { GET: handler, POST: handler });
+  return Object.assign(handler, {
+    GET: handler,
+    POST: handler,
+    PUT: handler,
+    PATCH: handler,
+    DELETE: handler,
+  });
 }
 
 async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
@@ -137,7 +150,10 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
     segments[0] === "v1" &&
     segments[1] === "health";
 
-  if (!isDispatch && !runId && !isHealth) {
+  const isAllowedPath =
+    !isDispatch && !runId && !isHealth && matchAllowedPath(req.method, segments, c.allowedPaths);
+
+  if (!isDispatch && !runId && !isHealth && !isAllowedPath) {
     return json({ error: "Not allowed" }, 403);
   }
 
@@ -272,6 +288,53 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
     status: upstreamRes.status,
     headers: { "Content-Type": contentType },
   });
+}
+
+/**
+ * Strict allow-list matcher for configured extra routes. Full-path,
+ * segment-by-segment comparison — no prefixes, no wildcards. A `:param`
+ * rule segment accepts exactly one non-empty path segment, rejecting
+ * `.`/`..` (and their percent-encoded forms) so a matched path can't
+ * traverse to a different upstream route.
+ */
+function matchAllowedPath(
+  method: string,
+  segments: string[],
+  rules: ReadonlyArray<AllowedPath>,
+): boolean {
+  for (const rule of rules) {
+    const methods = Array.isArray(rule.method) ? rule.method : [rule.method];
+    if (!methods.includes(method)) continue;
+    const ruleSegments = rule.path.split("/").filter(Boolean);
+    if (ruleSegments.length !== segments.length) continue;
+    let matched = true;
+    for (let i = 0; i < ruleSegments.length; i++) {
+      const ruleSegment = ruleSegments[i] ?? "";
+      const pathSegment = segments[i] ?? "";
+      if (ruleSegment.startsWith(":")) {
+        if (!isSafeParamSegment(pathSegment)) {
+          matched = false;
+          break;
+        }
+      } else if (ruleSegment !== pathSegment) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
+}
+
+function isSafeParamSegment(segment: string): boolean {
+  if (!segment) return false;
+  let decoded = segment;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {
+    return false;
+  }
+  return decoded !== "." && decoded !== ".." && !decoded.includes("/") && !decoded.includes("\\");
 }
 
 function classify(

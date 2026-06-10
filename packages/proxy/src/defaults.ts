@@ -23,6 +23,22 @@ export const DEFAULT_ALLOWED_MODELS: ReadonlyArray<string> = [
   "topaz/upscale/image",
 ];
 
+import type { AllowedPath } from "./types.js";
+
+/**
+ * Extra upstream routes the proxy forwards out of the box — the
+ * presigned-upload pair `rf.assets.upload(file)` calls. Customer
+ * `allowedPaths` entries are additive over these.
+ *
+ * Deliberately NOT here: `GET /v1/runs` (org-wide run listing),
+ * billing reads, account info. Those expose org data through the
+ * proxy's API key and must be opted into explicitly.
+ */
+export const DEFAULT_ALLOWED_PATHS: ReadonlyArray<AllowedPath> = [
+  { method: "POST", path: "/v1/asset-uploads" },
+  { method: "POST", path: "/v1/asset-uploads/:id/confirmations" },
+];
+
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const DEFAULT_RUNFLOW_BASE = "https://api.runflow.io";
