@@ -19,7 +19,7 @@
 //   5. when assistant returns no tool_use → stop
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { WORKFLOWS } from "../data/workflows";
+import { WORKFLOWS, type Workflow } from "../data/workflows";
 import {
   type CapturedInputs,
   type ChatMessage,
@@ -35,11 +35,15 @@ import {
   streamChatTurn,
 } from "../lib/chat";
 import { type ResBucket, isUpscale, resBucket } from "../lib/resolution";
+import { useShellConfig } from "../lib/shell-config";
 import type { PartialStudioHandle } from "../lib/studio-handle";
 import { Icon } from "./icons";
 
-function workflowDisplayName(workflowId: string): string {
-  return WORKFLOWS.find((w) => w.id === workflowId)?.name ?? workflowId;
+function workflowDisplayName(
+  workflowId: string,
+  workflows: ReadonlyArray<Workflow> = WORKFLOWS,
+): string {
+  return workflows.find((w) => w.id === workflowId)?.name ?? workflowId;
 }
 
 type PlanStep = { workflow_id: string; description: string };
@@ -197,6 +201,7 @@ export function ChatPanel({
   studioHandle: PartialStudioHandle;
   activeAssetId: string | null;
 }) {
+  const { workflows: catalogWorkflows } = useShellConfig();
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(activeAssetId));
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -675,7 +680,7 @@ export function ChatPanel({
         ) : null}
         {retryState && !retryState.resolved ? (
           <RetryBubble
-            workflowName={workflowDisplayName(retryState.workflowId)}
+            workflowName={workflowDisplayName(retryState.workflowId, catalogWorkflows)}
             error={retryState.error}
             attempt={retryState.attempt}
             onRetry={() => decideRetry("retry")}
@@ -734,6 +739,7 @@ export function ChatPanel({
 // ============================================================
 
 function MessageBubble({ message }: { message: ChatMessage }) {
+  const { workflows } = useShellConfig();
   // User message — text only (we don't render the image attachment back
   // to the user; the canvas is right there).
   if (message.role === "user") {
@@ -775,7 +781,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           return (
             <div key={i} className="rfs-chat-tool-call" title={JSON.stringify(block.input)}>
               <span className="rfs-chat-tool-icon">⚙</span>
-              {labelForTool(block)}
+              {labelForTool(block, workflows)}
             </div>
           );
         }
@@ -785,7 +791,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-function labelForTool(block: ToolUseBlock): string {
+function labelForTool(block: ToolUseBlock, workflows: ReadonlyArray<Workflow>): string {
   switch (block.name) {
     case "propose_plan":
       return "Proposing plan…";
@@ -806,7 +812,7 @@ function labelForTool(block: ToolUseBlock): string {
     case "request_choice":
       return "Asking you to pick an option";
     case "run_workflow":
-      return `Running ${workflowDisplayName(String(block.input.workflow_id ?? "workflow"))}…`;
+      return `Running ${workflowDisplayName(String(block.input.workflow_id ?? "workflow"), workflows)}…`;
     case "finish":
       return "Done";
     default:
@@ -825,6 +831,7 @@ function PlanBubble({
   onConfirm: () => void;
   onReject: () => void;
 }) {
+  const { workflows } = useShellConfig();
   return (
     <div className="rfs-chat-msg rfs-chat-msg-assistant">
       <div className="rfs-chat-plan">
@@ -838,7 +845,9 @@ function PlanBubble({
               <span className="rfs-chat-plan-num">{i + 1}</span>
               <div className="rfs-chat-plan-step-text">
                 <div className="rfs-chat-plan-step-desc">{s.description}</div>
-                <div className="rfs-chat-plan-step-id">{workflowDisplayName(s.workflow_id)}</div>
+                <div className="rfs-chat-plan-step-id">
+                  {workflowDisplayName(s.workflow_id, workflows)}
+                </div>
               </div>
             </li>
           ))}

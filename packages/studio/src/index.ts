@@ -18,6 +18,7 @@
 import { createElement } from "react";
 import { type Root, createRoot } from "react-dom/client";
 import { StudioShell } from "./components/StudioShell.js";
+import type { StudioShellProps } from "./lib/shell-config.js";
 import { type StudioUrls, setStudioUrls } from "./lib/urls.js";
 import { injectStyles } from "./styles.js";
 
@@ -36,6 +37,11 @@ export interface ThemeOverrides {
 export interface StudioMountOptions {
   /** Endpoint overrides. See `StudioUrls` for the full shape. */
   urls?: Partial<StudioUrls>;
+  /**
+   * Shell customization — workflow catalogue, initial source assets,
+   * sentinel config, copy overrides. See `StudioShellProps`.
+   */
+  props?: StudioShellProps;
   /** `light` | `dark` | `auto` | per-token overrides. Default `dark`. */
   theme?: "light" | "dark" | "auto" | ThemeOverrides;
   /** Inject the default stylesheet into <head>. Default true. */
@@ -62,7 +68,7 @@ export function mount(
   applyThemeOverrides(el, options.theme);
 
   const root = createRoot(el);
-  root.render(createElement(StudioShell));
+  root.render(createElement(StudioShell, options.props ?? {}));
 
   return {
     unmount() {
@@ -109,5 +115,13 @@ function applyThemeOverrides(el: HTMLElement, theme: StudioMountOptions["theme"]
 }
 
 export { StudioShell } from "./components/StudioShell.js";
+export { resolveShellConfig } from "./lib/shell-config.js";
+export type {
+  StudioShellProps,
+  StudioCopy,
+  StudioSentinelOptions,
+} from "./lib/shell-config.js";
+export type { Workflow } from "./data/workflows.js";
+export type { SampleAsset } from "./data/samples.js";
 export { setStudioUrls, URLS } from "./lib/urls.js";
 export type { StudioUrls } from "./lib/urls.js";

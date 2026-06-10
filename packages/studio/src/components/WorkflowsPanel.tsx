@@ -7,8 +7,8 @@
 // agent; today it's an empty state.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SAMPLES, type SampleAsset } from "../data/samples";
-import { WORKFLOWS, type Workflow } from "../data/workflows";
+import type { SampleAsset } from "../data/samples";
+import type { Workflow } from "../data/workflows";
 import {
   type CustomStep,
   type CustomWorkflow as CustomWfShape,
@@ -22,6 +22,7 @@ import {
   useCustomWorkflows,
 } from "../lib/custom-workflows";
 import type { SentinelResult } from "../lib/sentinel";
+import { useShellConfig } from "../lib/shell-config";
 import type { PartialStudioHandle } from "../lib/studio-handle";
 import { summarizeRequest } from "../lib/version-summary";
 import { ChatPanel } from "./ChatPanel";
@@ -150,6 +151,7 @@ export function WorkflowsPanel({
    * that don't want this feature wire-out cleanly. */
   onSelectAsset?: (id: string) => void;
 }) {
+  const { workflows } = useShellConfig();
   const [tab, setTab] = useState<"workflows" | "chat" | "history">("workflows");
   const [query, setQuery] = useState("");
   const customWorkflows = useCustomWorkflows();
@@ -209,12 +211,12 @@ export function WorkflowsPanel({
   }, [selectedWorkflowId]);
 
   const filtered = useMemo(() => {
-    if (!query) return WORKFLOWS;
+    if (!query) return workflows;
     const q = query.toLowerCase();
-    return WORKFLOWS.filter(
+    return workflows.filter(
       (w) => w.name.toLowerCase().includes(q) || w.desc.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, workflows]);
 
   const groups: Array<{ id: string; label: string; items: Workflow[] }> = [
     // Packages first — they're the "all-in-one" outputs, the headline
@@ -248,8 +250,8 @@ export function WorkflowsPanel({
   // need the same group label.
   const selectedWf = useMemo(
     () =>
-      selectedWorkflowId ? (WORKFLOWS.find((w) => w.id === selectedWorkflowId) ?? null) : null,
-    [selectedWorkflowId],
+      selectedWorkflowId ? (workflows.find((w) => w.id === selectedWorkflowId) ?? null) : null,
+    [selectedWorkflowId, workflows],
   );
   const groupLabelFor: Record<string, string> = {
     package: "Marketplace",
@@ -280,7 +282,7 @@ export function WorkflowsPanel({
         >
           {Icon.workflows}
           Edits
-          <span className="rfs-tab-count">{WORKFLOWS.filter((w) => w.kind !== "soon").length}</span>
+          <span className="rfs-tab-count">{workflows.filter((w) => w.kind !== "soon").length}</span>
         </button>
         <button
           type="button"
@@ -478,7 +480,7 @@ export function WorkflowsPanel({
                               {cw.steps
                                 .map(
                                   (s) =>
-                                    WORKFLOWS.find((w) => w.id === s.workflowId)?.name ??
+                                    workflows.find((w) => w.id === s.workflowId)?.name ??
                                     s.workflowId,
                                 )
                                 .join(" · ")}
@@ -867,6 +869,7 @@ function CustomReplayPanel({
   onCancel: () => void;
   onApply: (overrides: Record<string, string>) => void;
 }) {
+  const { workflows } = useShellConfig();
   const lastStep = custom.steps[custom.steps.length - 1];
   // Currently overridable params: aspect_ratio + resolution on the
   // final step, when present. Other workflow params are taken from
@@ -884,7 +887,7 @@ function CustomReplayPanel({
   // The override selects pull their option lists from the workflow
   // definition for the last step, so we always reflect the real
   // allowed values (not a hard-coded list that drifts).
-  const lastWf = WORKFLOWS.find((w) => w.id === lastStep?.workflowId);
+  const lastWf = workflows.find((w) => w.id === lastStep?.workflowId);
   const aspectInput = lastWf?.inputs?.find((i) => i.key === "aspect_ratio" && i.type === "select");
   const resolutionInput = lastWf?.inputs?.find(
     (i) => i.key === "resolution" && i.type === "select",
@@ -892,7 +895,10 @@ function CustomReplayPanel({
 
   // Pre-flight: surface missing required inputs BEFORE dispatch so the
   // chain doesn't fail mid-step with a vague "Prompt is required" toast.
-  const validationError = useMemo(() => validateRecipeSteps(custom.steps), [custom.steps]);
+  const validationError = useMemo(
+    () => validateRecipeSteps(custom.steps, workflows),
+    [custom.steps, workflows],
+  );
 
   return (
     <>
@@ -929,7 +935,7 @@ function CustomReplayPanel({
         <div className="rfs-action-pin-body">
           <ol className="rfs-custom-steps">
             {custom.steps.map((step, i) => {
-              const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+              const wf = workflows.find((w) => w.id === step.workflowId);
               const params: string[] = [];
               if (step.values?.aspect_ratio) params.push(step.values.aspect_ratio);
               if (step.values?.resolution) params.push(step.values.resolution);
@@ -1050,6 +1056,7 @@ function CustomEditorPanel({
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const { workflows } = useShellConfig();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
@@ -1102,7 +1109,10 @@ function CustomEditorPanel({
   // a required text/prompt input that's empty. The existing canSave
   // check already gates "no name" / "no steps"; this is the additive
   // case ("steps exist but a required input is blank").
-  const stepValidationError = useMemo(() => validateRecipeSteps(draft.steps), [draft.steps]);
+  const stepValidationError = useMemo(
+    () => validateRecipeSteps(draft.steps, workflows),
+    [draft.steps, workflows],
+  );
   const canSave = draft.steps.length > 0 && draft.name.trim().length > 0 && !stepValidationError;
 
   return (
@@ -1162,7 +1172,7 @@ function CustomEditorPanel({
           ) : (
             <div className="rfs-package-list">
               {draft.steps.map((step, i) => {
-                const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+                const wf = workflows.find((w) => w.id === step.workflowId);
                 const isExpanded = expandedStep === i;
                 const summary = stepSummaryText(step, wf);
                 return (
@@ -1288,10 +1298,13 @@ type RecipeValidationError = {
   stepIndex: number;
   message: string;
 };
-function validateRecipeSteps(steps: CustomStep[]): RecipeValidationError | null {
+function validateRecipeSteps(
+  steps: CustomStep[],
+  workflows: ReadonlyArray<Workflow>,
+): RecipeValidationError | null {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
-    const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+    const wf = workflows.find((w) => w.id === step.workflowId);
     if (!wf) continue;
 
     // Implicit prompt requirement: prompt/prompt-zip workflows store
@@ -1371,6 +1384,7 @@ function ActionHeaderWithExamples({
   activeAssetId: string | null;
   onSelectAsset?: (id: string) => void;
 }) {
+  const { samples: catalogSamples } = useShellConfig();
   const [open, setOpen] = useState(false);
   // Recompute matching samples when the workflow changes; reset the
   // open state so an expanded strip from one workflow doesn't bleed
@@ -1381,10 +1395,10 @@ function ActionHeaderWithExamples({
 
   const samples = useMemo<SampleAsset[]>(() => {
     if (!workflowId) return [];
-    return SAMPLES.filter(
-      (s) => s.recommendedWorkflows?.includes(workflowId) && s.id !== activeAssetId,
-    ).slice(0, 4);
-  }, [workflowId, activeAssetId]);
+    return catalogSamples
+      .filter((s) => s.recommendedWorkflows?.includes(workflowId) && s.id !== activeAssetId)
+      .slice(0, 4);
+  }, [workflowId, activeAssetId, catalogSamples]);
 
   const hasSamples = samples.length > 0 && !!onSelectAsset;
 

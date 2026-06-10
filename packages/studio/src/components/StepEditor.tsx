@@ -19,10 +19,13 @@
 // excluded.
 
 import { WORKFLOWS, type Workflow } from "../data/workflows";
+import { useShellConfig } from "../lib/shell-config";
 import { Icon } from "./icons";
 
-export function buildableWorkflowsForChain(): Workflow[] {
-  return WORKFLOWS.filter(
+export function buildableWorkflowsForChain(
+  workflows: ReadonlyArray<Workflow> = WORKFLOWS,
+): Workflow[] {
+  return workflows.filter(
     (w) =>
       (w.kind === "simple" || w.kind === "prompt" || w.kind === "prompt-zip") &&
       w.id !== "reference-inpaint",
@@ -138,6 +141,7 @@ export function StepPicker({
   onCancel: () => void;
   onPick: (wf: Workflow) => void;
 }) {
+  const { workflows } = useShellConfig();
   if (!open) {
     return (
       <button type="button" className="rfs-custom-editor-add" onClick={onOpen}>
@@ -145,7 +149,7 @@ export function StepPicker({
       </button>
     );
   }
-  const choices = buildableWorkflowsForChain();
+  const choices = buildableWorkflowsForChain(workflows);
   return (
     <div className="rfs-custom-editor-picker">
       <div className="rfs-custom-editor-picker-header">

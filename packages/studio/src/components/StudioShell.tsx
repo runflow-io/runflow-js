@@ -20,13 +20,11 @@
 
 import JSZip from "jszip";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SAMPLES } from "../data/samples";
-import {
-  type PackageCreativeDirection,
-  type PackageRecipeStep,
-  type PackageVariant,
-  WORKFLOWS,
-  type Workflow,
+import type {
+  PackageCreativeDirection,
+  PackageRecipeStep,
+  PackageVariant,
+  Workflow,
 } from "../data/workflows";
 import type { CustomWorkflow } from "../lib/custom-workflows";
 import { type GenerationResolution, dispatchGeneration } from "../lib/generation";
@@ -42,11 +40,13 @@ import {
   topazOutputMP,
 } from "../lib/resolution";
 import { type RunProgress, runWorkflow, uploadFile } from "../lib/runflow";
+import { type SentinelResult, evaluate as sentinelEvaluate } from "../lib/sentinel";
 import {
-  type SentinelResult,
-  evaluate as sentinelEvaluate,
-  taskDescription as sentinelTaskDescription,
-} from "../lib/sentinel";
+  ShellConfigProvider,
+  type StudioShellProps,
+  resolveShellConfig,
+  useShellConfig,
+} from "../lib/shell-config";
 import type { PartialStudioHandle } from "../lib/studio-handle";
 import { getStudioSettings } from "../lib/studio-settings";
 import { compactSummary } from "../lib/version-summary";
@@ -103,14 +103,24 @@ function assetFromSample(s: {
   };
 }
 
-export function StudioShell() {
+export function StudioShell(props: StudioShellProps) {
+  // Resolve the customization props once per change; zero props ⇒ the
+  // built-in catalogue/samples/sentinel/copy (original behavior).
+  const config = useMemo(
+    () => resolveShellConfig(props),
+    [props.tools, props.source, props.sentinel, props.copy],
+  );
+  // Ref mirror for the stable-memo studioHandle closures below.
+  const configRef = useRef(config);
+  configRef.current = config;
+
   const [assets, setAssets] = useState<Record<string, AssetState>>(() => {
     const m: Record<string, AssetState> = {};
-    for (const s of SAMPLES) m[s.id] = assetFromSample(s);
+    for (const s of config.samples) m[s.id] = assetFromSample(s);
     return m;
   });
-  const [order, setOrder] = useState<string[]>(() => SAMPLES.map((s) => s.id));
-  const [activeId, setActiveId] = useState<string | null>(SAMPLES[0]?.id ?? null);
+  const [order, setOrder] = useState<string[]>(() => config.samples.map((s) => s.id));
+  const [activeId, setActiveId] = useState<string | null>(config.samples[0]?.id ?? null);
   const [selected, setSelected] = useState<string | null>(null);
   // Per-run edits to a package workflow. Initialised from the workflow's
   // preset on selection; user reordering/deleting/toggling in the action
@@ -227,7 +237,10 @@ export function StudioShell() {
   const currentVersion = active
     ? active.versions.find((v) => v.id === active.currentVersionId) || active.versions[0]
     : null;
-  const selectedWf = useMemo(() => WORKFLOWS.find((w) => w.id === selected) ?? null, [selected]);
+  const selectedWf = useMemo(
+    () => config.workflows.find((w) => w.id === selected) ?? null,
+    [selected, config.workflows],
+  );
   const isPinning = selectedWf?.kind === "pin" || chatPinMode;
   const isPainting =
     selectedWf?.kind === "mask-only" || selectedWf?.kind === "mask-ref" || chatMaskMode;
@@ -579,6 +592,7 @@ export function StudioShell() {
         // Sentinel evaluation — same per-version pattern the workflow
         // runs use. Task description is the user's prompt verbatim,
         // exactly what the judges should be scoring against.
+        if (!configRef.current.sentinel.enabled) return;
         const sentinelResult = await sentinelEvaluate(result.outputUrl, trimmedPrompt);
         setAssets((s) => {
           const a = s[assetId];
@@ -931,6 +945,25 @@ export function StudioShell() {
       //     the chat agent's tool_result becomes is_error=true and the
       //     model stops kicking off subsequent steps. Amber and green
       //     both pass through; toast still surfaces verdict either way.
+      // Host disabled Sentinel entirely — clear the pending placeholder
+      // so no quality badge renders, and resolve.
+      if (!config.sentinel.enabled) {
+        setAssets((s) => {
+          const a = s[targetAssetId];
+          if (!a) return s;
+          return {
+            ...s,
+            [targetAssetId]: {
+              ...a,
+              versions: a.versions.map((ver) =>
+                ver.id === newVid ? { ...ver, sentinel: undefined } : ver,
+              ),
+            },
+          };
+        });
+        return { ok: true, versionId: newVid, outputUrl, label: wf.name };
+      }
+
       const settings = getStudioSettings();
       const isIntermediate = !!dispatch.intermediate;
       const gateThis = isIntermediate && settings.gateBetweenSteps;
@@ -955,7 +988,7 @@ export function StudioShell() {
         return { ok: true, versionId: newVid, outputUrl, label: wf.name };
       }
 
-      const taskDesc = sentinelTaskDescription(wf.id, dispatch.values, dispatch.prompt);
+      const taskDesc = config.sentinel.taskDescription(wf.id, dispatch.values, dispatch.prompt);
       const sentinelPromise = sentinelEvaluate(outputUrl, taskDesc, sourceUrl);
 
       // Gating mode: await the verdict so we can halt the chain on red.
@@ -1119,6 +1152,7 @@ export function StudioShell() {
   // between assets and versions. Idempotency guard: if a retry is
   // already in flight for this version, the second click no-ops.
   const onRetrySentinel = (versionId: string) => {
+    if (!config.sentinel.enabled) return;
     if (sentinelRetrying[versionId]) return;
     // Locate the version + asset once up front; if either's gone we
     // can't retry. (Covers the edge case of a deleted asset between
@@ -1165,7 +1199,7 @@ export function StudioShell() {
       };
     });
 
-    const taskDesc = sentinelTaskDescription(req.workflowId, req.values ?? {}, req.prompt);
+    const taskDesc = config.sentinel.taskDescription(req.workflowId, req.values ?? {}, req.prompt);
     void sentinelEvaluate(ver.url, taskDesc, req.sourceUrl).then((sentinel) => {
       setAssets((s) => {
         const a = s[targetAssetId];
@@ -1250,7 +1284,7 @@ export function StudioShell() {
     for (let i = 0; i < custom.steps.length; i += 1) {
       const step = custom.steps[i];
       const isLast = i === custom.steps.length - 1;
-      const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+      const wf = config.workflows.find((w) => w.id === step.workflowId);
       if (!wf || wf.kind === "soon") {
         addToast({
           kind: "error",
@@ -1347,7 +1381,7 @@ export function StudioShell() {
     let prepFinal: { versionId: string; outputUrl: string; label: string } | null = null;
     for (let i = 0; i < prep.length; i++) {
       const step = prep[i];
-      const stepWf = WORKFLOWS.find((w) => w.id === step.workflowId);
+      const stepWf = config.workflows.find((w) => w.id === step.workflowId);
       if (!stepWf) {
         const err = `Prep step ${i + 1}: unknown workflow ${step.workflowId}`;
         addToast({
@@ -1396,7 +1430,7 @@ export function StudioShell() {
         let vUrl = prepUrl;
         for (let i = 0; i < variant.steps.length; i++) {
           const step = variant.steps[i];
-          const stepWf = WORKFLOWS.find((w) => w.id === step.workflowId);
+          const stepWf = config.workflows.find((w) => w.id === step.workflowId);
           if (!stepWf) {
             addToast({
               kind: "error",
@@ -1538,7 +1572,7 @@ export function StudioShell() {
   const onShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (!url) return;
-    const isSample = activeId ? SAMPLES.some((s) => s.id === activeId) : false;
+    const isSample = activeId ? config.samples.some((s) => s.id === activeId) : false;
     try {
       await navigator.clipboard.writeText(url);
       addToast({
@@ -1823,7 +1857,7 @@ export function StudioShell() {
           setChatStageHint(hint || "Brush over the area, then click Confirm mask.");
         }),
       runWorkflow: async (workflowId, params, captured, opts) => {
-        const wf = WORKFLOWS.find((w) => w.id === workflowId);
+        const wf = configRef.current.workflows.find((w) => w.id === workflowId);
         if (!wf) return { ok: false, error: `Unknown workflow: ${workflowId}` };
         if (wf.kind === "soon") return { ok: false, error: `${wf.name} isn't shipped yet.` };
         const targetAssetId = activeIdRef.current;
@@ -1965,450 +1999,471 @@ export function StudioShell() {
   ) : null;
 
   return (
-    <div
-      className={`rfs-root${leftCollapsed ? " is-rail-collapsed" : ""}${rightOpenMobile ? " is-right-open" : ""}`}
-    >
-      <header className="rfs-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <button
-            type="button"
-            className="rfs-iconbtn"
-            onClick={() => setLeftCollapsed((v) => !v)}
-            title={leftCollapsed ? "Show assets" : "Hide assets"}
-            aria-label={leftCollapsed ? "Show assets" : "Hide assets"}
-          >
-            {leftCollapsed ? Icon.sidebarShow : Icon.sidebarHide}
-          </button>
-          <div className="rfs-brand">
-            <span className="rfs-brand-mark" aria-hidden />
-            <span className="rfs-brand-name">
-              Run<span>flow</span>
-            </span>
-            <span className="rfs-brand-tag">BETA</span>
-          </div>
-          <div className="rfs-project">
-            <span style={{ color: "var(--rfs-bg-3)" }}>/</span>
-            {editingName && active ? (
-              <input
-                className="rfs-project-name-input"
-                autoFocus
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onBlur={() => {
-                  const next = nameDraft.trim();
-                  if (active && next && next !== active.title) {
-                    setAssets((s) => ({
-                      ...s,
-                      [active.id]: { ...s[active.id], title: next },
-                    }));
-                  }
-                  setEditingName(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
-                  if (e.key === "Escape") {
-                    setEditingName(false);
-                    setNameDraft(active?.title ?? "");
-                  }
-                }}
-                maxLength={80}
-              />
-            ) : (
-              <button
-                type="button"
-                className="rfs-project-name"
-                onClick={() => {
-                  if (!active) return;
-                  setNameDraft(active.title);
-                  setEditingName(true);
-                }}
-                disabled={!active}
-                title="Click to rename"
-              >
-                {active?.title ?? "Untitled"}
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="rfs-header-right">
-          <button
-            type="button"
-            className="rfs-iconbtn"
-            onClick={onUndo}
-            disabled={!undoTarget}
-            title={undoTarget ? `Undo to ${undoTarget.label}` : "Nothing to undo"}
-            aria-label="Step to previous version"
-          >
-            {Icon.undo}
-          </button>
-          <button
-            type="button"
-            className="rfs-iconbtn"
-            onClick={onRedo}
-            disabled={!redoTarget}
-            title={redoTarget ? `Redo to ${redoTarget.label}` : "Nothing to redo"}
-            aria-label="Step to next version"
-          >
-            {Icon.redo}
-          </button>
-          <SettingsMenu />
-          <button
-            type="button"
-            className="rfs-btn"
-            onClick={onShare}
-            disabled={!active}
-            title="Copy link to this view"
-          >
-            {Icon.share}
-            Share
-          </button>
-          <button
-            type="button"
-            className="rfs-btn rfs-btn-primary"
-            disabled={!currentVersion}
-            onClick={onExport}
-          >
-            {Icon.download}
-            Export
-          </button>
-          <span className="rfs-avatar">RG</span>
-        </div>
-      </header>
-
-      <aside className="rfs-left">
-        {generateOpen ? (
-          (() => {
-            // Derive the "in-flight" summary from the active asset
-            // when it's a generation session — we just look at the
-            // current asset's pending versions. If the user navigated
-            // away (e.g. picked a sample) we treat the panel as idle
-            // again. Surface count + prompt so the GeneratePanel's
-            // summary can show "Generating 4 variations: <prompt>".
-            const generatingActive = !!(
-              active?.tags?.includes("generated") && active.versions.some((v) => v.pending)
-            );
-            const inFlightCount =
-              generatingActive && active ? active.versions.filter((v) => v.pending).length : 0;
-            const inFlightPrompt =
-              generatingActive && active ? (active.versions[0]?.request?.prompt ?? "") : "";
-            return (
-              <GeneratePanel
-                onClose={() => setGenerateOpen(false)}
-                onGenerate={dispatchGenerationSession}
-                inFlight={generatingActive}
-                inFlightCount={inFlightCount}
-                inFlightPrompt={inFlightPrompt}
-              />
-            );
-          })()
-        ) : (
-          <>
-            <div className="rfs-left-header">
-              <span className="rfs-left-title">Assets</span>
-              <span
-                className="rfs-left-title"
-                style={{ letterSpacing: 0, textTransform: "none", fontWeight: 500 }}
-              >
-                {order.length}
+    <ShellConfigProvider value={config}>
+      <div
+        className={`rfs-root${leftCollapsed ? " is-rail-collapsed" : ""}${rightOpenMobile ? " is-right-open" : ""}`}
+      >
+        <header className="rfs-header">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <button
+              type="button"
+              className="rfs-iconbtn"
+              onClick={() => setLeftCollapsed((v) => !v)}
+              title={leftCollapsed ? "Show assets" : "Hide assets"}
+              aria-label={leftCollapsed ? "Show assets" : "Hide assets"}
+            >
+              {leftCollapsed ? Icon.sidebarShow : Icon.sidebarHide}
+            </button>
+            <div className="rfs-brand">
+              <span className="rfs-brand-mark" aria-hidden />
+              <span className="rfs-brand-name">
+                {config.copy.brandName === "Runflow" ? (
+                  <>
+                    Run<span>flow</span>
+                  </>
+                ) : (
+                  config.copy.brandName
+                )}
               </span>
+              {config.copy.brandTag ? (
+                <span className="rfs-brand-tag">{config.copy.brandTag}</span>
+              ) : null}
             </div>
-            {/* "+ New asset" splits two ways. Upload accepts a local
+            <div className="rfs-project">
+              <span style={{ color: "var(--rfs-bg-3)" }}>/</span>
+              {editingName && active ? (
+                <input
+                  className="rfs-project-name-input"
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onBlur={() => {
+                    const next = nameDraft.trim();
+                    if (active && next && next !== active.title) {
+                      setAssets((s) => ({
+                        ...s,
+                        [active.id]: { ...s[active.id], title: next },
+                      }));
+                    }
+                    setEditingName(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+                    if (e.key === "Escape") {
+                      setEditingName(false);
+                      setNameDraft(active?.title ?? "");
+                    }
+                  }}
+                  maxLength={80}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="rfs-project-name"
+                  onClick={() => {
+                    if (!active) return;
+                    setNameDraft(active.title);
+                    setEditingName(true);
+                  }}
+                  disabled={!active}
+                  title="Click to rename"
+                >
+                  {active?.title ?? "Untitled"}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="rfs-header-right">
+            <button
+              type="button"
+              className="rfs-iconbtn"
+              onClick={onUndo}
+              disabled={!undoTarget}
+              title={undoTarget ? `Undo to ${undoTarget.label}` : "Nothing to undo"}
+              aria-label="Step to previous version"
+            >
+              {Icon.undo}
+            </button>
+            <button
+              type="button"
+              className="rfs-iconbtn"
+              onClick={onRedo}
+              disabled={!redoTarget}
+              title={redoTarget ? `Redo to ${redoTarget.label}` : "Nothing to redo"}
+              aria-label="Step to next version"
+            >
+              {Icon.redo}
+            </button>
+            <SettingsMenu />
+            <button
+              type="button"
+              className="rfs-btn"
+              onClick={onShare}
+              disabled={!active}
+              title="Copy link to this view"
+            >
+              {Icon.share}
+              Share
+            </button>
+            <button
+              type="button"
+              className="rfs-btn rfs-btn-primary"
+              disabled={!currentVersion}
+              onClick={onExport}
+            >
+              {Icon.download}
+              Export
+            </button>
+            {config.copy.avatarInitials ? (
+              <span className="rfs-avatar">{config.copy.avatarInitials}</span>
+            ) : null}
+          </div>
+        </header>
+
+        <aside className="rfs-left">
+          {generateOpen ? (
+            (() => {
+              // Derive the "in-flight" summary from the active asset
+              // when it's a generation session — we just look at the
+              // current asset's pending versions. If the user navigated
+              // away (e.g. picked a sample) we treat the panel as idle
+              // again. Surface count + prompt so the GeneratePanel's
+              // summary can show "Generating 4 variations: <prompt>".
+              const generatingActive = !!(
+                active?.tags?.includes("generated") && active.versions.some((v) => v.pending)
+              );
+              const inFlightCount =
+                generatingActive && active ? active.versions.filter((v) => v.pending).length : 0;
+              const inFlightPrompt =
+                generatingActive && active ? (active.versions[0]?.request?.prompt ?? "") : "";
+              return (
+                <GeneratePanel
+                  onClose={() => setGenerateOpen(false)}
+                  onGenerate={dispatchGenerationSession}
+                  inFlight={generatingActive}
+                  inFlightCount={inFlightCount}
+                  inFlightPrompt={inFlightPrompt}
+                />
+              );
+            })()
+          ) : (
+            <>
+              <div className="rfs-left-header">
+                <span className="rfs-left-title">{config.copy.assetsTitle}</span>
+                <span
+                  className="rfs-left-title"
+                  style={{ letterSpacing: 0, textTransform: "none", fontWeight: 500 }}
+                >
+                  {order.length}
+                </span>
+              </div>
+              {/* "+ New asset" splits two ways. Upload accepts a local
                 file (the existing path); Generate flips the rail into
                 the GeneratePanel for text-to-image. The user never
                 picks a model — the gateway maps resolution → tier. */}
-            <div className="rfs-left-newasset">
-              <label className="rfs-left-newasset-btn">
-                {Icon.upload}
-                Upload
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) onUploadAsset(f);
-                    e.currentTarget.value = "";
-                  }}
+              <div className="rfs-left-newasset">
+                <label className="rfs-left-newasset-btn">
+                  {Icon.upload}
+                  Upload
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onUploadAsset(f);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="rfs-left-newasset-btn rfs-left-newasset-generate"
+                  onClick={() => setGenerateOpen(true)}
+                  title="Generate new images from a prompt"
+                >
+                  {Icon.generate}
+                  Generate
+                </button>
+              </div>
+              <div className="rfs-asset-list">
+                {order.map((id) => {
+                  const a = assets[id];
+                  if (!a) return null;
+                  // Pick the freshest URL we have. For a generation
+                  // session where v0 is still pending, the FIRST resolved
+                  // version (anywhere in the array) is what we want — so
+                  // walk back-to-front and grab the first non-empty url.
+                  // Falls back to baseUrl, then empty.
+                  const thumbUrl =
+                    [...a.versions].reverse().find((v) => v.url)?.url ?? a.baseUrl ?? "";
+                  const allPending = a.versions.every((v) => v.pending);
+                  return (
+                    <button
+                      type="button"
+                      key={id}
+                      className={`rfs-asset${id === activeId ? " is-current" : ""}${allPending ? " is-pending" : ""}`}
+                      onClick={() => onSelectAsset(id)}
+                      title={a.title}
+                    >
+                      {thumbUrl ? (
+                        <img src={thumbUrl} alt={a.title} />
+                      ) : (
+                        <span className="rfs-asset-skeleton" aria-hidden />
+                      )}
+                      {a.versions.length > 1 ? (
+                        <span
+                          className="rfs-asset-count"
+                          aria-label={`${a.versions.length} versions`}
+                        >
+                          {a.versions.length}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </aside>
+
+        <main className="rfs-center">
+          <StudioCanvas
+            emptyTitle={config.copy.emptyTitle}
+            emptySubtitle={config.copy.emptySubtitle}
+            imageUrl={currentVersion?.url ?? null}
+            imageTitle={active?.title ?? "Untitled"}
+            imageWidth={currentVersion?.width}
+            imageHeight={currentVersion?.height}
+            requestedResolution={currentVersion?.request?.values?.resolution}
+            imgRef={imgRef}
+            isPinning={isPinning}
+            isPainting={isPainting}
+            pin={pin}
+            onImageClick={onImageClick}
+            brushCanvasRef={visibleMaskRef}
+            onMaskDown={onMaskDown}
+            onMaskMove={onMaskMove}
+            onMaskUp={onMaskUp}
+            brushSize={brushSize}
+            onBrushSize={setBrushSize}
+            maskCoverage={maskCoverage}
+            onClearMask={clearMask}
+            hint={stageHint}
+            pending={currentPending}
+            pendingLabel={currentVersion?.label ?? null}
+            pendingWorkflowId={currentVersion?.request?.workflowId ?? null}
+            pendingKind={currentVersion?.pendingKind}
+            pendingPrompt={currentVersion?.request?.prompt ?? null}
+            error={
+              // Two error sources land in the canvas:
+              //   1. A workflow run error (`error` state, set by the
+              //      action panel's apply path)
+              //   2. A version-level error (e.g. a failed generation
+              //      variation — the version has `error` set and an
+              //      empty url, so the canvas needs to show "couldn't
+              //      generate" instead of falling through to the cold
+              //      empty state)
+              error ?? currentVersion?.error ?? null
+            }
+            sentinelBadge={
+              currentVersion?.sentinel ? (
+                <SentinelBadge
+                  result={currentVersion.sentinel}
+                  open={sentinelOpen}
+                  onToggle={() => setSentinelOpen((v) => !v)}
+                  versionId={currentVersion.id}
+                  onRetry={
+                    currentVersion.request ? () => onRetrySentinel(currentVersion.id) : undefined
+                  }
+                  retryInFlight={!!sentinelRetrying[currentVersion.id]}
                 />
-              </label>
-              <button
-                type="button"
-                className="rfs-left-newasset-btn rfs-left-newasset-generate"
-                onClick={() => setGenerateOpen(true)}
-                title="Generate new images from a prompt"
-              >
-                {Icon.generate}
-                Generate
-              </button>
-            </div>
-            <div className="rfs-asset-list">
-              {order.map((id) => {
-                const a = assets[id];
-                if (!a) return null;
-                // Pick the freshest URL we have. For a generation
-                // session where v0 is still pending, the FIRST resolved
-                // version (anywhere in the array) is what we want — so
-                // walk back-to-front and grab the first non-empty url.
-                // Falls back to baseUrl, then empty.
-                const thumbUrl =
-                  [...a.versions].reverse().find((v) => v.url)?.url ?? a.baseUrl ?? "";
-                const allPending = a.versions.every((v) => v.pending);
+              ) : config.sentinel.enabled &&
+                currentVersion?.request &&
+                !currentVersion.error &&
+                !currentVersion.pending ? (
+                // Intermediate step that bypassed Sentinel — surface a
+                // muted badge so the user knows quality wasn't checked
+                // (rather than the badge silently disappearing).
+                <div
+                  className="rfs-sentinel-badge is-skipped"
+                  title="Sentinel skipped on this intermediate step. Toggle “Run Sentinel between steps” in Settings to gate every step."
+                >
+                  <span className="rfs-sentinel-dot is-failed" />
+                  <span>Sentinel skipped</span>
+                </div>
+              ) : null
+            }
+            chatMaskMode={chatMaskMode}
+            chatPinMode={chatPinMode}
+            onConfirmChatMask={onConfirmChatMask}
+            onCancelChatMask={onCancelChatMask}
+            onCancelChatPin={onCancelChatPin}
+            onOpenCompare={() => setCompareOpen(true)}
+            compareEnabled={(active?.versions.length ?? 0) >= 2}
+            onDownloadAll={onDownloadAll}
+            canDownloadAll={canDownloadAll}
+          />
+          {active ? (
+            <div className="rfs-version-stripe">
+              <span className="rfs-version-stripe-label">Versions</span>
+              {active.versions.map((v) => {
+                const bucket =
+                  !v.pending && v.width && v.height
+                    ? displayBucket(v.width, v.height, v.request?.values?.resolution)
+                    : null;
+                const dimSuffix =
+                  !v.pending && v.width && v.height ? ` · ${v.width}×${v.height}` : "";
+                // Intermediate steps that bypassed Sentinel (gating off,
+                // not the final step) end up with no sentinel + no error.
+                // Original v0 has no `request` and shouldn't get a chip.
+                const isIntermediateSkipped = !v.pending && !v.error && !v.sentinel && !!v.request;
                 return (
                   <button
                     type="button"
-                    key={id}
-                    className={`rfs-asset${id === activeId ? " is-current" : ""}${allPending ? " is-pending" : ""}`}
-                    onClick={() => onSelectAsset(id)}
-                    title={a.title}
+                    key={v.id}
+                    className={`rfs-version-thumb${v.id === active.currentVersionId ? " is-current" : ""}${v.pending ? " is-pending" : ""}${v.error ? " is-error" : ""}${v.sentinel && !v.pending ? ` sentinel-${v.sentinel.state}` : ""}`}
+                    onClick={() => onPickVersion(v.id)}
+                    title={
+                      v.error
+                        ? `${v.label} — ${v.error}`
+                        : `${compactSummary(v.label, v.request)}${dimSuffix}`
+                    }
                   >
-                    {thumbUrl ? (
-                      <img src={thumbUrl} alt={a.title} />
+                    {v.url ? (
+                      <img src={v.url} alt={v.label} />
                     ) : (
-                      <span className="rfs-asset-skeleton" aria-hidden />
+                      // Generation pending versions have no URL until the
+                      // model returns. Skeleton block instead of a broken
+                      // <img> while the spinner overlay (below) carries
+                      // the "still working" signal.
+                      <span className="rfs-version-thumb-skeleton" aria-hidden />
                     )}
-                    {a.versions.length > 1 ? (
+                    <span className="rfs-version-thumb-label">{v.label}</span>
+                    {bucket ? (
                       <span
-                        className="rfs-asset-count"
-                        aria-label={`${a.versions.length} versions`}
+                        className={`rfs-version-thumb-res rfs-version-thumb-res-${bucket.toLowerCase()}`}
+                        aria-label={`${v.width}×${v.height} pixels`}
                       >
-                        {a.versions.length}
+                        {bucket}
+                      </span>
+                    ) : null}
+                    {v.sentinel || isIntermediateSkipped ? (
+                      <span className="rfs-version-thumb-sentinel">
+                        <SentinelChip
+                          result={v.sentinel}
+                          skipped={isIntermediateSkipped}
+                          size="xs"
+                        />
+                      </span>
+                    ) : null}
+                    {v.pending ? (
+                      <span className="rfs-version-thumb-spinner" aria-hidden>
+                        <span className="rfs-version-thumb-spinner-ring" />
                       </span>
                     ) : null}
                   </button>
                 );
               })}
             </div>
-          </>
-        )}
-      </aside>
+          ) : null}
+        </main>
 
-      <main className="rfs-center">
-        <StudioCanvas
-          imageUrl={currentVersion?.url ?? null}
-          imageTitle={active?.title ?? "Untitled"}
-          imageWidth={currentVersion?.width}
-          imageHeight={currentVersion?.height}
-          requestedResolution={currentVersion?.request?.values?.resolution}
-          imgRef={imgRef}
-          isPinning={isPinning}
-          isPainting={isPainting}
-          pin={pin}
-          onImageClick={onImageClick}
-          brushCanvasRef={visibleMaskRef}
-          onMaskDown={onMaskDown}
-          onMaskMove={onMaskMove}
-          onMaskUp={onMaskUp}
-          brushSize={brushSize}
-          onBrushSize={setBrushSize}
-          maskCoverage={maskCoverage}
-          onClearMask={clearMask}
-          hint={stageHint}
-          pending={currentPending}
-          pendingLabel={currentVersion?.label ?? null}
-          pendingWorkflowId={currentVersion?.request?.workflowId ?? null}
-          pendingKind={currentVersion?.pendingKind}
-          pendingPrompt={currentVersion?.request?.prompt ?? null}
-          error={
-            // Two error sources land in the canvas:
-            //   1. A workflow run error (`error` state, set by the
-            //      action panel's apply path)
-            //   2. A version-level error (e.g. a failed generation
-            //      variation — the version has `error` set and an
-            //      empty url, so the canvas needs to show "couldn't
-            //      generate" instead of falling through to the cold
-            //      empty state)
-            error ?? currentVersion?.error ?? null
+        <WorkflowsPanel
+          selectedWorkflowId={selected}
+          onSelectWorkflow={onSelectWorkflow}
+          onClearWorkflowSelection={resetSelection}
+          photoTags={active?.tags ?? []}
+          recommendedWorkflowIds={active?.recommendedWorkflows ?? []}
+          versions={active?.versions ?? []}
+          currentVersionId={active?.currentVersionId ?? "v0"}
+          onPickVersion={onPickVersion}
+          selectedActionContent={selectedActionContent}
+          selectedActionFooter={selectedActionFooter}
+          selectedActionMeta={
+            selectedWf
+              ? { name: selectedWf.name, desc: selectedWf.desc, iconKey: selectedWf.id }
+              : null
           }
-          sentinelBadge={
-            currentVersion?.sentinel ? (
-              <SentinelBadge
-                result={currentVersion.sentinel}
-                open={sentinelOpen}
-                onToggle={() => setSentinelOpen((v) => !v)}
-                versionId={currentVersion.id}
-                onRetry={
-                  currentVersion.request ? () => onRetrySentinel(currentVersion.id) : undefined
-                }
-                retryInFlight={!!sentinelRetrying[currentVersion.id]}
-              />
-            ) : currentVersion?.request && !currentVersion.error && !currentVersion.pending ? (
-              // Intermediate step that bypassed Sentinel — surface a
-              // muted badge so the user knows quality wasn't checked
-              // (rather than the badge silently disappearing).
-              <div
-                className="rfs-sentinel-badge is-skipped"
-                title="Sentinel skipped on this intermediate step. Toggle “Run Sentinel between steps” in Settings to gate every step."
-              >
-                <span className="rfs-sentinel-dot is-failed" />
-                <span>Sentinel skipped</span>
-              </div>
-            ) : null
-          }
-          chatMaskMode={chatMaskMode}
-          chatPinMode={chatPinMode}
-          onConfirmChatMask={onConfirmChatMask}
-          onCancelChatMask={onCancelChatMask}
-          onCancelChatPin={onCancelChatPin}
-          onOpenCompare={() => setCompareOpen(true)}
-          compareEnabled={(active?.versions.length ?? 0) >= 2}
-          onDownloadAll={onDownloadAll}
-          canDownloadAll={canDownloadAll}
+          studioHandle={studioHandle}
+          activeAssetId={activeId}
+          onRunCustom={runCustomWorkflow}
+          onSelectAsset={onSelectAsset}
         />
-        {active ? (
-          <div className="rfs-version-stripe">
-            <span className="rfs-version-stripe-label">Versions</span>
-            {active.versions.map((v) => {
-              const bucket =
-                !v.pending && v.width && v.height
-                  ? displayBucket(v.width, v.height, v.request?.values?.resolution)
-                  : null;
-              const dimSuffix =
-                !v.pending && v.width && v.height ? ` · ${v.width}×${v.height}` : "";
-              // Intermediate steps that bypassed Sentinel (gating off,
-              // not the final step) end up with no sentinel + no error.
-              // Original v0 has no `request` and shouldn't get a chip.
-              const isIntermediateSkipped = !v.pending && !v.error && !v.sentinel && !!v.request;
-              return (
-                <button
-                  type="button"
-                  key={v.id}
-                  className={`rfs-version-thumb${v.id === active.currentVersionId ? " is-current" : ""}${v.pending ? " is-pending" : ""}${v.error ? " is-error" : ""}${v.sentinel && !v.pending ? ` sentinel-${v.sentinel.state}` : ""}`}
-                  onClick={() => onPickVersion(v.id)}
-                  title={
-                    v.error
-                      ? `${v.label} — ${v.error}`
-                      : `${compactSummary(v.label, v.request)}${dimSuffix}`
-                  }
-                >
-                  {v.url ? (
-                    <img src={v.url} alt={v.label} />
-                  ) : (
-                    // Generation pending versions have no URL until the
-                    // model returns. Skeleton block instead of a broken
-                    // <img> while the spinner overlay (below) carries
-                    // the "still working" signal.
-                    <span className="rfs-version-thumb-skeleton" aria-hidden />
-                  )}
-                  <span className="rfs-version-thumb-label">{v.label}</span>
-                  {bucket ? (
-                    <span
-                      className={`rfs-version-thumb-res rfs-version-thumb-res-${bucket.toLowerCase()}`}
-                      aria-label={`${v.width}×${v.height} pixels`}
-                    >
-                      {bucket}
-                    </span>
-                  ) : null}
-                  {v.sentinel || isIntermediateSkipped ? (
-                    <span className="rfs-version-thumb-sentinel">
-                      <SentinelChip result={v.sentinel} skipped={isIntermediateSkipped} size="xs" />
-                    </span>
-                  ) : null}
-                  {v.pending ? (
-                    <span className="rfs-version-thumb-spinner" aria-hidden>
-                      <span className="rfs-version-thumb-spinner-ring" />
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </main>
 
-      <WorkflowsPanel
-        selectedWorkflowId={selected}
-        onSelectWorkflow={onSelectWorkflow}
-        onClearWorkflowSelection={resetSelection}
-        photoTags={active?.tags ?? []}
-        recommendedWorkflowIds={active?.recommendedWorkflows ?? []}
-        versions={active?.versions ?? []}
-        currentVersionId={active?.currentVersionId ?? "v0"}
-        onPickVersion={onPickVersion}
-        selectedActionContent={selectedActionContent}
-        selectedActionFooter={selectedActionFooter}
-        selectedActionMeta={
-          selectedWf
-            ? { name: selectedWf.name, desc: selectedWf.desc, iconKey: selectedWf.id }
-            : null
-        }
-        studioHandle={studioHandle}
-        activeAssetId={activeId}
-        onRunCustom={runCustomWorkflow}
-        onSelectAsset={onSelectAsset}
-      />
-
-      {/* Mobile-only floating CTA: opens the workflows/chat bottom sheet.
+        {/* Mobile-only floating CTA: opens the workflows/chat bottom sheet.
           Sits on the canvas so the user can reach Edits with one thumb.
           Hidden by CSS on desktop and while the sheet itself is open. */}
-      <button
-        type="button"
-        className="rfs-mobile-fab rfs-mobile-fab-tools"
-        onClick={() => setRightOpenMobile(true)}
-        aria-label="Open edits panel"
-      >
-        {Icon.workflows}
-        <span>{selected ? "Configure" : "Edits"}</span>
-      </button>
-
-      {/* Backdrops + close affordances for the mobile overlays. The
-          left drawer and bottom sheet share the same dismiss pattern:
-          tap outside to close. */}
-      {!leftCollapsed ? (
         <button
           type="button"
-          className="rfs-mobile-backdrop rfs-mobile-backdrop-left"
-          aria-label="Close assets"
-          onClick={() => setLeftCollapsed(true)}
-        />
-      ) : null}
-      {rightOpenMobile ? (
-        <>
+          className="rfs-mobile-fab rfs-mobile-fab-tools"
+          onClick={() => setRightOpenMobile(true)}
+          aria-label="Open edits panel"
+        >
+          {Icon.workflows}
+          <span>{selected ? "Configure" : "Edits"}</span>
+        </button>
+
+        {/* Backdrops + close affordances for the mobile overlays. The
+          left drawer and bottom sheet share the same dismiss pattern:
+          tap outside to close. */}
+        {!leftCollapsed ? (
           <button
             type="button"
-            className="rfs-mobile-backdrop rfs-mobile-backdrop-right"
-            aria-label="Close edits panel"
-            onClick={() => setRightOpenMobile(false)}
+            className="rfs-mobile-backdrop rfs-mobile-backdrop-left"
+            aria-label="Close assets"
+            onClick={() => setLeftCollapsed(true)}
           />
-          <button
-            type="button"
-            className="rfs-sheet-close"
-            aria-label="Close edits panel"
-            onClick={() => setRightOpenMobile(false)}
-          >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        ) : null}
+        {rightOpenMobile ? (
+          <>
+            <button
+              type="button"
+              className="rfs-mobile-backdrop rfs-mobile-backdrop-right"
+              aria-label="Close edits panel"
+              onClick={() => setRightOpenMobile(false)}
+            />
+            <button
+              type="button"
+              className="rfs-sheet-close"
+              aria-label="Close edits panel"
+              onClick={() => setRightOpenMobile(false)}
             >
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </>
-      ) : null}
+              <svg
+                aria-hidden="true"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </>
+        ) : null}
 
-      <Toasts toasts={toasts} onDismiss={dismissToast} />
+        <Toasts toasts={toasts} onDismiss={dismissToast} />
 
-      {compareOpen && active && active.versions.length >= 2 ? (
-        <ComparePanel
-          versions={active.versions}
-          // 2 versions: left = first (original), right = latest.
-          // 3+ versions: same defaults; user can switch via per-pane
-          // dropdowns inside the modal.
-          initialLeftId={active.versions[0].id}
-          initialRightId={
-            active.currentVersionId !== active.versions[0].id
-              ? active.currentVersionId
-              : active.versions[active.versions.length - 1].id
-          }
-          onClose={() => setCompareOpen(false)}
-        />
-      ) : null}
-    </div>
+        {compareOpen && active && active.versions.length >= 2 ? (
+          <ComparePanel
+            versions={active.versions}
+            // 2 versions: left = first (original), right = latest.
+            // 3+ versions: same defaults; user can switch via per-pane
+            // dropdowns inside the modal.
+            initialLeftId={active.versions[0].id}
+            initialRightId={
+              active.currentVersionId !== active.versions[0].id
+                ? active.currentVersionId
+                : active.versions[active.versions.length - 1].id
+            }
+            onClose={() => setCompareOpen(false)}
+          />
+        ) : null}
+      </div>
+    </ShellConfigProvider>
   );
 }
 
@@ -2846,8 +2901,8 @@ function renderSelectedActionContent({
 // background-color · #F1F1F1"). Falls back to just the workflow id if
 // the workflow isn't found in the catalog (shouldn't happen in
 // practice, but cheap to guard).
-function packageStepSummary(step: PackageRecipeStep): string {
-  const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+function packageStepSummary(step: PackageRecipeStep, workflows: ReadonlyArray<Workflow>): string {
+  const wf = workflows.find((w) => w.id === step.workflowId);
   const name = wf?.name ?? step.workflowId;
   const paramBits: string[] = [];
   if (step.params.color) paramBits.push(step.params.color);
@@ -2966,6 +3021,7 @@ function PackageEditor({
   creativeValue: string;
   setCreativeValue: React.Dispatch<React.SetStateAction<string>>;
 }) {
+  const { workflows } = useShellConfig();
   const [expanded, setExpanded] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -3171,7 +3227,7 @@ function PackageEditor({
 
       <div className="rfs-package-list">
         {prep.map((step, i) => {
-          const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+          const wf = workflows.find((w) => w.id === step.workflowId);
           const isExpanded = expanded === i;
           return (
             <div key={`${step.workflowId}-${i}`} className="rfs-custom-editor-row">
@@ -3184,7 +3240,7 @@ function PackageEditor({
                   aria-expanded={isExpanded}
                 >
                   <div className="rfs-package-row-name">{step.label}</div>
-                  <div className="rfs-package-row-file">{packageStepSummary(step)}</div>
+                  <div className="rfs-package-row-file">{packageStepSummary(step, workflows)}</div>
                 </button>
                 <div className="rfs-package-row-actions">
                   <button

@@ -13,6 +13,8 @@ import { Icon } from "./icons";
 export type Pin = { x: number; y: number };
 
 export function StudioCanvas({
+  emptyTitle = "No image selected",
+  emptySubtitle = "Pick a sample from the left, or drop your own to get started.",
   imageUrl,
   imageTitle,
   imageWidth,
@@ -49,6 +51,10 @@ export function StudioCanvas({
   onDownloadAll,
   canDownloadAll,
 }: {
+  /** Empty-state heading shown when no image is selected. */
+  emptyTitle?: string;
+  /** Empty-state subline shown when no image is selected. */
+  emptySubtitle?: string;
   imageUrl: string | null;
   imageTitle: string;
   imageWidth?: number;
@@ -182,8 +188,8 @@ export function StudioCanvas({
     return (
       <div className="rfs-canvas">
         <div className="rfs-canvas-empty">
-          <h2>No image selected</h2>
-          <p>Pick a sample from the left, or drop your own to get started.</p>
+          <h2>{emptyTitle}</h2>
+          <p>{emptySubtitle}</p>
         </div>
       </div>
     );
