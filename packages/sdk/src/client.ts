@@ -1,3 +1,4 @@
+import { AssetsResource } from "./assets.js";
 import { RunflowError } from "./errors.js";
 import { RunFailedError, RunTimeoutError } from "./errors.js";
 import { ToolsResource } from "./tools/run.js";
@@ -19,6 +20,7 @@ export class Runflow {
   readonly runs: RunsResource;
   readonly health: HealthResource;
   readonly tools: ToolsResource;
+  readonly assets: AssetsResource;
 
   constructor(config: RunflowConfig) {
     if (!config.apiKey && !config.baseUrl) {
@@ -40,6 +42,50 @@ export class Runflow {
     this.runs = new RunsResource(this);
     this.health = new HealthResource(this);
     this.tools = new ToolsResource(this);
+    this.assets = new AssetsResource(this);
+  }
+
+  /**
+   * Fetch an absolute URL through the configured fetcher — no base-URL
+   * joining, no auth header. Used for presigned storage PUTs, which are
+   * authorized by the URL itself and must not leak the API key.
+   * @internal
+   */
+  async rawFetch(
+    url: string,
+    init: {
+      method?: string;
+      headers?: Record<string, string>;
+      body?: BodyInit;
+      signal?: AbortSignal;
+    },
+    timeoutMs: number = this.requestTimeoutMs,
+  ): Promise<Response> {
+    const controller = mergeAbort(init.signal, timeoutMs);
+    try {
+      return await this.fetcher(url, {
+        method: init.method ?? "GET",
+        headers: init.headers,
+        body: init.body,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (controller.timedOut()) {
+        throw new RunflowError(
+          `Request timed out (${timeoutMs}ms): ${init.method ?? "GET"} ${url}`,
+          {
+            code: "request_timeout",
+            cause: err,
+          },
+        );
+      }
+      throw new RunflowError(`Request failed: ${init.method ?? "GET"} ${url}`, {
+        code: "network_error",
+        cause: err,
+      });
+    } finally {
+      controller.clear();
+    }
   }
 
   /** @internal */

@@ -19,6 +19,8 @@
  */
 
 export { Runflow, ModelsResource, RunsResource, HealthResource } from "./client.js";
+export { AssetsResource } from "./assets.js";
+export type { UploadedAsset, UploadOptions } from "./assets.js";
 export {
   RunflowError,
   RunFailedError,
