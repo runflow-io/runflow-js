@@ -52,9 +52,12 @@ interface AllowedPath { method: HttpMethod | HttpMethod[]; path: string; } // pa
 - Integrate into the gate at `handler.ts:140`: a request that matches an allowed path is forwarded
   (still through CSRF + `authenticate` + `rateLimit` + body-cap). It is **not** dispatch, so the
   model allow-list and `onRun` are untouched.
-- `DEFAULT_ALLOWED_PATHS` (so `rf.assets.upload` works **zero-config**):
-  `POST /v1/asset-uploads`, `POST /v1/asset-uploads/:id/confirmations`. Customer `allowedPaths`
-  are **additive** over the defaults; built-in dispatch/runs/health stay always-on.
+- `DEFAULT_ALLOWED_PATHS` (so `rf.assets.upload`/`rf.assets.get` work **zero-config**):
+  `POST /v1/asset-uploads`, `POST /v1/asset-uploads/:id/confirmations`, `GET /v1/assets/:id`.
+  *(Revised in review round 1: a customer `allowedPaths` **replaces** the defaults — same
+  semantics as `allowedModels`; spread the exported `DEFAULT_ALLOWED_PATHS` to extend, pass `[]`
+  to disable. The first draft said "additive", which made the defaults impossible to turn off.)*
+  Built-in dispatch/runs/health stay always-on.
 - **Security (council P0):** the proxy forwards with the org's secret key. Allowing *reads* like
   `GET /v1/runs` or `GET /v1/billing/balance` exposes org-wide data to any same-origin browser —
   therefore those are **opt-in only**, never defaulted. SSRF is bounded (upstream host is fixed to

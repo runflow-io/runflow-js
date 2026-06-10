@@ -23,9 +23,11 @@ export const { GET, POST } = runflowProxy({
 });
 ```
 
-This handler covers the `/v1/models/*/runs` dispatch path and the
-`/v1/runs/{id}` poll path the Studio uses for every workflow run. It
-does NOT cover uploads, chat, image-proxy, or sentinel — see [Companion
+This handler covers the `/v1/models/*/runs` dispatch path, the
+`/v1/runs/{id}` poll path, and the asset-upload/read routes the Studio
+uses for workflow runs and file uploads (`rf.assets.upload` through the
+proxy's default allow-list — no extra upload endpoint needed). It does
+NOT cover chat, image-proxy, or sentinel — see [Companion
 endpoints](#companion-endpoints) below.
 
 ## Browser: mount the Studio
@@ -109,13 +111,13 @@ service:
 |---|---|---|
 | `runflowProxy` | `POST /v1/models/{model}/runs` + `GET /v1/runs/{id}` | `@runflow-io/proxy` |
 | `imageProxy` | `GET /?url=<external>` → echo bytes, same-origin (for cross-origin source images) | You |
-| `upload` | `POST` multipart → `{ url }` (writes to your storage) | You |
+| `upload` | *(optional legacy)* `POST` multipart → `{ url }` — by default uploads use the SDK presigned flow through `runflowProxy`; only set this to keep a custom storage path | You |
 | `chat` | SSE chat agent (wraps Anthropic + the tool catalogue) | You |
 | `sentinel` | `POST /evaluate?sync=false` + `GET /evaluate/{eval_id}` | You |
 
 The runflow-prototypes repo has working reference implementations under
 `projects/demos/api/{upload,chat,sentinel,image}.mjs`. If you only need
-single-step dispatch (no uploads, no chat, no sentinel), the proxy alone
+dispatch + uploads (no chat, no sentinel), the proxy alone
 is enough — the upload/chat/sentinel-dependent UI paths gracefully
 degrade when the routes return 404/403.
 
