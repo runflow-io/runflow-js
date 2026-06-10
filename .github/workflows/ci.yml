@@ -43,7 +43,7 @@ jobs:
       - name: Lint warning ratchet
         run: |
           BUDGET=45
-          count=$(bunx biome check . 2>&1 | grep -oE 'Found [0-9]+ warnings' | grep -oE '[0-9]+' | head -1)
+          count=$(bunx biome check . 2>&1 | grep -oE 'Found [0-9]+ warnings' | grep -oE '[0-9]+' | head -1 || true)
           count=${count:-0}
           echo "biome warnings: $count (budget: $BUDGET)"
           if [ "$count" -gt "$BUDGET" ]; then

@@ -53,6 +53,13 @@ describe("allowedPaths — defaults (asset uploads)", () => {
     expect(seen[0]?.url).toBe(`https://api.runflow.io/v1/assets/${UUID}`);
   });
 
+  it("rejects a trailing slash on allow-list matches", async () => {
+    const { proxy, seen } = spyProxy();
+    const res = await proxy(new Request(`http://app/api/runflow/v1/assets/${UUID}/`));
+    expect(res.status).toBe(403);
+    expect(seen.length).toBe(0);
+  });
+
   it("rejects empty path segments so matching always equals forwarding", async () => {
     const { proxy, seen } = spyProxy();
     const res = await proxy(

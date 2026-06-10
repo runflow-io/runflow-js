@@ -87,12 +87,30 @@ function isTransient(err: unknown): boolean {
   return (err.status ?? 0) >= 500;
 }
 
+function abortError(): RunflowError {
+  return new RunflowError("assets: aborted by signal", { code: "aborted" });
+}
+
+/** Sleep that wakes up immediately when the signal aborts. */
+function abortableSleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(done, ms);
+    function done() {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", done);
+      resolve();
+    }
+    signal?.addEventListener("abort", done, { once: true });
+  });
+}
+
 async function withRetry<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     if (attempt > 0) {
-      await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[attempt - 1]));
-      if (signal?.aborted) throw lastErr;
+      if (signal?.aborted) throw abortError();
+      await abortableSleep(RETRY_DELAYS_MS[attempt - 1] ?? 0, signal);
+      if (signal?.aborted) throw abortError();
     }
     try {
       return await fn();

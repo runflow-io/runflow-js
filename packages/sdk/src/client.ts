@@ -142,16 +142,29 @@ export class Runflow {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      let parsed: { error?: { message?: string; code?: string }; message?: string } | null = null;
+      // Two error body shapes flow through here: the API's nested
+      // { error: { message, code } } and the proxy's flat
+      // { error: string, code: string }.
+      let parsed: {
+        error?: { message?: string; code?: string } | string;
+        message?: string;
+        code?: string;
+      } | null = null;
       try {
         parsed = text ? JSON.parse(text) : null;
       } catch {
         // body wasn't JSON
       }
-      const msg = parsed?.error?.message ?? parsed?.message ?? text.slice(0, 300) ?? res.statusText;
+      const errField = parsed?.error;
+      const msg =
+        (typeof errField === "string" ? errField : errField?.message) ??
+        parsed?.message ??
+        text.slice(0, 300) ??
+        res.statusText;
+      const code = (typeof errField === "object" ? errField?.code : undefined) ?? parsed?.code;
       throw new RunflowError(`HTTP ${res.status}: ${msg || "request failed"}`, {
         status: res.status,
-        code: parsed?.error?.code,
+        code,
       });
     }
 

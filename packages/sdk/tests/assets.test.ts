@@ -269,6 +269,49 @@ describe("rf.assets.upload", () => {
     await expect(rf.assets.get("../sneaky")).rejects.toThrow(/invalid asset id/);
   });
 
+  it("abort during retry backoff surfaces an aborted error immediately", async () => {
+    const ac = new AbortController();
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch(() => {
+        // First (and only) attempt fails transiently; abort fires during
+        // the backoff sleep.
+        setTimeout(() => ac.abort(), 5);
+        return new Response("oops", { status: 503 });
+      }),
+    });
+    const started = Date.now();
+    const err = await rf.assets
+      .upload(new File(["x"], "a.png", { type: "image/png" }), { signal: ac.signal })
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RunflowError);
+    expect((err as RunflowError).code).toBe("aborted");
+    // Must not sit through the full 250ms backoff after the abort.
+    expect(Date.now() - started).toBeLessThan(200);
+  });
+
+  it("surfaces the proxy's flat { error, code } body shape", async () => {
+    const rf = new Runflow({
+      baseUrl: "http://app.local/api/runflow",
+      fetch: mockFetch(
+        () =>
+          new Response(
+            JSON.stringify({ error: "Path not allowed: GET /v1/foo", code: "path_not_allowed" }),
+            {
+              status: 403,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+      ),
+    });
+    const err = await rf.assets
+      .get("11111111-2222-3333-4444-555555555555")
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RunflowError);
+    expect((err as RunflowError).code).toBe("path_not_allowed");
+    expect((err as RunflowError).message).toContain("Path not allowed");
+  });
+
   it("rejects a malformed upload-session response", async () => {
     const rf = new Runflow({
       apiKey: "rf_live_x",

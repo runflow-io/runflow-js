@@ -28,6 +28,7 @@ export const URLS = {
 
 export type StudioUrls = typeof URLS;
 
+const DEFAULT_URLS: StudioUrls = { ...URLS };
 const customized = new Set<keyof StudioUrls>();
 
 export function setStudioUrls(overrides: Partial<StudioUrls>): void {
@@ -35,12 +36,16 @@ export function setStudioUrls(overrides: Partial<StudioUrls>): void {
     const v = overrides[key];
     if (typeof v === "string") {
       URLS[key] = v;
-      customized.add(key);
+      // Passing the default value back (e.g. a full urls object copied
+      // from the docs) is not a customization — only a real override
+      // should switch behavior (like uploads off the presigned path).
+      if (v === DEFAULT_URLS[key]) customized.delete(key);
+      else customized.add(key);
     }
   }
 }
 
-/** Whether the host explicitly overrode an endpoint via setStudioUrls. */
+/** Whether the host overrode an endpoint to a non-default value. */
 export function isUrlCustomized(key: keyof StudioUrls): boolean {
   return customized.has(key);
 }

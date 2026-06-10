@@ -150,9 +150,9 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
     segments[0] === "v1" &&
     segments[1] === "health";
 
-  // Empty segments (`//`) would make the matched path differ from the
-  // forwarded one — refuse to match them at all.
-  const hasEmptySegments = /\/\//.test(upstreamPath);
+  // Empty segments (`//`, trailing `/`) would make the matched path
+  // differ from the forwarded one — refuse to match them at all.
+  const hasEmptySegments = /\/\//.test(upstreamPath) || upstreamPath.endsWith("/");
   const isAllowedPath =
     !isDispatch &&
     !runId &&
