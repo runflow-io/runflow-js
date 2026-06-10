@@ -19,12 +19,8 @@
 //   5. when assistant returns no tool_use → stop
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Workflow } from "../data/workflows";
 import {
-  emptyCaptured,
-  extractToolUses,
-  getSessionId,
-  runTool,
-  streamChatTurn,
   type CapturedInputs,
   type ChatMessage,
   type ChoiceOption,
@@ -32,84 +28,75 @@ import {
   type StudioHandle,
   type ToolResultBlock,
   type ToolUseBlock,
+  emptyCaptured,
+  extractToolUses,
+  getSessionId,
+  runTool,
+  streamChatTurn,
 } from "../lib/chat";
+import { type ResBucket, isUpscale, resBucket } from "../lib/resolution";
+import { useShellConfig } from "../lib/shell-config";
 import type { PartialStudioHandle } from "../lib/studio-handle";
-import { WORKFLOWS } from "../data/workflows";
-import { isUpscale, resBucket, type ResBucket } from "../lib/resolution";
 import { Icon } from "./icons";
 
-function workflowDisplayName(workflowId: string): string {
-  return WORKFLOWS.find((w) => w.id === workflowId)?.name ?? workflowId;
+function workflowDisplayName(workflowId: string, workflows: ReadonlyArray<Workflow>): string {
+  return workflows.find((w) => w.id === workflowId)?.name ?? workflowId;
 }
 
 type PlanStep = { workflow_id: string; description: string };
 
-type PlanState =
-  | null
-  | {
-      steps: PlanStep[];
-      rationale: string;
-      resolved: boolean;
-      confirmed: boolean;
-    };
+type PlanState = null | {
+  steps: PlanStep[];
+  rationale: string;
+  resolved: boolean;
+  confirmed: boolean;
+};
 
-type RefRequestState =
-  | null
-  | {
-      hint: string;
-      resolved: boolean;
-      file: File | null;
-    };
+type RefRequestState = null | {
+  hint: string;
+  resolved: boolean;
+  file: File | null;
+};
 
-type TextRequestState =
-  | null
-  | {
-      label: string;
-      placeholder?: string;
-      optional: boolean;
-      resolved: boolean;
-      value: string | null;
-    };
+type TextRequestState = null | {
+  label: string;
+  placeholder?: string;
+  optional: boolean;
+  resolved: boolean;
+  value: string | null;
+};
 
-type ColorRequestState =
-  | null
-  | {
-      hint: string;
-      defaultHex: string;
-      resolved: boolean;
-      value: string | null;
-    };
+type ColorRequestState = null | {
+  hint: string;
+  defaultHex: string;
+  resolved: boolean;
+  value: string | null;
+};
 
-type AspectRequestState =
-  | null
-  | {
-      hint: string;
-      options: string[];
-      allowCustom: boolean;
-      defaultValue?: string;
-      resolved: boolean;
-      value: string | null;
-    };
+type AspectRequestState = null | {
+  hint: string;
+  options: string[];
+  allowCustom: boolean;
+  defaultValue?: string;
+  resolved: boolean;
+  value: string | null;
+};
 
-type ResolutionRequestState =
-  | null
-  | {
-      hint: string;
-      defaultValue?: string;
-      sourceDims: { width: number; height: number } | null;
-      resolved: boolean;
-      value: string | null;
-    };
+type ResolutionRequestState = null | {
+  hint: string;
+  defaultValue?: string;
+  sourceDims: { width: number; height: number } | null;
+  resolved: boolean;
+  value: string | null;
+};
 
-type ChoiceRequestState =
-  | null
-  | {
-      hint: string;
-      options: ChoiceOption[];
-      defaultValue?: string;
-      resolved: boolean;
-      value: string | null;
-    };
+type ChoiceRequestState = null | {
+  hint: string;
+  options: ChoiceOption[];
+  defaultValue?: string;
+  resolved: boolean;
+  value: string | null;
+};
 
 // Inline retry-or-skip state shown when run_workflow returns an error
 // inside an agent plan. Survives across attempts so the user can keep
@@ -117,14 +104,12 @@ type ChoiceRequestState =
 // model adapt around the failure. `attempt` increments on every retry
 // so the bubble can show "Attempt 3 of 4 failed" instead of swallowing
 // repeated failures.
-type RetryState =
-  | null
-  | {
-      workflowId: string;
-      error: string;
-      attempt: number;
-      resolved: boolean;
-    };
+type RetryState = null | {
+  workflowId: string;
+  error: string;
+  attempt: number;
+  resolved: boolean;
+};
 
 type RetryDecision = "retry" | "skip";
 
@@ -146,7 +131,7 @@ function isValidHex(s: string): boolean {
 }
 function normaliseHex(s: string): string {
   let v = s.trim();
-  if (!v.startsWith("#")) v = "#" + v;
+  if (!v.startsWith("#")) v = `#${v}`;
   if (v.length === 4) {
     // #RGB → #RRGGBB
     v = `#${v[1]}${v[1]}${v[2]}${v[2]}${v[3]}${v[3]}`;
@@ -188,10 +173,7 @@ function healStuckTranscript(messages: ChatMessage[]): ChatMessage[] {
   if (last.role !== "assistant" || !Array.isArray(last.content)) return messages;
   const hasOrphanToolUse = last.content.some((b) => b.type === "tool_use");
   if (!hasOrphanToolUse) return messages;
-  console.warn(
-    "[chat] dropping trailing assistant message with unresolved tool_use blocks",
-    last,
-  );
+  console.warn("[chat] dropping trailing assistant message with unresolved tool_use blocks", last);
   // Walk back past the orphan AND the user message that triggered it.
   let i = messages.length - 2;
   while (i >= 0 && messages[i].role !== "user") i -= 1;
@@ -216,6 +198,7 @@ export function ChatPanel({
   studioHandle: PartialStudioHandle;
   activeAssetId: string | null;
 }) {
+  const { workflows: catalogWorkflows } = useShellConfig();
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadMessages(activeAssetId));
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -272,7 +255,17 @@ export function ChatPanel({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, planState, refState, textState, colorState, aspectState, resolutionState, choiceState, retryState]);
+  }, [
+    messages,
+    planState,
+    refState,
+    textState,
+    colorState,
+    aspectState,
+    resolutionState,
+    choiceState,
+    retryState,
+  ]);
 
   const sessionId = useMemo(() => getSessionId(), []);
 
@@ -411,10 +404,7 @@ export function ChatPanel({
             // tool_result. Loops until the user picks Skip or the run
             // finally succeeds.
             let attempt = 1;
-            while (
-              dispatch.uiEffect?.kind === "workflow_failed" &&
-              tu.name === "run_workflow"
-            ) {
+            while (dispatch.uiEffect?.kind === "workflow_failed" && tu.name === "run_workflow") {
               const failed = dispatch.uiEffect;
               const decision = await new Promise<RetryDecision>((resolve) => {
                 retryResolverRef.current = resolve;
@@ -582,10 +572,9 @@ export function ChatPanel({
   return (
     <div className="rfs-chat">
       <header className="rfs-chat-header">
-        <span className="rfs-chat-header-title">
-          {hasTranscript ? "Conversation" : "New chat"}
-        </span>
+        <span className="rfs-chat-header-title">{hasTranscript ? "Conversation" : "New chat"}</span>
         <button
+          type="button"
           className="rfs-chat-reset"
           onClick={clearChat}
           disabled={isStreaming || !hasTranscript}
@@ -595,7 +584,17 @@ export function ChatPanel({
               : "Reset the conversation and start fresh"
           }
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M3 12a9 9 0 1 0 3.5-7.1" />
             <path d="M3 4v6h6" />
           </svg>
@@ -608,7 +607,9 @@ export function ChatPanel({
             <div className="rfs-empty-icon">{Icon.chat}</div>
             <h3>Chat with the studio</h3>
             <p>
-              Describe what you want done — &ldquo;remove the price tag&rdquo;, &ldquo;put this on a Mediterranean rooftop&rdquo;, &ldquo;swap the print on the sleeve&rdquo;. The agent picks the workflow, asks for what it needs, and runs it.
+              Describe what you want done — &ldquo;remove the price tag&rdquo;, &ldquo;put this on a
+              Mediterranean rooftop&rdquo;, &ldquo;swap the print on the sleeve&rdquo;. The agent
+              picks the workflow, asks for what it needs, and runs it.
             </p>
           </div>
         ) : (
@@ -623,7 +624,11 @@ export function ChatPanel({
           />
         ) : null}
         {refState && !refState.resolved ? (
-          <ReferenceBubble hint={refState.hint} onSubmit={submitReference} onCancel={cancelReference} />
+          <ReferenceBubble
+            hint={refState.hint}
+            onSubmit={submitReference}
+            onCancel={cancelReference}
+          />
         ) : null}
         {textState && !textState.resolved ? (
           <TextBubble
@@ -672,7 +677,7 @@ export function ChatPanel({
         ) : null}
         {retryState && !retryState.resolved ? (
           <RetryBubble
-            workflowName={workflowDisplayName(retryState.workflowId)}
+            workflowName={workflowDisplayName(retryState.workflowId, catalogWorkflows)}
             error={retryState.error}
             attempt={retryState.attempt}
             onRetry={() => decideRetry("retry")}
@@ -713,6 +718,7 @@ export function ChatPanel({
         />
         <div className="rfs-chat-footer-actions">
           <button
+            type="button"
             className="rfs-btn rfs-btn-primary rfs-chat-send"
             onClick={send}
             disabled={!input.trim() || isStreaming || !activeAssetId}
@@ -730,6 +736,7 @@ export function ChatPanel({
 // ============================================================
 
 function MessageBubble({ message }: { message: ChatMessage }) {
+  const { workflows } = useShellConfig();
   // User message — text only (we don't render the image attachment back
   // to the user; the canvas is right there).
   if (message.role === "user") {
@@ -771,7 +778,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           return (
             <div key={i} className="rfs-chat-tool-call" title={JSON.stringify(block.input)}>
               <span className="rfs-chat-tool-icon">⚙</span>
-              {labelForTool(block)}
+              {labelForTool(block, workflows)}
             </div>
           );
         }
@@ -781,7 +788,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-function labelForTool(block: ToolUseBlock): string {
+function labelForTool(block: ToolUseBlock, workflows: ReadonlyArray<Workflow>): string {
   switch (block.name) {
     case "propose_plan":
       return "Proposing plan…";
@@ -802,7 +809,7 @@ function labelForTool(block: ToolUseBlock): string {
     case "request_choice":
       return "Asking you to pick an option";
     case "run_workflow":
-      return `Running ${workflowDisplayName(String(block.input.workflow_id ?? "workflow"))}…`;
+      return `Running ${workflowDisplayName(String(block.input.workflow_id ?? "workflow"), workflows)}…`;
     case "finish":
       return "Done";
     default:
@@ -821,6 +828,7 @@ function PlanBubble({
   onConfirm: () => void;
   onReject: () => void;
 }) {
+  const { workflows } = useShellConfig();
   return (
     <div className="rfs-chat-msg rfs-chat-msg-assistant">
       <div className="rfs-chat-plan">
@@ -834,14 +842,20 @@ function PlanBubble({
               <span className="rfs-chat-plan-num">{i + 1}</span>
               <div className="rfs-chat-plan-step-text">
                 <div className="rfs-chat-plan-step-desc">{s.description}</div>
-                <div className="rfs-chat-plan-step-id">{workflowDisplayName(s.workflow_id)}</div>
+                <div className="rfs-chat-plan-step-id">
+                  {workflowDisplayName(s.workflow_id, workflows)}
+                </div>
               </div>
             </li>
           ))}
         </ol>
         <div className="rfs-chat-plan-actions">
-          <button className="rfs-btn" onClick={onReject}>Push back</button>
-          <button className="rfs-btn rfs-btn-primary" onClick={onConfirm}>Run plan</button>
+          <button type="button" className="rfs-btn" onClick={onReject}>
+            Push back
+          </button>
+          <button type="button" className="rfs-btn rfs-btn-primary" onClick={onConfirm}>
+            Run plan
+          </button>
         </div>
       </div>
     </div>
@@ -872,7 +886,12 @@ function ReferenceBubble({
         />
         <span>Click to upload a reference image</span>
       </label>
-      <button className="rfs-link" onClick={onCancel} style={{ marginTop: 4, fontSize: 12 }}>
+      <button
+        type="button"
+        className="rfs-link"
+        onClick={onCancel}
+        style={{ marginTop: 4, fontSize: 12 }}
+      >
         Skip
       </button>
     </div>
@@ -907,6 +926,7 @@ function ColorBubble({
         <div className="rfs-chat-color-presets">
           {COLOR_PRESETS.map((p) => (
             <button
+              type="button"
               key={p.hex}
               className={`rfs-chat-color-swatch${picked === p.hex ? " is-picked" : ""}`}
               style={{ background: p.hex }}
@@ -937,6 +957,7 @@ function ColorBubble({
             spellCheck={false}
           />
           <button
+            type="button"
             className="rfs-btn rfs-btn-primary"
             onClick={submit}
             disabled={!isValidHex(hexInput)}
@@ -944,7 +965,12 @@ function ColorBubble({
             Use color
           </button>
         </div>
-        <button className="rfs-link" onClick={onCancel} style={{ fontSize: 12, alignSelf: "flex-start" }}>
+        <button
+          type="button"
+          className="rfs-link"
+          onClick={onCancel}
+          style={{ fontSize: 12, alignSelf: "flex-start" }}
+        >
           Skip
         </button>
       </div>
@@ -969,7 +995,8 @@ function TextBubble({
   return (
     <div className="rfs-chat-msg rfs-chat-msg-assistant">
       <div className="rfs-chat-bubble">
-        {label}{optional ? " (optional)" : ""}
+        {label}
+        {optional ? " (optional)" : ""}
       </div>
       <textarea
         className="rfs-textarea"
@@ -981,11 +1008,16 @@ function TextBubble({
       />
       <div style={{ display: "flex", gap: 6, marginTop: 6, justifyContent: "flex-end" }}>
         {optional ? (
-          <button className="rfs-btn" onClick={() => onSubmit("")}>Skip</button>
+          <button type="button" className="rfs-btn" onClick={() => onSubmit("")}>
+            Skip
+          </button>
         ) : (
-          <button className="rfs-btn" onClick={onCancel}>Cancel</button>
+          <button type="button" className="rfs-btn" onClick={onCancel}>
+            Cancel
+          </button>
         )}
         <button
+          type="button"
           className="rfs-btn rfs-btn-primary"
           onClick={() => onSubmit(value)}
           disabled={!optional && !value.trim()}
@@ -1021,8 +1053,8 @@ function AspectBubble({
   const [customW, setCustomW] = useState("");
   const [customH, setCustomH] = useState("");
   const submitCustom = () => {
-    const w = parseInt(customW, 10);
-    const h = parseInt(customH, 10);
+    const w = Number.parseInt(customW, 10);
+    const h = Number.parseInt(customH, 10);
     if (!w || !h || w < 1 || h < 1) return;
     onSubmit(`${w}:${h}`);
   };
@@ -1033,13 +1065,14 @@ function AspectBubble({
         <div className="rfs-chat-aspect-grid">
           {options.map((opt) => {
             const [wStr, hStr] = opt.split(":");
-            const w = parseInt(wStr, 10) || 1;
-            const h = parseInt(hStr, 10) || 1;
+            const w = Number.parseInt(wStr, 10) || 1;
+            const h = Number.parseInt(hStr, 10) || 1;
             const max = 14;
             const tileW = w >= h ? max : Math.round((w / h) * max);
             const tileH = h >= w ? max : Math.round((h / w) * max);
             return (
               <button
+                type="button"
                 key={opt}
                 className={`rfs-chat-aspect-tile${picked === opt ? " is-picked" : ""}`}
                 onClick={() => {
@@ -1049,10 +1082,7 @@ function AspectBubble({
                 title={opt}
               >
                 <span className="rfs-chat-aspect-shape-wrap" aria-hidden>
-                  <span
-                    className="rfs-chat-aspect-shape"
-                    style={{ width: tileW, height: tileH }}
-                  />
+                  <span className="rfs-chat-aspect-shape" style={{ width: tileW, height: tileH }} />
                 </span>
                 <span className="rfs-chat-aspect-label">{opt}</span>
               </button>
@@ -1084,15 +1114,17 @@ function AspectBubble({
               aria-label="Custom height"
             />
             <button
+              type="button"
               className="rfs-btn rfs-btn-primary"
               onClick={submitCustom}
-              disabled={!parseInt(customW, 10) || !parseInt(customH, 10)}
+              disabled={!Number.parseInt(customW, 10) || !Number.parseInt(customH, 10)}
             >
               Use
             </button>
           </div>
         ) : null}
         <button
+          type="button"
           className="rfs-link"
           onClick={onCancel}
           style={{ fontSize: 12, alignSelf: "flex-start" }}
@@ -1124,8 +1156,7 @@ function ResolutionBubble({
   const sourceBucket: ResBucket | null = sourceDims
     ? resBucket(sourceDims.width, sourceDims.height)
     : null;
-  const initial: ResBucket =
-    (defaultValue as ResBucket) ?? sourceBucket ?? "2K";
+  const initial: ResBucket = (defaultValue as ResBucket) ?? sourceBucket ?? "2K";
   const [picked, setPicked] = useState<ResBucket>(initial);
   const upscaling = sourceBucket && isUpscale(sourceBucket, picked);
   const buckets: ResBucket[] = ["1K", "2K", "4K"];
@@ -1136,6 +1167,7 @@ function ResolutionBubble({
         <div className="rfs-chat-resolution-segmented" role="radiogroup">
           {buckets.map((b) => (
             <button
+              type="button"
               key={b}
               role="radio"
               aria-checked={picked === b}
@@ -1154,15 +1186,19 @@ function ResolutionBubble({
         ) : null}
         {upscaling ? (
           <div className="rfs-help rfs-help-warn">
-            Heads up — picking {picked} from a {sourceBucket} source means
-            upscaling; the model can't add detail that isn't there.
+            Heads up — picking {picked} from a {sourceBucket} source means upscaling; the model
+            can't add detail that isn't there.
           </div>
         ) : null}
         <div className="rfs-chat-resolution-actions">
-          <button className="rfs-link" onClick={onCancel} style={{ fontSize: 12 }}>
+          <button type="button" className="rfs-link" onClick={onCancel} style={{ fontSize: 12 }}>
             Skip
           </button>
-          <button className="rfs-btn rfs-btn-primary" onClick={() => onSubmit(picked)}>
+          <button
+            type="button"
+            className="rfs-btn rfs-btn-primary"
+            onClick={() => onSubmit(picked)}
+          >
             Use {picked}
           </button>
         </div>
@@ -1201,10 +1237,10 @@ function RetryBubble({
         </div>
         <div className="rfs-chat-retry-error">{error}</div>
         <div className="rfs-chat-retry-actions">
-          <button className="rfs-btn" onClick={onSkip}>
+          <button type="button" className="rfs-btn" onClick={onSkip}>
             Skip step and continue
           </button>
-          <button className="rfs-btn rfs-btn-primary" onClick={onRetry}>
+          <button type="button" className="rfs-btn rfs-btn-primary" onClick={onRetry}>
             Retry
           </button>
         </div>
@@ -1234,6 +1270,7 @@ function ChoiceBubble({
       <div className="rfs-chat-choice">
         {options.map((o) => (
           <button
+            type="button"
             key={o.value}
             className={`rfs-chat-choice-btn${defaultValue === o.value ? " is-default" : ""}`}
             onClick={() => onSubmit(o.value)}
@@ -1242,6 +1279,7 @@ function ChoiceBubble({
           </button>
         ))}
         <button
+          type="button"
           className="rfs-link"
           onClick={onCancel}
           style={{ fontSize: 12, alignSelf: "flex-start" }}

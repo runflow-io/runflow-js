@@ -7,9 +7,10 @@
 // The future Chat tab can call this same function — pass a workflow id
 // + already-resolved inputs and it'll run the same path.
 
+import { Runflow, composePinPrompt, composeRegionPrompt } from "@runflow-io/sdk";
 import type { Workflow } from "../data/workflows";
 
-import { URLS } from "./urls";
+import { URLS, isUrlCustomized } from "./urls";
 // Endpoint constants flow through the module-level URLS registry;
 // callers configure them in mount() via setStudioUrls(). The original
 // prototype hardcoded /demos/api/* paths here.
@@ -46,12 +47,6 @@ export type DispatchInputs = {
   values: Record<string, string>;
 };
 
-function pinPhrase(p: { x: number; y: number }) {
-  const yLabel = p.y < 0.33 ? "upper" : p.y < 0.66 ? "middle" : "lower";
-  const xLabel = p.x < 0.33 ? "left" : p.x < 0.66 ? "center" : "right";
-  return `${yLabel}-${xLabel}`;
-}
-
 // Fetch a remote image through our same-origin proxy to dodge the
 // no-cors-cache "Failed to fetch" trap on cross-origin sources.
 async function fetchSourceBlob(url: string): Promise<Blob> {
@@ -68,11 +63,26 @@ async function fetchSourceBlob(url: string): Promise<Blob> {
 // a deterministic 4xx (auth, payload-too-large, etc.) feel sluggish.
 const UPLOAD_RETRY_DELAYS_MS = [250, 750];
 
-export async function uploadFile(name: string, body: Blob, fallbackType = "image/png"): Promise<string> {
+export async function uploadFile(
+  name: string,
+  body: Blob,
+  fallbackType = "image/png",
+): Promise<string> {
   // Server only accepts PNG/JPEG/WebP. Rewrap if the blob lost its type
   // (e.g. some fetch responses arrive as application/octet-stream).
-  const type = body.type && body.type.startsWith("image/") ? body.type : fallbackType;
+  const type = body.type?.startsWith("image/") ? body.type : fallbackType;
   const file = new File([body], name, { type });
+
+  // Default path: the SDK's presigned flow through the Runflow proxy —
+  // works zero-config because @runflow-io/proxy allows the asset-upload
+  // routes by default (and the SDK retries transient failures itself).
+  // Hosts that explicitly configured a multipart `upload` endpoint (the
+  // pre-0.1 contract) keep their behavior.
+  if (!isUrlCustomized("upload")) {
+    const rf = new Runflow({ baseUrl: URLS.runflowProxy });
+    const asset = await rf.assets.upload(file, { filename: name });
+    return asset.url;
+  }
 
   const totalAttempts = UPLOAD_RETRY_DELAYS_MS.length + 1;
   let lastTransientReason: string | null = null;
@@ -147,11 +157,13 @@ async function buildBody(
     };
   }
   if (wf.kind === "pin") {
-    const region = inputs.pin ? pinPhrase(inputs.pin) : "center";
     const text = inputs.prompt || "";
+    const prompt = inputs.pin
+      ? composePinPrompt(inputs.pin, text)
+      : composeRegionPrompt("center", text);
     return {
       input: {
-        prompt: `Edit the ${region} area of this image: ${text}. Photoreal product photography, preserve the rest of the image, true colors and lighting.`,
+        prompt,
         image_urls: [sourceUrl],
       },
     };
@@ -374,8 +386,7 @@ export async function runWorkflow(
       }
       if (status === "succeeded") {
         const out = r.output || {};
-        const outputUrl =
-          out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
+        const outputUrl = out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
         if (!outputUrl) {
           onProgress({ phase: "error", message: "No image in output" });
           return { status: "failed", outputUrl: null, error: "no output url" };

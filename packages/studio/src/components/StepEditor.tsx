@@ -18,11 +18,12 @@
 // runtime), packages (no nested chains for now), and `soon` are
 // excluded.
 
-import { WORKFLOWS, type Workflow } from "../data/workflows";
+import type { Workflow } from "../data/workflows";
+import { useShellConfig } from "../lib/shell-config";
 import { Icon } from "./icons";
 
-export function buildableWorkflowsForChain(): Workflow[] {
-  return WORKFLOWS.filter(
+export function buildableWorkflowsForChain(workflows: ReadonlyArray<Workflow>): Workflow[] {
+  return workflows.filter(
     (w) =>
       (w.kind === "simple" || w.kind === "prompt" || w.kind === "prompt-zip") &&
       w.id !== "reference-inpaint",
@@ -109,7 +110,9 @@ export function StepParamsForm({
                 onChange={(e) => setValue(e.target.value)}
               >
                 {inp.options.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
               {inp.help ? <div className="rfs-help">{inp.help}</div> : null}
@@ -136,6 +139,7 @@ export function StepPicker({
   onCancel: () => void;
   onPick: (wf: Workflow) => void;
 }) {
+  const { workflows } = useShellConfig();
   if (!open) {
     return (
       <button type="button" className="rfs-custom-editor-add" onClick={onOpen}>
@@ -143,7 +147,7 @@ export function StepPicker({
       </button>
     );
   }
-  const choices = buildableWorkflowsForChain();
+  const choices = buildableWorkflowsForChain(workflows);
   return (
     <div className="rfs-custom-editor-picker">
       <div className="rfs-custom-editor-picker-header">

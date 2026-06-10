@@ -15,10 +15,11 @@
  * ```
  */
 
-import { createRoot, type Root } from "react-dom/client";
 import { createElement } from "react";
+import { type Root, createRoot } from "react-dom/client";
 import { StudioShell } from "./components/StudioShell.js";
-import { setStudioUrls, type StudioUrls } from "./lib/urls.js";
+import type { StudioShellProps } from "./lib/shell-config.js";
+import { type StudioUrls, setStudioUrls } from "./lib/urls.js";
 import { injectStyles } from "./styles.js";
 
 export interface ThemeOverrides {
@@ -36,6 +37,11 @@ export interface ThemeOverrides {
 export interface StudioMountOptions {
   /** Endpoint overrides. See `StudioUrls` for the full shape. */
   urls?: Partial<StudioUrls>;
+  /**
+   * Shell customization — workflow catalogue, initial source assets,
+   * sentinel config, copy overrides. See `StudioShellProps`.
+   */
+  props?: StudioShellProps;
   /** `light` | `dark` | `auto` | per-token overrides. Default `dark`. */
   theme?: "light" | "dark" | "auto" | ThemeOverrides;
   /** Inject the default stylesheet into <head>. Default true. */
@@ -62,12 +68,13 @@ export function mount(
   applyThemeOverrides(el, options.theme);
 
   const root = createRoot(el);
-  root.render(createElement(StudioShell));
+  root.render(createElement(StudioShell, options.props ?? {}));
 
   return {
     unmount() {
       root.unmount();
       el.removeAttribute("data-theme");
+      for (const [, cssVar] of THEME_VAR_MAP) el.style.removeProperty(cssVar);
     },
   };
 }
@@ -82,33 +89,41 @@ function applyThemeAttribute(el: HTMLElement, theme: StudioMountOptions["theme"]
   if (theme === "light") mode = "light";
   else if (theme === "auto") {
     mode =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-color-scheme: light)").matches
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches
         ? "light"
         : "dark";
   }
   el.setAttribute("data-theme", mode);
 }
 
+const THEME_VAR_MAP: Array<[keyof ThemeOverrides, string]> = [
+  ["accent", "--rfs-accent"],
+  ["bg0", "--rfs-bg-0"],
+  ["bg1", "--rfs-bg-1"],
+  ["bg2", "--rfs-bg-2"],
+  ["bg3", "--rfs-bg-3"],
+  ["ink0", "--rfs-ink-0"],
+  ["ink1", "--rfs-ink-1"],
+  ["ink2", "--rfs-ink-2"],
+  ["ink3", "--rfs-ink-3"],
+];
+
 function applyThemeOverrides(el: HTMLElement, theme: StudioMountOptions["theme"]): void {
   if (!theme || typeof theme === "string") return;
-  const map: Array<[keyof ThemeOverrides, string]> = [
-    ["accent", "--rfs-accent"],
-    ["bg0", "--rfs-bg-0"],
-    ["bg1", "--rfs-bg-1"],
-    ["bg2", "--rfs-bg-2"],
-    ["bg3", "--rfs-bg-3"],
-    ["ink0", "--rfs-ink-0"],
-    ["ink1", "--rfs-ink-1"],
-    ["ink2", "--rfs-ink-2"],
-    ["ink3", "--rfs-ink-3"],
-  ];
-  for (const [key, cssVar] of map) {
+  for (const [key, cssVar] of THEME_VAR_MAP) {
     const v = theme[key];
     if (typeof v === "string") el.style.setProperty(cssVar, v);
   }
 }
 
 export { StudioShell } from "./components/StudioShell.js";
+export { resolveShellConfig } from "./lib/shell-config.js";
+export type {
+  StudioShellProps,
+  StudioCopy,
+  StudioSentinelOptions,
+} from "./lib/shell-config.js";
+export type { Workflow } from "./data/workflows.js";
+export type { SampleAsset } from "./data/samples.js";
 export { setStudioUrls, URLS } from "./lib/urls.js";
 export type { StudioUrls } from "./lib/urls.js";

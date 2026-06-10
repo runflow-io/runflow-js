@@ -36,6 +36,7 @@ export function Toasts({
           </div>
           {t.onView ? (
             <button
+              type="button"
               className="rfs-toast-action"
               onClick={() => {
                 t.onView?.();
@@ -46,6 +47,7 @@ export function Toasts({
             </button>
           ) : null}
           <button
+            type="button"
             className="rfs-toast-close"
             onClick={() => onDismiss(t.id)}
             aria-label="Dismiss"

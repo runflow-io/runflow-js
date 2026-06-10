@@ -1,3 +1,4 @@
+import { mergeToolValues } from "@runflow-io/sdk";
 import { describe, expect, it } from "vitest";
 import {
   BUILTIN_TOOLS,
@@ -7,7 +8,6 @@ import {
   findTool,
   smartResize,
 } from "../src/tools/index.js";
-import { mergeToolValues } from "@runflow-io/sdk";
 
 describe("builtin tools catalogue", () => {
   it("covers every original workflow", () => {
@@ -73,7 +73,9 @@ describe("builtin tools catalogue", () => {
       image: "https://cdn/photo.png",
       prompt: "on a windswept rooftop at golden hour",
     } as never);
-    const body = aiScene.buildRequest(merged) as { input: { prompt: string; image_urls: string[] } };
+    const body = aiScene.buildRequest(merged) as {
+      input: { prompt: string; image_urls: string[] };
+    };
     expect(body.input.prompt).toMatch(/Place the subject of this image on a windswept rooftop/);
     expect(body.input.image_urls).toEqual(["https://cdn/photo.png"]);
   });

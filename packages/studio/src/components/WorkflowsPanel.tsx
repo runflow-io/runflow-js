@@ -7,26 +7,27 @@
 // agent; today it's an empty state.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { WORKFLOWS, type Workflow } from "../data/workflows";
-import { SAMPLES, type SampleAsset } from "../data/samples";
-import { StepParamsForm, StepPicker, defaultStepValues } from "./StepEditor";
-import type { SentinelResult } from "../lib/sentinel";
-import type { PartialStudioHandle } from "../lib/studio-handle";
-import { summarizeRequest } from "../lib/version-summary";
+import type { SampleAsset } from "../data/samples";
+import type { Workflow } from "../data/workflows";
 import {
-  chainForVersion,
-  chainIsSavable,
-  reasonChainNotSavable,
-  saveCustomWorkflow,
-  createCustomWorkflow,
-  updateCustomWorkflow,
-  useCustomWorkflows,
-  deleteCustomWorkflow,
   type CustomStep,
   type CustomWorkflow as CustomWfShape,
+  chainForVersion,
+  chainIsSavable,
+  createCustomWorkflow,
+  deleteCustomWorkflow,
+  reasonChainNotSavable,
+  saveCustomWorkflow,
+  updateCustomWorkflow,
+  useCustomWorkflows,
 } from "../lib/custom-workflows";
+import type { SentinelResult } from "../lib/sentinel";
+import { useShellConfig } from "../lib/shell-config";
+import type { PartialStudioHandle } from "../lib/studio-handle";
+import { summarizeRequest } from "../lib/version-summary";
 import { ChatPanel } from "./ChatPanel";
 import { SentinelChip } from "./SentinelBadge";
+import { StepParamsForm, StepPicker, defaultStepValues } from "./StepEditor";
 import { Icon } from "./icons";
 
 // Snapshot of what the user actually asked for when this version was
@@ -150,6 +151,7 @@ export function WorkflowsPanel({
    * that don't want this feature wire-out cleanly. */
   onSelectAsset?: (id: string) => void;
 }) {
+  const { workflows } = useShellConfig();
   const [tab, setTab] = useState<"workflows" | "chat" | "history">("workflows");
   const [query, setQuery] = useState("");
   const customWorkflows = useCustomWorkflows();
@@ -209,16 +211,22 @@ export function WorkflowsPanel({
   }, [selectedWorkflowId]);
 
   const filtered = useMemo(() => {
-    if (!query) return WORKFLOWS;
+    if (!query) return workflows;
     const q = query.toLowerCase();
-    return WORKFLOWS.filter((w) => w.name.toLowerCase().includes(q) || w.desc.toLowerCase().includes(q));
-  }, [query]);
+    return workflows.filter(
+      (w) => w.name.toLowerCase().includes(q) || w.desc.toLowerCase().includes(q),
+    );
+  }, [query, workflows]);
 
   const groups: Array<{ id: string; label: string; items: Workflow[] }> = [
     // Packages first — they're the "all-in-one" outputs, the headline
     // result for marketplace prep. Below them sit the individual
     // primitives that the packages chain under the hood.
-    { id: "package", label: "Marketplace packages", items: filtered.filter((w) => w.group === "package") },
+    {
+      id: "package",
+      label: "Marketplace packages",
+      items: filtered.filter((w) => w.group === "package"),
+    },
     { id: "magic", label: "Magic", items: filtered.filter((w) => w.group === "magic") },
     { id: "compose", label: "Compose", items: filtered.filter((w) => w.group === "compose") },
     { id: "cleanup", label: "Cleanup", items: filtered.filter((w) => w.group === "cleanup") },
@@ -235,17 +243,15 @@ export function WorkflowsPanel({
   // major source of "what is all this stuff?" feedback.
   const hasRecipes = customWorkflows.length > 0;
 
-  const recommendedSet = useMemo(
-    () => new Set(recommendedWorkflowIds),
-    [recommendedWorkflowIds],
-  );
+  const recommendedSet = useMemo(() => new Set(recommendedWorkflowIds), [recommendedWorkflowIds]);
 
   // Breadcrumb context for the focused configure view. Derived here
   // (not in the JSX) because both the breadcrumb and the back button
   // need the same group label.
   const selectedWf = useMemo(
-    () => (selectedWorkflowId ? WORKFLOWS.find((w) => w.id === selectedWorkflowId) ?? null : null),
-    [selectedWorkflowId],
+    () =>
+      selectedWorkflowId ? (workflows.find((w) => w.id === selectedWorkflowId) ?? null) : null,
+    [selectedWorkflowId, workflows],
   );
   const groupLabelFor: Record<string, string> = {
     package: "Marketplace",
@@ -270,22 +276,30 @@ export function WorkflowsPanel({
     <aside className="rfs-right">
       <div className="rfs-tabs">
         <button
+          type="button"
           className={`rfs-tab${tab === "workflows" ? " is-active" : ""}`}
           onClick={() => setTab("workflows")}
         >
           {Icon.workflows}
           Edits
-          <span className="rfs-tab-count">{WORKFLOWS.filter((w) => w.kind !== "soon").length}</span>
+          <span className="rfs-tab-count">{workflows.filter((w) => w.kind !== "soon").length}</span>
         </button>
         <button
+          type="button"
           className={`rfs-tab${tab === "chat" ? " is-active" : ""}`}
           onClick={() => setTab("chat")}
         >
           {Icon.chat}
           Chat
-          <span className="rfs-tab-soon" style={{ background: "var(--rfs-accent-soft)", color: "var(--rfs-accent)" }}>BETA</span>
+          <span
+            className="rfs-tab-soon"
+            style={{ background: "var(--rfs-accent-soft)", color: "var(--rfs-accent)" }}
+          >
+            BETA
+          </span>
         </button>
         <button
+          type="button"
           className={`rfs-tab${tab === "history" ? " is-active" : ""}`}
           onClick={() => setTab("history")}
         >
@@ -315,288 +329,342 @@ export function WorkflowsPanel({
             }}
           />
         ) : isFocused ? (
-        // Focused configure view: hide the search + card grid entirely
-        // so the user can attend to one thing at a time. The breadcrumb
-        // is the only way back to browse mode (clicking the canvas or
-        // a tab also clears selection from the parent).
-        <>
-          <div className="rfs-breadcrumb">
-            <button
-              type="button"
-              className="rfs-breadcrumb-back"
-              onClick={exitFocus}
-              aria-label="Back to all edits"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <span className="rfs-breadcrumb-trail">
-              <button type="button" className="rfs-breadcrumb-link" onClick={exitFocus}>
-                {breadcrumb?.group ?? "Edits"}
+          // Focused configure view: hide the search + card grid entirely
+          // so the user can attend to one thing at a time. The breadcrumb
+          // is the only way back to browse mode (clicking the canvas or
+          // a tab also clears selection from the parent).
+          <>
+            <div className="rfs-breadcrumb">
+              <button
+                type="button"
+                className="rfs-breadcrumb-back"
+                onClick={exitFocus}
+                aria-label="Back to all edits"
+              >
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
               </button>
-              <span className="rfs-breadcrumb-sep" aria-hidden>·</span>
-              <span className="rfs-breadcrumb-current">{breadcrumb?.name ?? ""}</span>
-            </span>
-          </div>
-          {selectedCustom ? (
-            <CustomReplayPanel
-              custom={selectedCustom}
-              onCancel={() => setSelectedCustomId(null)}
-              onApply={(overrides) => {
-                onRunCustom(selectedCustom, overrides);
-                setSelectedCustomId(null);
-              }}
-            />
-          ) : selectedActionContent ? (
-            <div className="rfs-action-pin is-focused">
-              {selectedActionMeta ? (
-                <ActionHeaderWithExamples
-                  meta={selectedActionMeta}
-                  workflowId={selectedWorkflowId}
-                  activeAssetId={activeAssetId}
-                  onSelectAsset={onSelectAsset}
-                />
-              ) : null}
-              <div className="rfs-action-pin-body">{selectedActionContent}</div>
+              <span className="rfs-breadcrumb-trail">
+                <button type="button" className="rfs-breadcrumb-link" onClick={exitFocus}>
+                  {breadcrumb?.group ?? "Edits"}
+                </button>
+                <span className="rfs-breadcrumb-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="rfs-breadcrumb-current">{breadcrumb?.name ?? ""}</span>
+              </span>
             </div>
-          ) : null}
-          {selectedCustom ? null : selectedActionFooter ? (
-            <footer className="rfs-action-footer">{selectedActionFooter}</footer>
-          ) : null}
-        </>
+            {selectedCustom ? (
+              <CustomReplayPanel
+                custom={selectedCustom}
+                onCancel={() => setSelectedCustomId(null)}
+                onApply={(overrides) => {
+                  onRunCustom(selectedCustom, overrides);
+                  setSelectedCustomId(null);
+                }}
+              />
+            ) : selectedActionContent ? (
+              <div className="rfs-action-pin is-focused">
+                {selectedActionMeta ? (
+                  <ActionHeaderWithExamples
+                    meta={selectedActionMeta}
+                    workflowId={selectedWorkflowId}
+                    activeAssetId={activeAssetId}
+                    onSelectAsset={onSelectAsset}
+                  />
+                ) : null}
+                <div className="rfs-action-pin-body">{selectedActionContent}</div>
+              </div>
+            ) : null}
+            {selectedCustom ? null : selectedActionFooter ? (
+              <footer className="rfs-action-footer">{selectedActionFooter}</footer>
+            ) : null}
+          </>
         ) : (
-        <>
-          <div className="rfs-search">
-            <input
-              placeholder="Search edits…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="rfs-cards">
-            {/* Custom group only renders when the user already has
+          <>
+            <div className="rfs-search">
+              <input
+                placeholder="Search edits…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="rfs-cards">
+              {/* Custom group only renders when the user already has
                 saved recipes. The empty-state +New tile was the
                 loudest first-impression of the panel and shipped no
                 value until the user had run a chain through History
                 first — moved to a quieter footer link instead. */}
-            {hasRecipes ? (
-            <div className="rfs-cards-group">
-              <div className="rfs-cards-group-label">
-                <span>Custom</span>
-              </div>
-              <button
-                type="button"
-                className="rfs-card rfs-card-custom-new"
-                onClick={openEditorForNew}
-                title="Build a recipe from scratch"
-              >
-                <div className="rfs-card-icon rfs-card-icon-custom" aria-hidden>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </div>
-                <div className="rfs-card-text">
-                  <div className="rfs-card-name">New recipe</div>
-                  <div className="rfs-card-desc">Build another chain from scratch</div>
-                </div>
-              </button>
-              {customWorkflows.map((cw) => {
-                const isSelected = selectedCustomId === cw.id;
-                return (
-                  <div
-                    key={cw.id}
-                    className={`rfs-card rfs-card-custom${isSelected ? " is-selected" : ""}`}
-                  >
-                    <button
-                      className="rfs-card-custom-body"
-                      onClick={() => {
-                        const next = isSelected ? null : cw.id;
-                        setSelectedCustomId(next);
-                        if (next) onClearWorkflowSelection?.();
-                      }}
-                    >
-                      <div className="rfs-card-icon rfs-card-icon-custom" aria-hidden>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="7" height="7" rx="1" />
-                          <rect x="14" y="3" width="7" height="7" rx="1" />
-                          <rect x="14" y="14" width="7" height="7" rx="1" />
-                          <rect x="3" y="14" width="7" height="7" rx="1" />
-                        </svg>
-                      </div>
-                      <div className="rfs-card-text">
-                        <div className="rfs-card-name">{cw.name}</div>
-                        <div className="rfs-card-desc">
-                          {cw.steps.length} step{cw.steps.length === 1 ? "" : "s"}
-                          {": "}
-                          {cw.steps
-                            .map((s) => WORKFLOWS.find((w) => w.id === s.workflowId)?.name ?? s.workflowId)
-                            .join(" · ")}
-                        </div>
-                      </div>
-                    </button>
-                    <button
-                      className="rfs-card-custom-edit"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEditorForExisting(cw);
-                      }}
-                      title="Edit recipe (rename, reorder, add or remove steps)"
-                      aria-label={`Edit recipe ${cw.name}`}
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="rfs-card-custom-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`Delete custom edit "${cw.name}"?`)) {
-                          deleteCustomWorkflow(cw.id);
-                          if (isSelected) setSelectedCustomId(null);
-                        }
-                      }}
-                      title="Delete custom edit"
-                      aria-label="Delete custom edit"
-                    >
-                      ×
-                    </button>
+              {hasRecipes ? (
+                <div className="rfs-cards-group">
+                  <div className="rfs-cards-group-label">
+                    <span>Custom</span>
                   </div>
-                );
-              })}
-            </div>
-            ) : null}
-            {groups.map((g) => (
-              <div key={g.id} className="rfs-cards-group">
-                <div className="rfs-cards-group-label">
-                  <span>{g.label}</span>
-                </div>
-                {g.items.map((wf) => {
-                  const applic = wf.applicableHint?.(photoTags);
-                  // Tri-state: "soon" (not built yet) vs.
-                  // "not-applicable" (built, but wrong photo for it)
-                  // vs. enabled. Both disabled states block the click,
-                  // but they read differently — soon is "come back
-                  // later", not-applicable is "swap your photo".
-                  const isSoon = wf.kind === "soon";
-                  const isNotApplicable = !isSoon && !!applic && !applic.ok;
-                  const disabled = isSoon || isNotApplicable;
-                  const isSelected = selectedWorkflowId === wf.id;
-                  // Recommended = the editorial "this is the demo for
-                  // this image" flag from the active asset. Replaces
-                  // the static `wf.feature` always-yellow that used to
-                  // mark ai-edit + reference-inpaint regardless of
-                  // what was on the canvas.
-                  const isRecommended = !disabled && !isSelected && recommendedSet.has(wf.id);
-                  // Native `title` tooltips don't fire on `disabled`
-                  // buttons (and child elements inside them are also
-                  // pointer-events:none in most browsers). For the
-                  // not-applicable case we wrap the disabled button in
-                  // a span carrying the tooltip — the wrapper isn't
-                  // disabled, so the tooltip surfaces normally on
-                  // hover. Soon cards don't need a tooltip.
-                  const cardButton = (
-                    <button
-                      key={wf.id}
-                      className={`rfs-card${isSelected ? " is-selected" : ""}${isRecommended ? " is-recommended" : ""}${isNotApplicable ? " is-not-applicable" : ""}`}
-                      onClick={() => onSelectWorkflow(wf)}
-                      disabled={disabled}
-                    >
-                      <div className="rfs-card-icon">{Icon[wf.id as keyof typeof Icon] ?? null}</div>
-                      <div className="rfs-card-text">
-                        <div className="rfs-card-name">
-                          {wf.name}
-                          {isSoon ? <span className="rfs-card-soon">SOON</span> : null}
-                          {isNotApplicable ? (
-                            <span
-                              className="rfs-card-swap"
-                              aria-label="Different photo would unlock this"
-                            >
-                              ?
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="rfs-card-desc">
-                          {isNotApplicable && applic?.reason ? applic.reason : wf.desc}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                  return isNotApplicable ? (
-                    <span
-                      key={wf.id}
-                      className="rfs-card-wrap"
-                      title={`${applic?.reason ?? "Not applicable"} — try a different photo`}
-                    >
-                      {cardButton}
-                    </span>
-                  ) : (
-                    cardButton
-                  );
-                })}
-              </div>
-            ))}
-            {/* Quiet footer disclosures for things that don't earn
-                first-class card real estate: pre-release workflows
-                (no actions to take) and the create-recipe entry
-                point when the user has none yet. */}
-            {soonItems.length > 0 ? (
-              <div className="rfs-cards-footer">
-                <button
-                  type="button"
-                  className="rfs-cards-disclosure"
-                  onClick={() => setShowSoon((v) => !v)}
-                  aria-expanded={showSoon}
-                >
-                  <svg
-                    width="10" height="10" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2.4"
-                    strokeLinecap="round" strokeLinejoin="round"
-                    style={{ transform: showSoon ? "rotate(90deg)" : "none", transition: "transform 120ms ease" }}
+                  <button
+                    type="button"
+                    className="rfs-card rfs-card-custom-new"
+                    onClick={openEditorForNew}
+                    title="Build a recipe from scratch"
                   >
-                    <path d="M9 6l6 6-6 6" />
-                  </svg>
-                  Coming soon ({soonItems.length})
-                </button>
-                {showSoon ? (
-                  <div className="rfs-cards-group rfs-cards-group-soon">
-                    {soonItems.map((wf) => (
-                      <button
-                        key={wf.id}
-                        className="rfs-card"
-                        disabled
-                        type="button"
+                    <div className="rfs-card-icon rfs-card-icon-custom" aria-hidden>
+                      <svg
+                        aria-hidden="true"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        <div className="rfs-card-icon">{Icon[wf.id as keyof typeof Icon] ?? null}</div>
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </div>
+                    <div className="rfs-card-text">
+                      <div className="rfs-card-name">New recipe</div>
+                      <div className="rfs-card-desc">Build another chain from scratch</div>
+                    </div>
+                  </button>
+                  {customWorkflows.map((cw) => {
+                    const isSelected = selectedCustomId === cw.id;
+                    return (
+                      <div
+                        key={cw.id}
+                        className={`rfs-card rfs-card-custom${isSelected ? " is-selected" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          className="rfs-card-custom-body"
+                          onClick={() => {
+                            const next = isSelected ? null : cw.id;
+                            setSelectedCustomId(next);
+                            if (next) onClearWorkflowSelection?.();
+                          }}
+                        >
+                          <div className="rfs-card-icon rfs-card-icon-custom" aria-hidden>
+                            <svg
+                              aria-hidden="true"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <rect x="3" y="3" width="7" height="7" rx="1" />
+                              <rect x="14" y="3" width="7" height="7" rx="1" />
+                              <rect x="14" y="14" width="7" height="7" rx="1" />
+                              <rect x="3" y="14" width="7" height="7" rx="1" />
+                            </svg>
+                          </div>
+                          <div className="rfs-card-text">
+                            <div className="rfs-card-name">{cw.name}</div>
+                            <div className="rfs-card-desc">
+                              {cw.steps.length} step{cw.steps.length === 1 ? "" : "s"}
+                              {": "}
+                              {cw.steps
+                                .map(
+                                  (s) =>
+                                    workflows.find((w) => w.id === s.workflowId)?.name ??
+                                    s.workflowId,
+                                )
+                                .join(" · ")}
+                            </div>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className="rfs-card-custom-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditorForExisting(cw);
+                          }}
+                          title="Edit recipe (rename, reorder, add or remove steps)"
+                          aria-label={`Edit recipe ${cw.name}`}
+                        >
+                          <svg
+                            aria-hidden="true"
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="rfs-card-custom-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`Delete custom edit "${cw.name}"?`)) {
+                              deleteCustomWorkflow(cw.id);
+                              if (isSelected) setSelectedCustomId(null);
+                            }
+                          }}
+                          title="Delete custom edit"
+                          aria-label="Delete custom edit"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {groups.map((g) => (
+                <div key={g.id} className="rfs-cards-group">
+                  <div className="rfs-cards-group-label">
+                    <span>{g.label}</span>
+                  </div>
+                  {g.items.map((wf) => {
+                    const applic = wf.applicableHint?.(photoTags);
+                    // Tri-state: "soon" (not built yet) vs.
+                    // "not-applicable" (built, but wrong photo for it)
+                    // vs. enabled. Both disabled states block the click,
+                    // but they read differently — soon is "come back
+                    // later", not-applicable is "swap your photo".
+                    const isSoon = wf.kind === "soon";
+                    const isNotApplicable = !isSoon && !!applic && !applic.ok;
+                    const disabled = isSoon || isNotApplicable;
+                    const isSelected = selectedWorkflowId === wf.id;
+                    // Recommended = the editorial "this is the demo for
+                    // this image" flag from the active asset. Replaces
+                    // the static `wf.feature` always-yellow that used to
+                    // mark ai-edit + reference-inpaint regardless of
+                    // what was on the canvas.
+                    const isRecommended = !disabled && !isSelected && recommendedSet.has(wf.id);
+                    // Native `title` tooltips don't fire on `disabled`
+                    // buttons (and child elements inside them are also
+                    // pointer-events:none in most browsers). For the
+                    // not-applicable case we wrap the disabled button in
+                    // a span carrying the tooltip — the wrapper isn't
+                    // disabled, so the tooltip surfaces normally on
+                    // hover. Soon cards don't need a tooltip.
+                    const cardButton = (
+                      <button
+                        type="button"
+                        key={wf.id}
+                        className={`rfs-card${isSelected ? " is-selected" : ""}${isRecommended ? " is-recommended" : ""}${isNotApplicable ? " is-not-applicable" : ""}`}
+                        onClick={() => onSelectWorkflow(wf)}
+                        disabled={disabled}
+                      >
+                        <div className="rfs-card-icon">
+                          {Icon[wf.id as keyof typeof Icon] ?? null}
+                        </div>
                         <div className="rfs-card-text">
                           <div className="rfs-card-name">
                             {wf.name}
-                            <span className="rfs-card-soon">SOON</span>
+                            {isSoon ? <span className="rfs-card-soon">SOON</span> : null}
+                            {isNotApplicable ? (
+                              <span
+                                className="rfs-card-swap"
+                                aria-label="Different photo would unlock this"
+                              >
+                                ?
+                              </span>
+                            ) : null}
                           </div>
-                          <div className="rfs-card-desc">{wf.desc}</div>
+                          <div className="rfs-card-desc">
+                            {isNotApplicable && applic?.reason ? applic.reason : wf.desc}
+                          </div>
                         </div>
                       </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            {!hasRecipes ? (
-              <div className="rfs-cards-footer">
-                <button
-                  type="button"
-                  className="rfs-cards-link"
-                  onClick={openEditorForNew}
-                >
-                  + Create a recipe
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </>
+                    );
+                    return isNotApplicable ? (
+                      <span
+                        key={wf.id}
+                        className="rfs-card-wrap"
+                        title={`${applic?.reason ?? "Not applicable"} — try a different photo`}
+                      >
+                        {cardButton}
+                      </span>
+                    ) : (
+                      cardButton
+                    );
+                  })}
+                </div>
+              ))}
+              {/* Quiet footer disclosures for things that don't earn
+                first-class card real estate: pre-release workflows
+                (no actions to take) and the create-recipe entry
+                point when the user has none yet. */}
+              {soonItems.length > 0 ? (
+                <div className="rfs-cards-footer">
+                  <button
+                    type="button"
+                    className="rfs-cards-disclosure"
+                    onClick={() => setShowSoon((v) => !v)}
+                    aria-expanded={showSoon}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        transform: showSoon ? "rotate(90deg)" : "none",
+                        transition: "transform 120ms ease",
+                      }}
+                    >
+                      <path d="M9 6l6 6-6 6" />
+                    </svg>
+                    Coming soon ({soonItems.length})
+                  </button>
+                  {showSoon ? (
+                    <div className="rfs-cards-group rfs-cards-group-soon">
+                      {soonItems.map((wf) => (
+                        <button key={wf.id} className="rfs-card" disabled type="button">
+                          <div className="rfs-card-icon">
+                            {Icon[wf.id as keyof typeof Icon] ?? null}
+                          </div>
+                          <div className="rfs-card-text">
+                            <div className="rfs-card-name">
+                              {wf.name}
+                              <span className="rfs-card-soon">SOON</span>
+                            </div>
+                            <div className="rfs-card-desc">{wf.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+              {!hasRecipes ? (
+                <div className="rfs-cards-footer">
+                  <button type="button" className="rfs-cards-link" onClick={openEditorForNew}>
+                    + Create a recipe
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </>
         )
       ) : tab === "chat" ? (
         <ChatPanel studioHandle={studioHandle} activeAssetId={activeAssetId} />
@@ -610,23 +678,26 @@ export function WorkflowsPanel({
             </div>
           ) : (
             <div className="rfs-cards-group">
-              {versions.slice().reverse().map((v) => {
-                const chain = chainForVersion(versions, v.id);
-                const savable = chainIsSavable(chain);
-                const blockReason = !savable ? reasonChainNotSavable(chain) : null;
-                return (
-                  <HistoryCard
-                    key={v.id}
-                    version={v}
-                    isCurrent={v.id === currentVersionId}
-                    onClick={() => onPickVersion(v.id)}
-                    chainLength={chain.length}
-                    canSaveChain={savable}
-                    cannotSaveReason={blockReason}
-                    onSaveChain={(name) => saveCustomWorkflow(name, chain)}
-                  />
-                );
-              })}
+              {versions
+                .slice()
+                .reverse()
+                .map((v) => {
+                  const chain = chainForVersion(versions, v.id);
+                  const savable = chainIsSavable(chain);
+                  const blockReason = !savable ? reasonChainNotSavable(chain) : null;
+                  return (
+                    <HistoryCard
+                      key={v.id}
+                      version={v}
+                      isCurrent={v.id === currentVersionId}
+                      onClick={() => onPickVersion(v.id)}
+                      chainLength={chain.length}
+                      canSaveChain={savable}
+                      cannotSaveReason={blockReason}
+                      onSaveChain={(name) => saveCustomWorkflow(name, chain)}
+                    />
+                  );
+                })}
             </div>
           )}
         </div>
@@ -677,10 +748,8 @@ function HistoryCard({
   };
 
   return (
-    <div
-      className={`rfs-card rfs-history-card${isCurrent ? " is-selected" : ""}`}
-    >
-      <button className="rfs-history-card-head" onClick={onClick}>
+    <div className={`rfs-card rfs-history-card${isCurrent ? " is-selected" : ""}`}>
+      <button type="button" className="rfs-history-card-head" onClick={onClick}>
         <div
           className="rfs-card-icon"
           style={{ background: "transparent", padding: 0, width: 44, height: 44 }}
@@ -695,11 +764,7 @@ function HistoryCard({
           <div className="rfs-history-card-name-row">
             <div className="rfs-card-name">{version.label}</div>
             {showSentinelChip ? (
-              <SentinelChip
-                result={version.sentinel}
-                skipped={sentinelSkipped}
-                size="sm"
-              />
+              <SentinelChip result={version.sentinel} skipped={sentinelSkipped} size="sm" />
             ) : null}
           </div>
           <div className="rfs-card-desc">
@@ -716,10 +781,7 @@ function HistoryCard({
               <dd className="rfs-history-row-value">
                 {r.kind === "swatch" ? (
                   <span className="rfs-history-swatch-row">
-                    <span
-                      className="rfs-history-swatch"
-                      style={{ background: r.value }}
-                    />
+                    <span className="rfs-history-swatch" style={{ background: r.value }} />
                     <span style={{ fontFamily: "ui-monospace, SF Mono, Menlo, monospace" }}>
                       {r.value}
                     </span>
@@ -742,7 +804,11 @@ function HistoryCard({
               className="rfs-history-save-trigger"
               onClick={() => setSavePromptOpen(true)}
               disabled={!canSaveChain}
-              title={canSaveChain ? `Save these ${chainLength} step${chainLength === 1 ? "" : "s"} as a custom edit you can replay` : (cannotSaveReason ?? "")}
+              title={
+                canSaveChain
+                  ? `Save these ${chainLength} step${chainLength === 1 ? "" : "s"} as a custom edit you can replay`
+                  : (cannotSaveReason ?? "")
+              }
             >
               Save these {chainLength} step{chainLength === 1 ? "" : "s"} as custom edit
             </button>
@@ -803,6 +869,7 @@ function CustomReplayPanel({
   onCancel: () => void;
   onApply: (overrides: Record<string, string>) => void;
 }) {
+  const { workflows } = useShellConfig();
   const lastStep = custom.steps[custom.steps.length - 1];
   // Currently overridable params: aspect_ratio + resolution on the
   // final step, when present. Other workflow params are taken from
@@ -820,10 +887,8 @@ function CustomReplayPanel({
   // The override selects pull their option lists from the workflow
   // definition for the last step, so we always reflect the real
   // allowed values (not a hard-coded list that drifts).
-  const lastWf = WORKFLOWS.find((w) => w.id === lastStep?.workflowId);
-  const aspectInput = lastWf?.inputs?.find(
-    (i) => i.key === "aspect_ratio" && i.type === "select",
-  );
+  const lastWf = workflows.find((w) => w.id === lastStep?.workflowId);
+  const aspectInput = lastWf?.inputs?.find((i) => i.key === "aspect_ratio" && i.type === "select");
   const resolutionInput = lastWf?.inputs?.find(
     (i) => i.key === "resolution" && i.type === "select",
   );
@@ -831,8 +896,8 @@ function CustomReplayPanel({
   // Pre-flight: surface missing required inputs BEFORE dispatch so the
   // chain doesn't fail mid-step with a vague "Prompt is required" toast.
   const validationError = useMemo(
-    () => validateRecipeSteps(custom.steps),
-    [custom.steps],
+    () => validateRecipeSteps(custom.steps, workflows),
+    [custom.steps, workflows],
   );
 
   return (
@@ -841,7 +906,17 @@ function CustomReplayPanel({
         <header className="rfs-action-pin-header">
           <div className="rfs-action-pin-header-row">
             <div className="rfs-action-pin-icon" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <rect x="3" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="3" width="7" height="7" rx="1" />
                 <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -851,7 +926,8 @@ function CustomReplayPanel({
             <div className="rfs-action-pin-title">
               <div className="rfs-action-pin-name">{custom.name}</div>
               <div className="rfs-action-pin-desc">
-                Replay these {custom.steps.length} step{custom.steps.length === 1 ? "" : "s"} on the current image
+                Replay these {custom.steps.length} step{custom.steps.length === 1 ? "" : "s"} on the
+                current image
               </div>
             </div>
           </div>
@@ -859,12 +935,13 @@ function CustomReplayPanel({
         <div className="rfs-action-pin-body">
           <ol className="rfs-custom-steps">
             {custom.steps.map((step, i) => {
-              const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+              const wf = workflows.find((w) => w.id === step.workflowId);
               const params: string[] = [];
               if (step.values?.aspect_ratio) params.push(step.values.aspect_ratio);
               if (step.values?.resolution) params.push(step.values.resolution);
               if (step.values?.color) params.push(step.values.color);
-              if (step.prompt) params.push(`"${step.prompt.slice(0, 40)}${step.prompt.length > 40 ? "…" : ""}"`);
+              if (step.prompt)
+                params.push(`"${step.prompt.slice(0, 40)}${step.prompt.length > 40 ? "…" : ""}"`);
               return (
                 <li key={i} className="rfs-custom-step">
                   <span className="rfs-custom-step-num">{i + 1}</span>
@@ -894,7 +971,9 @@ function CustomReplayPanel({
               </button>
               {showOverride ? (
                 <div className="rfs-custom-override-body">
-                  {aspectInput && aspectInput.type === "select" && overridableKeys.includes("aspect_ratio") ? (
+                  {aspectInput &&
+                  aspectInput.type === "select" &&
+                  overridableKeys.includes("aspect_ratio") ? (
                     <div className="rfs-input-group">
                       <label className="rfs-label">Aspect ratio</label>
                       <select
@@ -905,12 +984,16 @@ function CustomReplayPanel({
                         }
                       >
                         {aspectInput.options.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
                         ))}
                       </select>
                     </div>
                   ) : null}
-                  {resolutionInput && resolutionInput.type === "select" && overridableKeys.includes("resolution") ? (
+                  {resolutionInput &&
+                  resolutionInput.type === "select" &&
+                  overridableKeys.includes("resolution") ? (
                     <div className="rfs-input-group">
                       <label className="rfs-label">Resolution</label>
                       <select
@@ -921,7 +1004,9 @@ function CustomReplayPanel({
                         }
                       >
                         {resolutionInput.options.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -933,8 +1018,11 @@ function CustomReplayPanel({
         </div>
       </div>
       <footer className="rfs-action-footer">
-        <button className="rfs-btn" onClick={onCancel}>Cancel</button>
+        <button type="button" className="rfs-btn" onClick={onCancel}>
+          Cancel
+        </button>
         <button
+          type="button"
           className="rfs-btn rfs-btn-primary"
           onClick={() => onApply(showOverride ? overrides : {})}
           disabled={!!validationError}
@@ -968,6 +1056,7 @@ function CustomEditorPanel({
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const { workflows } = useShellConfig();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
@@ -1021,13 +1110,10 @@ function CustomEditorPanel({
   // check already gates "no name" / "no steps"; this is the additive
   // case ("steps exist but a required input is blank").
   const stepValidationError = useMemo(
-    () => validateRecipeSteps(draft.steps),
-    [draft.steps],
+    () => validateRecipeSteps(draft.steps, workflows),
+    [draft.steps, workflows],
   );
-  const canSave =
-    draft.steps.length > 0 &&
-    draft.name.trim().length > 0 &&
-    !stepValidationError;
+  const canSave = draft.steps.length > 0 && draft.name.trim().length > 0 && !stepValidationError;
 
   return (
     <>
@@ -1035,7 +1121,17 @@ function CustomEditorPanel({
         <header className="rfs-action-pin-header">
           <div className="rfs-action-pin-header-row">
             <div className="rfs-action-pin-icon" aria-hidden>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M12 20h9" />
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
               </svg>
@@ -1076,7 +1172,7 @@ function CustomEditorPanel({
           ) : (
             <div className="rfs-package-list">
               {draft.steps.map((step, i) => {
-                const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+                const wf = workflows.find((w) => w.id === step.workflowId);
                 const isExpanded = expandedStep === i;
                 const summary = stepSummaryText(step, wf);
                 return (
@@ -1164,8 +1260,11 @@ function CustomEditorPanel({
         </div>
       </div>
       <footer className="rfs-action-footer">
-        <button className="rfs-btn" onClick={onCancel}>Cancel</button>
+        <button type="button" className="rfs-btn" onClick={onCancel}>
+          Cancel
+        </button>
         <button
+          type="button"
           className="rfs-btn rfs-btn-primary"
           onClick={onSave}
           disabled={!canSave}
@@ -1199,10 +1298,13 @@ type RecipeValidationError = {
   stepIndex: number;
   message: string;
 };
-function validateRecipeSteps(steps: CustomStep[]): RecipeValidationError | null {
+function validateRecipeSteps(
+  steps: CustomStep[],
+  workflows: ReadonlyArray<Workflow>,
+): RecipeValidationError | null {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
-    const wf = WORKFLOWS.find((w) => w.id === step.workflowId);
+    const wf = workflows.find((w) => w.id === step.workflowId);
     if (!wf) continue;
 
     // Implicit prompt requirement: prompt/prompt-zip workflows store
@@ -1244,7 +1346,7 @@ function validateRecipeSteps(steps: CustomStep[]): RecipeValidationError | null 
 function stepSummaryText(step: CustomStep, wf: Workflow | undefined): string {
   const bits: string[] = [];
   const v = step.values ?? {};
-  if (step.prompt && step.prompt.trim()) {
+  if (step.prompt?.trim()) {
     const p = step.prompt.trim();
     bits.push(`"${p.length > 30 ? `${p.slice(0, 30)}…` : p}"`);
   }
@@ -1282,6 +1384,7 @@ function ActionHeaderWithExamples({
   activeAssetId: string | null;
   onSelectAsset?: (id: string) => void;
 }) {
+  const { samples: catalogSamples } = useShellConfig();
   const [open, setOpen] = useState(false);
   // Recompute matching samples when the workflow changes; reset the
   // open state so an expanded strip from one workflow doesn't bleed
@@ -1292,21 +1395,17 @@ function ActionHeaderWithExamples({
 
   const samples = useMemo<SampleAsset[]>(() => {
     if (!workflowId) return [];
-    return SAMPLES.filter(
-      (s) =>
-        s.recommendedWorkflows?.includes(workflowId) &&
-        s.id !== activeAssetId,
-    ).slice(0, 4);
-  }, [workflowId, activeAssetId]);
+    return catalogSamples
+      .filter((s) => s.recommendedWorkflows?.includes(workflowId) && s.id !== activeAssetId)
+      .slice(0, 4);
+  }, [workflowId, activeAssetId, catalogSamples]);
 
   const hasSamples = samples.length > 0 && !!onSelectAsset;
 
   return (
     <header className={`rfs-action-pin-header${open ? " is-expanded" : ""}`}>
       <div className="rfs-action-pin-header-row">
-        <div className="rfs-action-pin-icon">
-          {Icon[meta.iconKey as keyof typeof Icon] ?? null}
-        </div>
+        <div className="rfs-action-pin-icon">{Icon[meta.iconKey as keyof typeof Icon] ?? null}</div>
         <div className="rfs-action-pin-title">
           <div className="rfs-action-pin-name">{meta.name}</div>
           <div className="rfs-action-pin-desc">{meta.desc}</div>
@@ -1316,21 +1415,21 @@ function ActionHeaderWithExamples({
             type="button"
             className={`rfs-action-examples-toggle${open ? " is-open" : ""}`}
             onClick={() => setOpen((v) => !v)}
-            title={open ? "Hide examples" : `See ${samples.length} sample${samples.length === 1 ? "" : "s"} this works on`}
+            title={
+              open
+                ? "Hide examples"
+                : `See ${samples.length} sample${samples.length === 1 ? "" : "s"} this works on`
+            }
             aria-expanded={open}
           >
             <span aria-hidden>✨</span>
-            <span className="rfs-action-examples-toggle-label">
-              {open ? "Hide" : "Examples"}
-            </span>
+            <span className="rfs-action-examples-toggle-label">{open ? "Hide" : "Examples"}</span>
           </button>
         ) : null}
       </div>
       {open && hasSamples ? (
         <div className="rfs-action-examples">
-          <div className="rfs-action-examples-hint">
-            Try this workflow on a curated demo image:
-          </div>
+          <div className="rfs-action-examples-hint">Try this workflow on a curated demo image:</div>
           <div className="rfs-action-examples-strip">
             {samples.map((s) => (
               <button
@@ -1353,4 +1452,3 @@ function ActionHeaderWithExamples({
     </header>
   );
 }
-

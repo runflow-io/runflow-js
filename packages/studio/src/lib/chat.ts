@@ -35,9 +35,7 @@ export type ToolResultBlock = {
 };
 export type ImageBlock = {
   type: "image";
-  source:
-    | { type: "url"; url: string }
-    | { type: "base64"; media_type: string; data: string };
+  source: { type: "url"; url: string } | { type: "base64"; media_type: string; data: string };
 };
 
 export type ContentBlock = TextBlock | ToolUseBlock | ToolResultBlock | ImageBlock;
@@ -84,8 +82,7 @@ export type StudioHandle = {
     captured: CapturedInputs,
     opts?: { intermediate?: boolean },
   ) => Promise<
-    | { ok: true; versionId: string; outputUrl: string; label: string }
-    | { ok: false; error: string }
+    { ok: true; versionId: string; outputUrl: string; label: string } | { ok: false; error: string }
   >;
 };
 
@@ -137,8 +134,7 @@ async function* parseSse(stream: ReadableStream<Uint8Array>): AsyncGenerator<Sse
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       // SSE events are separated by blank lines
-      let split: number;
-      while ((split = buffer.indexOf("\n\n")) >= 0) {
+      for (let split = buffer.indexOf("\n\n"); split >= 0; split = buffer.indexOf("\n\n")) {
         const raw = buffer.slice(0, split);
         buffer = buffer.slice(split + 2);
         const lines = raw.split("\n");
@@ -236,7 +232,8 @@ export async function streamChatTurn(
         }
       } else if (ev.event === "content_block_delta") {
         const idx = (ev.data as { index: number }).index;
-        const delta = (ev.data as { delta: { type: string; text?: string; partial_json?: string } }).delta;
+        const delta = (ev.data as { delta: { type: string; text?: string; partial_json?: string } })
+          .delta;
         if (delta.type === "text_delta" && typeof delta.text === "string") {
           const block = blocks[idx];
           if (block && block.type === "text") {
@@ -265,7 +262,8 @@ export async function streamChatTurn(
       } else if (ev.event === "message_stop") {
         // done
       } else if (ev.event === "error") {
-        const errMsg = (ev.data as { error?: { message?: string } }).error?.message ?? "stream error";
+        const errMsg =
+          (ev.data as { error?: { message?: string } }).error?.message ?? "stream error";
         return { ok: false, error: errMsg };
       }
     }
@@ -292,8 +290,19 @@ export type DispatchResult = {
   captured: CapturedInputs;
   /** UI-side notes the chat panel needs to react to (e.g. plan to render). */
   uiEffect?:
-    | { kind: "plan_proposed"; steps: { workflow_id: string; description: string }[]; rationale: string; confirmed: boolean }
-    | { kind: "workflow_complete"; workflowId: string; versionId: string; outputUrl: string; label: string }
+    | {
+        kind: "plan_proposed";
+        steps: { workflow_id: string; description: string }[];
+        rationale: string;
+        confirmed: boolean;
+      }
+    | {
+        kind: "workflow_complete";
+        workflowId: string;
+        versionId: string;
+        outputUrl: string;
+        label: string;
+      }
     | { kind: "workflow_failed"; workflowId: string; error: string }
     | { kind: "input_captured"; field: keyof CapturedInputs };
 };
@@ -369,7 +378,8 @@ export async function runTool(
       const hint = String(block.input.hint ?? "Pick a color");
       const def = typeof block.input.default === "string" ? block.input.default : undefined;
       const hex = await handle.requestColor(hint, def);
-      if (hex === null) return { toolResult: err(id, "User cancelled the color picker."), captured };
+      if (hex === null)
+        return { toolResult: err(id, "User cancelled the color picker."), captured };
       next.color = hex;
       return {
         toolResult: ok(
@@ -390,8 +400,7 @@ export async function runTool(
         return { toolResult: err(id, "request_aspect needs at least one option."), captured };
       }
       const allowCustom = !!block.input.allow_custom;
-      const def =
-        typeof block.input.default === "string" ? block.input.default : undefined;
+      const def = typeof block.input.default === "string" ? block.input.default : undefined;
       const value = await handle.requestAspect(hint, options, allowCustom, def);
       if (value === null) {
         return { toolResult: err(id, "User cancelled the aspect ratio picker."), captured };
@@ -407,8 +416,7 @@ export async function runTool(
     }
     case "request_resolution": {
       const hint = String(block.input.hint ?? "Pick a resolution");
-      const def =
-        typeof block.input.default === "string" ? block.input.default : undefined;
+      const def = typeof block.input.default === "string" ? block.input.default : undefined;
       const value = await handle.requestResolution(hint, def);
       if (value === null) {
         return { toolResult: err(id, "User cancelled the resolution picker."), captured };
@@ -439,8 +447,7 @@ export async function runTool(
       if (options.length < 2) {
         return { toolResult: err(id, "request_choice needs at least two options."), captured };
       }
-      const def =
-        typeof block.input.default === "string" ? block.input.default : undefined;
+      const def = typeof block.input.default === "string" ? block.input.default : undefined;
       const value = await handle.requestChoice(hint, options, def);
       if (value === null) {
         return { toolResult: err(id, "User cancelled the choice picker."), captured };
@@ -463,7 +470,10 @@ export async function runTool(
       }
       next.text = text;
       return {
-        toolResult: ok(id, text === "" ? "User skipped the optional text." : `Text captured: "${text}"`),
+        toolResult: ok(
+          id,
+          text === "" ? "User skipped the optional text." : `Text captured: "${text}"`,
+        ),
         captured: next,
         uiEffect: { kind: "input_captured", field: "text" },
       };
@@ -472,7 +482,13 @@ export async function runTool(
       const workflowId = String(block.input.workflow_id ?? "");
       if (!workflowId) return { toolResult: err(id, "Missing workflow_id."), captured };
       const params: Record<string, string> = {};
-      for (const k of ["prompt", "aspect_ratio", "resolution", "color", "product_isolation_prompt"]) {
+      for (const k of [
+        "prompt",
+        "aspect_ratio",
+        "resolution",
+        "color",
+        "product_isolation_prompt",
+      ]) {
         const v = block.input[k];
         if (typeof v === "string" && v.length) params[k] = v;
       }
@@ -531,7 +547,8 @@ export async function runTool(
 let _sessionId: string | null = null;
 export function getSessionId(): string {
   if (_sessionId) return _sessionId;
-  const stored = typeof window !== "undefined" ? window.sessionStorage.getItem("rfs-chat-session") : null;
+  const stored =
+    typeof window !== "undefined" ? window.sessionStorage.getItem("rfs-chat-session") : null;
   if (stored) {
     _sessionId = stored;
     return stored;

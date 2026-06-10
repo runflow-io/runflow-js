@@ -1,5 +1,6 @@
 import {
   DEFAULT_ALLOWED_MODELS,
+  DEFAULT_ALLOWED_PATHS,
   DEFAULT_BASE_PATH,
   DEFAULT_MAX_BODY_BYTES,
   DEFAULT_RUNFLOW_BASE,
@@ -7,6 +8,7 @@ import {
   UUID_RE,
 } from "./defaults.js";
 import type {
+  AllowedPath,
   AuthResult,
   OnRunArgs,
   ProxyConfig,
@@ -25,6 +27,7 @@ interface NormalizedConfig {
   upstreamTimeoutMs: number;
   fetcher: typeof fetch;
   allowedModelsFor: (auth: AuthResult | null) => ReadonlyArray<string>;
+  allowedPaths: ReadonlyArray<AllowedPath>;
   allowedOrigins: ReadonlyArray<string> | "same-origin" | false;
   requireJsonContentType: boolean;
   authenticate?: ProxyConfig["authenticate"];
@@ -39,7 +42,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
   }
   const allowed = cfg.allowedModels ?? DEFAULT_ALLOWED_MODELS;
   const allowedModelsFor =
-    typeof allowed === "function" ? allowed : (() => allowed as ReadonlyArray<string>);
+    typeof allowed === "function" ? allowed : () => allowed as ReadonlyArray<string>;
   return {
     apiKey: cfg.apiKey,
     basePath: stripTrailing(cfg.basePath ?? DEFAULT_BASE_PATH),
@@ -48,6 +51,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
     upstreamTimeoutMs: cfg.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS,
     fetcher: cfg.fetch ?? globalThis.fetch,
     allowedModelsFor,
+    allowedPaths: cfg.allowedPaths ?? DEFAULT_ALLOWED_PATHS,
     allowedOrigins: cfg.allowedOrigins ?? "same-origin",
     requireJsonContentType: cfg.requireJsonContentType ?? true,
     authenticate: cfg.authenticate,
@@ -67,10 +71,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
  * header. `false` opts out entirely (not recommended). An explicit
  * array of origins is matched case-insensitively on scheme + host + port.
  */
-function originAllowed(
-  req: Request,
-  policy: NormalizedConfig["allowedOrigins"],
-): boolean {
+function originAllowed(req: Request, policy: NormalizedConfig["allowedOrigins"]): boolean {
   if (policy === false) return true;
   const origin = req.headers.get("origin");
   if (!origin) {
@@ -123,10 +124,19 @@ function jsonContentTypeOK(req: Request): boolean {
 export function runflowProxy(cfg: ProxyConfig): ProxyHandler & {
   GET: ProxyHandler;
   POST: ProxyHandler;
+  PUT: ProxyHandler;
+  PATCH: ProxyHandler;
+  DELETE: ProxyHandler;
 } {
   const c = normalize(cfg);
   const handler: ProxyHandler = async (req) => handle(c, req);
-  return Object.assign(handler, { GET: handler, POST: handler });
+  return Object.assign(handler, {
+    GET: handler,
+    POST: handler,
+    PUT: handler,
+    PATCH: handler,
+    DELETE: handler,
+  });
 }
 
 async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
@@ -135,20 +145,46 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
   const segments = upstreamPath.split("/").filter(Boolean);
   const { isDispatch, model, runId } = classify(req.method, segments);
   const isHealth =
-    req.method === "GET" && segments.length === 2 && segments[0] === "v1" && segments[1] === "health";
+    req.method === "GET" &&
+    segments.length === 2 &&
+    segments[0] === "v1" &&
+    segments[1] === "health";
 
-  if (!isDispatch && !runId && !isHealth) {
-    return json({ error: "Not allowed" }, 403);
+  // Empty segments (`//`, trailing `/`) would make the matched path
+  // differ from the forwarded one — refuse to match them at all.
+  const hasEmptySegments = /\/\//.test(upstreamPath) || upstreamPath.endsWith("/");
+  const isAllowedPath =
+    !isDispatch &&
+    !runId &&
+    !isHealth &&
+    !hasEmptySegments &&
+    matchAllowedPath(req.method, segments, c.allowedPaths);
+
+  if (!isDispatch && !runId && !isHealth && !isAllowedPath) {
+    return json(
+      {
+        error: `Path not allowed: ${req.method} /${upstreamPath.slice(0, 120)}. The proxy forwards model dispatch, run polling, health, and the asset upload/read routes by default; add other upstream routes via the allowedPaths option.`,
+        code: "path_not_allowed",
+      },
+      403,
+    );
   }
 
   // CSRF gate — must run before any authenticate hook so a malicious
   // page can't drain cookie credentials into the customer's API key.
   if (req.method !== "GET" && req.method !== "HEAD") {
     if (!originAllowed(req, c.allowedOrigins)) {
-      return json({ error: "Origin not allowed" }, 403);
+      return json({ error: "Origin not allowed", code: "origin_not_allowed" }, 403);
     }
     if (c.requireJsonContentType && !jsonContentTypeOK(req)) {
-      return json({ error: "Content-Type must be application/json" }, 415);
+      return json(
+        {
+          error:
+            "Content-Type must be application/json (CSRF defense — required on every non-GET request through the proxy, including bodyless DELETEs)",
+          code: "json_content_type_required",
+        },
+        415,
+      );
     }
   }
 
@@ -168,7 +204,10 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
   if (isDispatch && model) {
     const allowed = c.allowedModelsFor(auth);
     if (!allowed.includes(model)) {
-      return json({ error: "Model not allowed" }, 403);
+      return json(
+        { error: `Model not allowed: ${model.slice(0, 120)}`, code: "model_not_allowed" },
+        403,
+      );
     }
   }
 
@@ -274,6 +313,53 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
   });
 }
 
+/**
+ * Strict allow-list matcher for configured extra routes. Full-path,
+ * segment-by-segment comparison — no prefixes, no wildcards. A `:param`
+ * rule segment accepts exactly one non-empty path segment, rejecting
+ * `.`/`..` (and their percent-encoded forms) so a matched path can't
+ * traverse to a different upstream route.
+ */
+function matchAllowedPath(
+  method: string,
+  segments: string[],
+  rules: ReadonlyArray<AllowedPath>,
+): boolean {
+  for (const rule of rules) {
+    const methods = Array.isArray(rule.method) ? rule.method : [rule.method];
+    if (!methods.includes(method)) continue;
+    const ruleSegments = rule.path.split("/").filter(Boolean);
+    if (ruleSegments.length !== segments.length) continue;
+    let matched = true;
+    for (let i = 0; i < ruleSegments.length; i++) {
+      const ruleSegment = ruleSegments[i] ?? "";
+      const pathSegment = segments[i] ?? "";
+      if (ruleSegment.startsWith(":")) {
+        if (!isSafeParamSegment(pathSegment)) {
+          matched = false;
+          break;
+        }
+      } else if (ruleSegment !== pathSegment) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return true;
+  }
+  return false;
+}
+
+function isSafeParamSegment(segment: string): boolean {
+  if (!segment) return false;
+  let decoded = segment;
+  try {
+    decoded = decodeURIComponent(segment);
+  } catch {
+    return false;
+  }
+  return decoded !== "." && decoded !== ".." && !decoded.includes("/") && !decoded.includes("\\");
+}
+
 function classify(
   method: string,
   segments: string[],
@@ -339,7 +425,11 @@ async function readBoundedBody(req: Request, max: number): Promise<string> {
   return new TextDecoder().decode(merged);
 }
 
-function json(payload: unknown, status: number, extraHeaders: Record<string, string> = {}): Response {
+function json(
+  payload: unknown,
+  status: number,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(payload), {
     status,
     headers: { "Content-Type": "application/json", ...extraHeaders },

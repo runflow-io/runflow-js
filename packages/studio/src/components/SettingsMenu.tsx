@@ -13,10 +13,7 @@
 // per step, which is too slow for casual demos but useful when the
 // operator wants to catch a regression early.
 
-import {
-  setStudioSetting,
-  useStudioSettings,
-} from "../lib/studio-settings";
+import { setStudioSetting, useStudioSettings } from "../lib/studio-settings";
 
 const TOOLTIP =
   "Pause the chain if any intermediate step fails the quality check. Adds ~2 minutes per step.";

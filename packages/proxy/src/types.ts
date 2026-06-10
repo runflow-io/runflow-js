@@ -23,7 +23,7 @@ export interface RateLimitDeniedResult {
 export interface RateLimitAllowedResult {
   status: 0;
 }
-export type RateLimitResult = RateLimitDeniedResult | RateLimitAllowedResult | void;
+export type RateLimitResult = RateLimitDeniedResult | RateLimitAllowedResult | undefined;
 
 export interface ProxyRequestContext {
   method: string;
@@ -52,6 +52,25 @@ export interface OnRunArgs extends ProxyRequestContext {
   upstreamStatus: number;
 }
 
+export type AllowedPathMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+/**
+ * One extra upstream route the proxy may forward beyond its built-ins
+ * (dispatch, run polling, health).
+ *
+ * `path` is matched against the upstream path (after `basePath` is
+ * stripped) segment by segment — full match only, no prefixes or
+ * wildcards. A `:param` segment matches exactly one non-empty segment;
+ * traversal segments (`.`, `..`, including percent-encoded forms) never
+ * match.
+ */
+export interface AllowedPath {
+  /** HTTP method(s) this rule applies to. */
+  method: AllowedPathMethod | ReadonlyArray<AllowedPathMethod>;
+  /** Upstream path pattern, e.g. `"/v1/asset-uploads/:id/confirmations"`. */
+  path: string;
+}
+
 export interface ProxyConfig {
   /** Runflow API key — required. Sent as `Authorization: Bearer <key>`. */
   apiKey: string;
@@ -62,6 +81,32 @@ export interface ProxyConfig {
    * Runflow's solutions models + nano-banana + Topaz upscale.
    */
   allowedModels?: ReadonlyArray<string> | ((auth: AuthResult | null) => ReadonlyArray<string>);
+
+  /**
+   * Extra upstream routes to forward beyond the always-on built-ins
+   * (dispatch, run polling, health). Like `allowedModels`, passing a
+   * list REPLACES the defaults (`DEFAULT_ALLOWED_PATHS`: the asset
+   * upload pair + `GET /v1/assets/:id`, what `rf.assets.upload`/`get`
+   * need). Spread the exported defaults to extend them:
+   *
+   * ```ts
+   * allowedPaths: [...DEFAULT_ALLOWED_PATHS, { method: "GET", path: "/v1/runs" }]
+   * ```
+   *
+   * Pass `[]` to disable the asset routes entirely.
+   *
+   * SECURITY: every request that matches is forwarded with YOUR API key,
+   * so an allowed GET exposes that data to any same-origin browser
+   * session (the default upload routes included — pair the proxy with
+   * `authenticate` + `rateLimit` in production). Only allow reads like
+   * `GET /v1/runs` or `GET /v1/billing/balance` deliberately.
+   *
+   * Notes: upstream responses are fully buffered (no streaming) — avoid
+   * allowing large/binary endpoints; non-GET requests must send
+   * `Content-Type: application/json` (CSRF gate), including bodyless
+   * DELETE/PATCH/PUT.
+   */
+  allowedPaths?: ReadonlyArray<AllowedPath>;
 
   /**
    * The URL prefix the proxy is mounted at. Stripped from incoming

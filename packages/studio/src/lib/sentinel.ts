@@ -87,7 +87,7 @@ export async function evaluate(
     const dispatchJson = (await dispatch.json()) as { eval_id?: string };
     const evalId = dispatchJson.eval_id;
     if (!evalId) {
-      console.warn(`[sentinel] dispatch ok but no eval_id in response`, dispatchJson);
+      console.warn("[sentinel] dispatch ok but no eval_id in response", dispatchJson);
       return { state: "failed", error: "no eval_id in dispatch response" };
     }
 
@@ -163,7 +163,9 @@ export async function evaluate(
             sd.error || sd.error_message || sd.failure_reason || sd.message || null;
           return {
             state: "failed",
-            error: upstreamReason ? `eval failed: ${upstreamReason}` : "eval failed (no reason given)",
+            error: upstreamReason
+              ? `eval failed: ${upstreamReason}`
+              : "eval failed (no reason given)",
           };
         }
       } catch (e) {
@@ -180,7 +182,7 @@ export async function evaluate(
       error: lastPollFail ? `timed out (last poll: ${lastPollFail})` : "timed out",
     };
   } catch (e) {
-    console.warn(`[sentinel] evaluate threw`, e);
+    console.warn("[sentinel] evaluate threw", e);
     return { state: "failed", error: e instanceof Error ? e.message : "network" };
   }
 }
@@ -223,7 +225,9 @@ export function taskDescription(
     case "generate":
       // Text-to-image — the user's prompt IS the brief. Surfaces what
       // they asked for so the judges can score against it directly.
-      return promptText || values.prompt || "Photoreal product photography, the subject is the hero.";
+      return (
+        promptText || values.prompt || "Photoreal product photography, the subject is the hero."
+      );
     default:
       return "Photoreal product photography, the subject is the hero.";
   }

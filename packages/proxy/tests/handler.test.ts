@@ -55,11 +55,17 @@ describe("runflowProxy — routing", () => {
       }),
     });
     const res = await proxy(
-      new Request("http://app/api/runflow/v1/models/runfl0w/background-removal/runs".replace("runfl0w", "runflow"), {
-        method: "POST",
-        body: JSON.stringify({ input: { image_url: "https://cdn/x.png" } }),
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Request(
+        "http://app/api/runflow/v1/models/runfl0w/background-removal/runs".replace(
+          "runfl0w",
+          "runflow",
+        ),
+        {
+          method: "POST",
+          body: JSON.stringify({ input: { image_url: "https://cdn/x.png" } }),
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
     expect(res.status).toBe(200);
     expect(seenAuth).toBe(`Bearer ${KEY}`);
@@ -73,9 +79,15 @@ describe("runflowProxy — routing", () => {
       apiKey: KEY,
       fetch: mockUpstream(
         (req) =>
-          new Response(JSON.stringify({ id: new URL(req.url).pathname.split("/").pop(), status_code: "succeeded" }), {
-            headers: { "Content-Type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              id: new URL(req.url).pathname.split("/").pop(),
+              status_code: "succeeded",
+            }),
+            {
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
       ),
     });
     const goodUuid = "11111111-2222-3333-4444-555555555555";

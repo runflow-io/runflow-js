@@ -1,7 +1,8 @@
+import { AssetsResource } from "./assets.js";
 import { RunflowError } from "./errors.js";
-import type { Run, RunDispatched, RunflowConfig, WaitOptions } from "./types.js";
 import { RunFailedError, RunTimeoutError } from "./errors.js";
 import { ToolsResource } from "./tools/run.js";
+import type { Run, RunDispatched, RunflowConfig, WaitOptions } from "./types.js";
 
 const DEFAULT_API_BASE = "https://api.runflow.io";
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
@@ -19,6 +20,7 @@ export class Runflow {
   readonly runs: RunsResource;
   readonly health: HealthResource;
   readonly tools: ToolsResource;
+  readonly assets: AssetsResource;
 
   constructor(config: RunflowConfig) {
     if (!config.apiKey && !config.baseUrl) {
@@ -32,7 +34,10 @@ export class Runflow {
     }
     this.fetcher = config.fetch ?? globalThis.fetch;
     this.base = stripTrailing(config.baseUrl ?? config.apiBase ?? DEFAULT_API_BASE);
-    this.authHeader = config.apiKey ? `Bearer ${config.apiKey}` : undefined;
+    // In proxy mode (baseUrl) the proxy injects the key server-side — the
+    // browser-side client must never send one, even if a caller passes
+    // both. Matches the documented "baseUrl wins, bearer omitted" contract.
+    this.authHeader = config.apiKey && !config.baseUrl ? `Bearer ${config.apiKey}` : undefined;
     this.extraHeaders = { ...config.headers };
     this.requestTimeoutMs = config.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
@@ -40,6 +45,53 @@ export class Runflow {
     this.runs = new RunsResource(this);
     this.health = new HealthResource(this);
     this.tools = new ToolsResource(this);
+    this.assets = new AssetsResource(this);
+  }
+
+  /**
+   * Fetch an absolute URL through the configured fetcher — no base-URL
+   * joining, no auth header. Used for presigned storage PUTs, which are
+   * authorized by the URL itself and must not leak the API key.
+   * @internal
+   */
+  async rawFetch(
+    url: string,
+    init: {
+      method?: string;
+      headers?: Record<string, string>;
+      body?: BodyInit;
+      signal?: AbortSignal;
+    },
+    timeoutMs: number = this.requestTimeoutMs,
+  ): Promise<Response> {
+    const controller = mergeAbort(init.signal, timeoutMs);
+    try {
+      return await this.fetcher(url, {
+        method: init.method ?? "GET",
+        headers: init.headers,
+        body: init.body,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      // Presigned URLs carry bearer-like signatures in the query string —
+      // never echo them into error messages.
+      const redacted = redactUrl(url);
+      if (controller.timedOut()) {
+        throw new RunflowError(
+          `Request timed out (${timeoutMs}ms): ${init.method ?? "GET"} ${redacted}`,
+          {
+            code: "request_timeout",
+            cause: err,
+          },
+        );
+      }
+      throw new RunflowError(`Request failed: ${init.method ?? "GET"} ${redacted}`, {
+        code: "network_error",
+        cause: err,
+      });
+    } finally {
+      controller.clear();
+    }
   }
 
   /** @internal */
@@ -72,10 +124,13 @@ export class Runflow {
       res = await this.fetcher(url, { method, headers, body, signal: controller.signal });
     } catch (err) {
       if (controller.timedOut()) {
-        throw new RunflowError(`Request timed out (${this.requestTimeoutMs}ms): ${method} ${path}`, {
-          code: "request_timeout",
-          cause: err,
-        });
+        throw new RunflowError(
+          `Request timed out (${this.requestTimeoutMs}ms): ${method} ${path}`,
+          {
+            code: "request_timeout",
+            cause: err,
+          },
+        );
       }
       throw new RunflowError(`Request failed: ${method} ${path}`, {
         code: "network_error",
@@ -87,16 +142,29 @@ export class Runflow {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
-      let parsed: { error?: { message?: string; code?: string }; message?: string } | null = null;
+      // Two error body shapes flow through here: the API's nested
+      // { error: { message, code } } and the proxy's flat
+      // { error: string, code: string }.
+      let parsed: {
+        error?: { message?: string; code?: string } | string;
+        message?: string;
+        code?: string;
+      } | null = null;
       try {
         parsed = text ? JSON.parse(text) : null;
       } catch {
         // body wasn't JSON
       }
-      const msg = parsed?.error?.message ?? parsed?.message ?? text.slice(0, 300) ?? res.statusText;
+      const errField = parsed?.error;
+      const msg =
+        (typeof errField === "string" ? errField : errField?.message) ??
+        parsed?.message ??
+        text.slice(0, 300) ??
+        res.statusText;
+      const code = (typeof errField === "object" ? errField?.code : undefined) ?? parsed?.code;
       throw new RunflowError(`HTTP ${res.status}: ${msg || "request failed"}`, {
         status: res.status,
-        code: parsed?.error?.code,
+        code,
       });
     }
 
@@ -166,7 +234,11 @@ export class RunsResource {
       }
       opts.onPoll?.(run);
       yield run;
-      if (run.status_code === "succeeded" || run.status_code === "failed" || run.status_code === "canceled") {
+      if (
+        run.status_code === "succeeded" ||
+        run.status_code === "failed" ||
+        run.status_code === "canceled"
+      ) {
         return;
       }
       await sleep(interval);
@@ -189,10 +261,11 @@ export class RunsResource {
       throw new RunflowError(`Run ${id} produced no status updates`, { code: "no_status" });
     }
     if (last.status_code === "failed" || last.status_code === "canceled") {
-      throw new RunFailedError(
-        last.error?.message ?? `Run ${id} ${last.status_code}`,
-        { id: last.id, status: last.status_code, error: last.error },
-      );
+      throw new RunFailedError(last.error?.message ?? `Run ${id} ${last.status_code}`, {
+        id: last.id,
+        status: last.status_code,
+        error: last.error,
+      });
     }
     return last;
   }
@@ -210,6 +283,12 @@ function stripTrailing(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
+/** Drop the query string (where presigned-URL signatures live). */
+function redactUrl(url: string): string {
+  const q = url.indexOf("?");
+  return q === -1 ? url : `${url.slice(0, q)}?…`;
+}
+
 /**
  * Validate + percent-encode a multi-segment model id (`owner/slug`,
  * `owner/slug/subroute`). Each segment must be non-empty and not `.`
@@ -223,9 +302,12 @@ function encodeModelId(model: string): string {
   const parts = model.split("/");
   for (const p of parts) {
     if (p === "" || p === "." || p === "..") {
-      throw new RunflowError(`models.run: invalid model id segment ${JSON.stringify(p)} in ${JSON.stringify(model)}`, {
-        code: "invalid_model_id",
-      });
+      throw new RunflowError(
+        `models.run: invalid model id segment ${JSON.stringify(p)} in ${JSON.stringify(model)}`,
+        {
+          code: "invalid_model_id",
+        },
+      );
     }
   }
   return parts.map(encodeURIComponent).join("/");

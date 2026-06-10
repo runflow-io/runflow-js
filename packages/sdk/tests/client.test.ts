@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Runflow, RunflowError, RunFailedError } from "../src/index.js";
+import { RunFailedError, Runflow, RunflowError } from "../src/index.js";
 
 function mockFetch(handler: (req: Request) => Response | Promise<Response>): typeof fetch {
   return ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -95,17 +95,20 @@ describe("models.run + runs.wait", () => {
         );
       }),
     });
-    await expect(rf.runs.wait("run_2", { pollIntervalMs: 1 })).rejects.toBeInstanceOf(RunFailedError);
+    await expect(rf.runs.wait("run_2", { pollIntervalMs: 1 })).rejects.toBeInstanceOf(
+      RunFailedError,
+    );
   });
 
   it("surfaces HTTP errors as RunflowError with status", async () => {
     const rf = new Runflow({
       apiKey: "rf_live_x",
-      fetch: mockFetch(() =>
-        new Response(JSON.stringify({ error: { message: "rate limited" } }), {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
-        }),
+      fetch: mockFetch(
+        () =>
+          new Response(JSON.stringify({ error: { message: "rate limited" } }), {
+            status: 429,
+            headers: { "Content-Type": "application/json" },
+          }),
       ),
     });
     try {
@@ -131,14 +134,14 @@ describe("models.run + runs.get — path encoding", () => {
       }),
     });
     await rf.models.run("space owner/has spaces/runs slug", {});
-    expect(seenUrl).toMatch(
-      /\/v1\/models\/space%20owner\/has%20spaces\/runs%20slug\/runs/,
-    );
+    expect(seenUrl).toMatch(/\/v1\/models\/space%20owner\/has%20spaces\/runs%20slug\/runs/);
   });
 
   it("rejects model id with empty / dot / dot-dot segments", async () => {
     const rf = new Runflow({ apiKey: "rf_live_x", fetch: mockFetch(() => new Response("")) });
-    await expect(rf.models.run("runflow//background-removal", {})).rejects.toThrow(/invalid model id/);
+    await expect(rf.models.run("runflow//background-removal", {})).rejects.toThrow(
+      /invalid model id/,
+    );
     await expect(rf.models.run("runflow/../secret", {})).rejects.toThrow(/invalid model id/);
     await expect(rf.models.run("./foo", {})).rejects.toThrow(/invalid model id/);
   });
@@ -207,8 +210,9 @@ describe("tools.run — type-contract enforcement", () => {
 
 describe("tools.run", () => {
   it("merges presets and runtime args, then extracts output", async () => {
-    const { defineTool, imageInput, textInput, imageOutput, extractFirstImageUrl } =
-      await import("../src/tools/index.js");
+    const { defineTool, imageInput, textInput, imageOutput, extractFirstImageUrl } = await import(
+      "../src/tools/index.js"
+    );
 
     const tool = defineTool({
       id: "scene-test",

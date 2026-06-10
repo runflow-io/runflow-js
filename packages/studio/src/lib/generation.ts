@@ -50,15 +50,12 @@ export function pickGenerationTier(resolution: GenerationResolution): Generation
   return TIERS[resolution];
 }
 
-export function estimateGenerationCost(
-  resolution: GenerationResolution,
-  count: number,
-): number {
+export function estimateGenerationCost(resolution: GenerationResolution, count: number): number {
   return TIERS[resolution].costUsd * count;
 }
 
 export function formatCostUsd(usd: number): string {
-  if (usd < 0.01) return `< $0.01`;
+  if (usd < 0.01) return "< $0.01";
   return `$${usd.toFixed(2)}`;
 }
 
@@ -157,8 +154,7 @@ export async function dispatchGeneration(
         // The Runflow API normalises edit-output shapes around an
         // `outputs[]` array; fall back to a couple of legacy shapes
         // so a slight schema drift doesn't kill the panel.
-        const outputUrl =
-          out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
+        const outputUrl = out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
         if (!outputUrl) {
           return { ok: false, tier, error: "Run succeeded but no image URL in output" };
         }

@@ -32,9 +32,7 @@ export type CustomWorkflow = {
 
 // Workflows that need runtime canvas input. Any chain containing one
 // of these can't be saved as a custom in v1.
-const STATEFUL_WORKFLOW_IDS = new Set([
-  "reference-inpaint",
-]);
+const STATEFUL_WORKFLOW_IDS = new Set(["reference-inpaint"]);
 
 // True if a candidate chain (list of VersionRequests pulled from a
 // version's history) can be persisted verbatim. Used by the Save

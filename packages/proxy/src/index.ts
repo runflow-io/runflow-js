@@ -16,6 +16,8 @@
 export { runflowProxy, type ProxyHandler } from "./handler.js";
 export type {
   ProxyConfig,
+  AllowedPath,
+  AllowedPathMethod,
   AuthResult,
   AuthContext,
   ProxyRequestContext,
@@ -26,6 +28,7 @@ export type {
 } from "./types.js";
 export {
   DEFAULT_ALLOWED_MODELS,
+  DEFAULT_ALLOWED_PATHS,
   DEFAULT_BASE_PATH,
   DEFAULT_RUNFLOW_BASE,
   DEFAULT_MAX_BODY_BYTES,

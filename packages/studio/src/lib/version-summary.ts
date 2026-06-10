@@ -36,7 +36,7 @@ export function summarizeRequest(req: VersionRequest): SummaryRow[] {
   const v = req.values || {};
 
   // Free-form text — quoted so it visually pops as the user's words.
-  if (req.prompt && req.prompt.trim()) {
+  if (req.prompt?.trim()) {
     rows.push({
       key: "prompt",
       label: PROMPT_LABELS[req.workflowId] ?? "Prompt",
