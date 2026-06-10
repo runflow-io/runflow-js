@@ -13,9 +13,7 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "sideEffects": [
-    "./dist/styles.css"
-  ],
+  "sideEffects": ["./dist/styles.css"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -34,11 +32,7 @@
     },
     "./styles.css": "./dist/styles.css"
   },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup && cp src/styles.css dist/styles.css",
     "dev": "tsup --watch",

@@ -39,19 +39,22 @@ The browser SDK never sees your API key — it's injected by
 ```ts
 const asset = await rf.assets.upload(fileInput.files[0]);
 await rf.models.run("google/nano-banana-pro/edit", {
-  input: { prompt: "remove the price tag", image_urls: [asset.url] },
+  // asset.ref is the stable runflow://assets/{id} reference — dispatch
+  // resolves it to a fresh signed URL server-side, so it never expires.
+  input: { prompt: "remove the price tag", image_urls: [asset.ref] },
 });
 ```
 
 `upload()` runs the platform's presigned flow (create session → PUT the
 bytes to storage → confirm), retrying transient failures, and returns
-`{ id, url, ref, ... }`. `url` is a short-TTL **signed HTTPS URL** —
-pass it straight to any model's media inputs, but don't persist it:
-store `id` (or the stable `runflow://assets/{id}` `ref`) and re-mint a
-fresh url with `rf.assets.get(id)` when needed. Works in the browser
-through `@runflow-io/proxy` (the upload + asset-read endpoints are on
-its default allow-list). Raw `Blob`s need `{ filename }`; the cap is
-50 MB.
+`{ id, url, ref, ... }`. **Prefer `ref`** (`runflow://assets/{id}`) for
+model inputs and for anything you store — the API resolves it to a
+freshly signed URL at dispatch, so it never expires. `url` is a
+short-TTL **signed HTTPS URL** for immediate browser use (previews,
+`<img>`); re-mint one with `rf.assets.get(id)` when needed. Works in
+the browser through `@runflow-io/proxy` (the upload + asset-read
+endpoints are on its default allow-list). Raw `Blob`s need
+`{ filename }`; the cap is 50 MB.
 
 ### Pin-based editing
 
@@ -148,7 +151,8 @@ information for `buildRequest` and the run helpers.
   are URL-encoded; `..`/empty segments are rejected.
 - `runflow.runs.get(id)` / `runflow.runs.poll(id)` / `runflow.runs.wait(id)`
 - `runflow.assets.upload(file, opts?)` — presigned upload (with retry);
-  returns a signed https `url` + stable `runflow://` `ref`.
+  returns the stable `runflow://` `ref` (preferred model input) + a
+  short-TTL signed https `url` for browser display.
 - `runflow.assets.get(id)` — re-fetch an asset with a freshly signed `url`.
 - `runflow.tools.run(tool, args)` / `runflow.tools.dispatch(tool, args)`
 - `runflow.health.check()`
