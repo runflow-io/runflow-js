@@ -26,6 +26,7 @@ export {
   RunFailedError,
   RunTimeoutError,
 } from "./errors.js";
+export type { RunflowErrorCode } from "./errors.js";
 export type {
   Run,
   RunDispatched,

@@ -18,13 +18,11 @@
 // runtime), packages (no nested chains for now), and `soon` are
 // excluded.
 
-import { WORKFLOWS, type Workflow } from "../data/workflows";
+import type { Workflow } from "../data/workflows";
 import { useShellConfig } from "../lib/shell-config";
 import { Icon } from "./icons";
 
-export function buildableWorkflowsForChain(
-  workflows: ReadonlyArray<Workflow> = WORKFLOWS,
-): Workflow[] {
+export function buildableWorkflowsForChain(workflows: ReadonlyArray<Workflow>): Workflow[] {
   return workflows.filter(
     (w) =>
       (w.kind === "simple" || w.kind === "prompt" || w.kind === "prompt-zip") &&

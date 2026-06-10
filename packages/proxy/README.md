@@ -104,6 +104,7 @@ The proxy accepts these paths out of the box:
 | GET    | `/v1/health`                            | Public health.                   |
 | POST   | `/v1/asset-uploads`                     | Create a presigned upload.       |
 | POST   | `/v1/asset-uploads/{id}/confirmations`  | Confirm it (`rf.assets.upload`). |
+| GET    | `/v1/assets/{id}`                       | Re-sign an asset URL (`rf.assets.get`). |
 
 Everything else returns `403 Not allowed`. Run IDs are validated as
 UUIDv4-shape to block path traversal. Dispatch is additionally gated by
@@ -112,21 +113,29 @@ UUIDv4-shape to block path traversal. Dispatch is additionally gated by
 ### Extending the allow-list: `allowedPaths`
 
 ```ts
+import { DEFAULT_ALLOWED_PATHS, runflowProxy } from "@runflow-io/proxy";
+
 runflowProxy({
   apiKey: process.env.RUNFLOW_API_KEY!,
   allowedPaths: [
+    ...DEFAULT_ALLOWED_PATHS, // keep the rf.assets.upload/get routes
     { method: "GET", path: "/v1/runs" }, // run listing
     { method: "GET", path: "/v1/billing/balance" }, // billing read
   ],
 });
 ```
 
-Rules are additive over the defaults and matched strictly — full path,
-segment by segment, no prefixes or wildcards. A `:param` segment matches
-exactly one non-empty segment and rejects traversal (`.`, `..`,
+Like `allowedModels`, a custom list **replaces** the defaults — spread
+`DEFAULT_ALLOWED_PATHS` (exported) to extend them, as above, or pass
+`[]` to turn the asset routes off entirely. Matching is strict — full
+path, segment by segment, no prefixes or wildcards. A `:param` segment
+matches exactly one non-empty segment and rejects traversal (`.`, `..`,
 percent-encoded forms). `method` takes a string or an array
 (`["GET", "DELETE"]`); the handler also exports `PUT`/`PATCH`/`DELETE`
-for framework route files.
+for framework route files. Non-GET requests must send
+`Content-Type: application/json` (CSRF gate) even when bodyless, and
+upstream responses are fully buffered — avoid allowing large or binary
+endpoints.
 
 > **Security:** every matched request is forwarded with **your** API
 > key, so an allowed `GET /v1/runs` exposes org-wide run data to any

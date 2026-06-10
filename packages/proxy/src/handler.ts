@@ -51,7 +51,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
     upstreamTimeoutMs: cfg.upstreamTimeoutMs ?? DEFAULT_UPSTREAM_TIMEOUT_MS,
     fetcher: cfg.fetch ?? globalThis.fetch,
     allowedModelsFor,
-    allowedPaths: [...DEFAULT_ALLOWED_PATHS, ...(cfg.allowedPaths ?? [])],
+    allowedPaths: cfg.allowedPaths ?? DEFAULT_ALLOWED_PATHS,
     allowedOrigins: cfg.allowedOrigins ?? "same-origin",
     requireJsonContentType: cfg.requireJsonContentType ?? true,
     authenticate: cfg.authenticate,
@@ -150,21 +150,41 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
     segments[0] === "v1" &&
     segments[1] === "health";
 
+  // Empty segments (`//`) would make the matched path differ from the
+  // forwarded one — refuse to match them at all.
+  const hasEmptySegments = /\/\//.test(upstreamPath);
   const isAllowedPath =
-    !isDispatch && !runId && !isHealth && matchAllowedPath(req.method, segments, c.allowedPaths);
+    !isDispatch &&
+    !runId &&
+    !isHealth &&
+    !hasEmptySegments &&
+    matchAllowedPath(req.method, segments, c.allowedPaths);
 
   if (!isDispatch && !runId && !isHealth && !isAllowedPath) {
-    return json({ error: "Not allowed" }, 403);
+    return json(
+      {
+        error: `Path not allowed: ${req.method} /${upstreamPath.slice(0, 120)}. The proxy forwards model dispatch, run polling, health, and the asset upload/read routes by default; add other upstream routes via the allowedPaths option.`,
+        code: "path_not_allowed",
+      },
+      403,
+    );
   }
 
   // CSRF gate — must run before any authenticate hook so a malicious
   // page can't drain cookie credentials into the customer's API key.
   if (req.method !== "GET" && req.method !== "HEAD") {
     if (!originAllowed(req, c.allowedOrigins)) {
-      return json({ error: "Origin not allowed" }, 403);
+      return json({ error: "Origin not allowed", code: "origin_not_allowed" }, 403);
     }
     if (c.requireJsonContentType && !jsonContentTypeOK(req)) {
-      return json({ error: "Content-Type must be application/json" }, 415);
+      return json(
+        {
+          error:
+            "Content-Type must be application/json (CSRF defense — required on every non-GET request through the proxy, including bodyless DELETEs)",
+          code: "json_content_type_required",
+        },
+        415,
+      );
     }
   }
 
@@ -184,7 +204,10 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
   if (isDispatch && model) {
     const allowed = c.allowedModelsFor(auth);
     if (!allowed.includes(model)) {
-      return json({ error: "Model not allowed" }, 403);
+      return json(
+        { error: `Model not allowed: ${model.slice(0, 120)}`, code: "model_not_allowed" },
+        403,
+      );
     }
   }
 

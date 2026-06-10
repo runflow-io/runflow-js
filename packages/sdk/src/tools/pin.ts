@@ -23,8 +23,9 @@ export interface PinPoint {
 /**
  * Map a normalized pin to its region phrase on the 3×3 grid.
  *
- * Thirds are split at 0.33 and 0.66 (exact boundary values fall into the
- * middle/center band): `{x: 0.1, y: 0.1}` → `"upper-left"`,
+ * Thirds are split at 0.33 and 0.66 — an exact 0.33 falls into the
+ * middle/center band, an exact 0.66 into the lower/right band:
+ * `{x: 0.1, y: 0.1}` → `"upper-left"`,
  * `{x: 0.5, y: 0.5}` → `"middle-center"`, `{x: 0.9, y: 0.9}` →
  * `"lower-right"`.
  */

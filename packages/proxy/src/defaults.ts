@@ -26,9 +26,12 @@ export const DEFAULT_ALLOWED_MODELS: ReadonlyArray<string> = [
 import type { AllowedPath } from "./types.js";
 
 /**
- * Extra upstream routes the proxy forwards out of the box — the
- * presigned-upload pair `rf.assets.upload(file)` calls. Customer
- * `allowedPaths` entries are additive over these.
+ * Extra upstream routes the proxy forwards out of the box: the
+ * presigned-upload pair `rf.assets.upload(file)` calls, plus the
+ * single-asset read `rf.assets.get(id)` uses to re-sign an expired
+ * asset URL. Like `allowedModels`, a customer-supplied `allowedPaths`
+ * REPLACES this list — spread `DEFAULT_ALLOWED_PATHS` to extend it, or
+ * pass `[]` to turn these routes off entirely.
  *
  * Deliberately NOT here: `GET /v1/runs` (org-wide run listing),
  * billing reads, account info. Those expose org data through the
@@ -37,6 +40,7 @@ import type { AllowedPath } from "./types.js";
 export const DEFAULT_ALLOWED_PATHS: ReadonlyArray<AllowedPath> = [
   { method: "POST", path: "/v1/asset-uploads" },
   { method: "POST", path: "/v1/asset-uploads/:id/confirmations" },
+  { method: "GET", path: "/v1/assets/:id" },
 ];
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

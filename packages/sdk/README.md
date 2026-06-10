@@ -44,12 +44,14 @@ await rf.models.run("google/nano-banana-pro/edit", {
 ```
 
 `upload()` runs the platform's presigned flow (create session → PUT the
-bytes to storage → confirm) and returns `{ id, url, ref, ... }`. `url`
-is a short-TTL **signed HTTPS URL** — pass it straight to any model's
-media inputs. `ref` is the stable `runflow://assets/{id}` reference.
-Works in the browser through `@runflow-io/proxy` (the upload endpoints
-are on its default allow-list). Raw `Blob`s need `{ filename }`; the
-cap is 50 MB.
+bytes to storage → confirm), retrying transient failures, and returns
+`{ id, url, ref, ... }`. `url` is a short-TTL **signed HTTPS URL** —
+pass it straight to any model's media inputs, but don't persist it:
+store `id` (or the stable `runflow://assets/{id}` `ref`) and re-mint a
+fresh url with `rf.assets.get(id)` when needed. Works in the browser
+through `@runflow-io/proxy` (the upload + asset-read endpoints are on
+its default allow-list). Raw `Blob`s need `{ filename }`; the cap is
+50 MB.
 
 ### Pin-based editing
 
@@ -145,12 +147,14 @@ information for `buildRequest` and the run helpers.
 - `runflow.models.run(model, body)` — dispatch a run. Model id segments
   are URL-encoded; `..`/empty segments are rejected.
 - `runflow.runs.get(id)` / `runflow.runs.poll(id)` / `runflow.runs.wait(id)`
-- `runflow.assets.upload(file, opts?)` — presigned upload; returns a
-  signed https `url` + stable `runflow://` `ref`.
+- `runflow.assets.upload(file, opts?)` — presigned upload (with retry);
+  returns a signed https `url` + stable `runflow://` `ref`.
+- `runflow.assets.get(id)` — re-fetch an asset with a freshly signed `url`.
 - `runflow.tools.run(tool, args)` / `runflow.tools.dispatch(tool, args)`
 - `runflow.health.check()`
-- `pinRegion(pin)` / `composePinPrompt(pin, instruction)` — the shared
-  pin→region prompt contract.
+- `pinRegion(pin)` / `composeRegionPrompt(region, instruction)` /
+  `composePinPrompt(pin, instruction)` — the shared pin→region prompt
+  contract.
 
 All return well-typed promises; errors are `RunflowError`,
 `RunFailedError`, or `RunTimeoutError`.

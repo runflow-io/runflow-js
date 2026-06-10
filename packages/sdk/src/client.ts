@@ -34,7 +34,10 @@ export class Runflow {
     }
     this.fetcher = config.fetch ?? globalThis.fetch;
     this.base = stripTrailing(config.baseUrl ?? config.apiBase ?? DEFAULT_API_BASE);
-    this.authHeader = config.apiKey ? `Bearer ${config.apiKey}` : undefined;
+    // In proxy mode (baseUrl) the proxy injects the key server-side — the
+    // browser-side client must never send one, even if a caller passes
+    // both. Matches the documented "baseUrl wins, bearer omitted" contract.
+    this.authHeader = config.apiKey && !config.baseUrl ? `Bearer ${config.apiKey}` : undefined;
     this.extraHeaders = { ...config.headers };
     this.requestTimeoutMs = config.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
@@ -70,16 +73,19 @@ export class Runflow {
         signal: controller.signal,
       });
     } catch (err) {
+      // Presigned URLs carry bearer-like signatures in the query string —
+      // never echo them into error messages.
+      const redacted = redactUrl(url);
       if (controller.timedOut()) {
         throw new RunflowError(
-          `Request timed out (${timeoutMs}ms): ${init.method ?? "GET"} ${url}`,
+          `Request timed out (${timeoutMs}ms): ${init.method ?? "GET"} ${redacted}`,
           {
             code: "request_timeout",
             cause: err,
           },
         );
       }
-      throw new RunflowError(`Request failed: ${init.method ?? "GET"} ${url}`, {
+      throw new RunflowError(`Request failed: ${init.method ?? "GET"} ${redacted}`, {
         code: "network_error",
         cause: err,
       });
@@ -262,6 +268,12 @@ export class HealthResource {
 
 function stripTrailing(url: string): string {
   return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+/** Drop the query string (where presigned-URL signatures live). */
+function redactUrl(url: string): string {
+  const q = url.indexOf("?");
+  return q === -1 ? url : `${url.slice(0, q)}?…`;
 }
 
 /**

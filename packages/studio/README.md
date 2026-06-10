@@ -58,7 +58,9 @@ mount(target: string | HTMLElement, options?: {
     runflowProxy?: string;     // /api/runflow         — dispatch + poll
     runflowDevProxy?: string;  // (off by default)      — unreleased models
     imageProxy?: string;       // /api/runflow/image    — same-origin image fetch
-    upload?: string;           // /api/runflow/upload   — multipart → public URL
+    upload?: string;           // optional legacy multipart endpoint — by default
+                               // uploads use the SDK presigned flow through
+                               // runflowProxy (no extra endpoint needed)
     chat?: string;             // /api/runflow/chat     — chat agent (SSE)
     sentinel?: string;         // /api/runflow/sentinel — sentinel evaluation
   };
@@ -77,8 +79,12 @@ mount(target: string | HTMLElement, options?: {
 props; zero props renders the stock studio.
 
 ```tsx
+import { StudioShell } from "@runflow-io/studio";
+import { WORKFLOWS } from "@runflow-io/studio/headless";
+
 <StudioShell
-  // The workflow catalogue: cards, chat-agent tools, package steps.
+  // The workflow catalogue (Workflow[], not the SDK's ToolDefs):
+  // cards, chat-agent tools, package steps.
   tools={WORKFLOWS.filter((w) => w.group === "cleanup")}
   // A starting image URL, or SampleAsset[] to replace the samples.
   source="https://cdn.example/listing.jpg"

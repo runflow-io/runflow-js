@@ -80,6 +80,17 @@ const DEFAULT_OVERLAY_STYLE = "rgba(251,191,36,0.55)";
 const DEFAULT_MAX_DPR = 2;
 const DEFAULT_COVERAGE_STEP = 8;
 
+/** Stroke interpolation divides by the brush size — keep it finite and ≥ 1. */
+function clampBrushSize(px: number): number {
+  return Number.isFinite(px) && px >= 1 ? px : 1;
+}
+
+function warnOnce(flag: { warned: boolean }, message: string): void {
+  if (flag.warned) return;
+  flag.warned = true;
+  if (typeof console !== "undefined") console.warn(`[createMaskController] ${message}`);
+}
+
 function domCreateCanvas(width: number, height: number): HTMLCanvasElement {
   if (typeof document === "undefined") {
     throw new Error("createMaskController: no DOM available — pass `createCanvas` in the options.");
@@ -96,14 +107,21 @@ export function createMaskController(opts: MaskControllerOptions = {}): MaskCont
   const sampleStep = opts.coverageSampleStep ?? DEFAULT_COVERAGE_STEP;
   const createCanvas = opts.createCanvas ?? domCreateCanvas;
 
-  let size = opts.brushSize ?? DEFAULT_BRUSH_SIZE;
+  let size = clampBrushSize(opts.brushSize ?? DEFAULT_BRUSH_SIZE);
   let visible: HTMLCanvasElement | null = null;
   let hidden: HTMLCanvasElement | null = null;
   let stroking = false;
   let lastPos: { x: number; y: number } | null = null;
+  const notReadyWarning = { warned: false };
 
   const paintAt = (x: number, y: number) => {
-    if (!visible || !hidden) return;
+    if (!visible || !hidden) {
+      warnOnce(
+        notReadyWarning,
+        "painting before attach()/syncToDisplay() does nothing — call both first (see the headless README example).",
+      );
+      return;
+    }
     const vctx = visible.getContext("2d");
     if (vctx) {
       vctx.fillStyle = overlayStyle;
@@ -147,7 +165,7 @@ export function createMaskController(opts: MaskControllerOptions = {}): MaskCont
       hidden = createCanvas(Math.round(width), Math.round(height));
       hidden.width = Math.round(width);
       hidden.height = Math.round(height);
-      const hctx = hidden.getContext("2d");
+      const hctx = hidden.getContext("2d", { willReadFrequently: true });
       if (hctx) {
         hctx.fillStyle = "black";
         hctx.fillRect(0, 0, hidden.width, hidden.height);
@@ -156,7 +174,7 @@ export function createMaskController(opts: MaskControllerOptions = {}): MaskCont
       lastPos = null;
     },
     setBrushSize(px) {
-      size = px;
+      size = clampBrushSize(px);
     },
     brushSize() {
       return size;
@@ -223,11 +241,17 @@ export function createMaskController(opts: MaskControllerOptions = {}): MaskCont
       return total === 0 ? 0 : (white / total) * 100;
     },
     async toMaskBlob(naturalWidth, naturalHeight) {
-      if (!hidden || naturalWidth <= 0 || naturalHeight <= 0) return null;
+      if (!hidden || naturalWidth <= 0 || naturalHeight <= 0) {
+        warnOnce(
+          notReadyWarning,
+          "toMaskBlob() before attach()/syncToDisplay() (or with non-positive dimensions) returns null.",
+        );
+        return null;
+      }
       const out = createCanvas(naturalWidth, naturalHeight);
       out.width = naturalWidth;
       out.height = naturalHeight;
-      const ctx = out.getContext("2d");
+      const ctx = out.getContext("2d", { willReadFrequently: true });
       if (!ctx) return null;
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, out.width, out.height);

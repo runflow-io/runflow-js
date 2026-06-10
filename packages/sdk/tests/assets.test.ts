@@ -163,6 +163,112 @@ describe("rf.assets.upload", () => {
     expect((err as RunflowError).message).toMatch(/storage PUT failed/);
   });
 
+  it("retries transient failures (5xx / network) and then succeeds", async () => {
+    let sessionAttempts = 0;
+    let putAttempts = 0;
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch((req) => {
+        const url = new URL(req.url);
+        if (req.method === "POST" && url.pathname === "/v1/asset-uploads") {
+          sessionAttempts++;
+          if (sessionAttempts === 1) return new Response("oops", { status: 503 });
+          return Response.json({ asset_id: ASSET_ID, upload_url: "https://storage.example/p" });
+        }
+        if (req.method === "PUT") {
+          putAttempts++;
+          if (putAttempts === 1) throw new Error("socket reset");
+          return new Response(null, { status: 200 });
+        }
+        if (url.pathname.endsWith("/confirmations")) {
+          return Response.json({
+            id: ASSET_ID,
+            name: "a.png",
+            url: SIGNED_URL,
+            mime_type: "image/png",
+            size_bytes: 1,
+          });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    });
+    const asset = await rf.assets.upload(new File(["x"], "a.png", { type: "image/png" }));
+    expect(asset.id).toBe(ASSET_ID);
+    expect(sessionAttempts).toBe(2);
+    expect(putAttempts).toBe(2);
+  });
+
+  it("does not retry deterministic 4xx failures", async () => {
+    let attempts = 0;
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch(() => {
+        attempts++;
+        return new Response(JSON.stringify({ error: { message: "nope" } }), { status: 422 });
+      }),
+    });
+    await expect(rf.assets.upload(new File(["x"], "a.png", { type: "image/png" }))).rejects.toThrow(
+      /422/,
+    );
+    expect(attempts).toBe(1);
+  });
+
+  it("refuses a non-https upload_url", async () => {
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch(() =>
+        Response.json({ asset_id: ASSET_ID, upload_url: "http://storage.example/p" }),
+      ),
+    });
+    await expect(rf.assets.upload(new File(["x"], "a.png", { type: "image/png" }))).rejects.toThrow(
+      /non-https/,
+    );
+  });
+
+  it("never leaks presigned query strings into error messages", async () => {
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch((req) => {
+        const url = new URL(req.url);
+        if (req.method === "POST" && url.pathname === "/v1/asset-uploads") {
+          return Response.json({
+            asset_id: ASSET_ID,
+            upload_url: "https://storage.example/p?X-Amz-Signature=SECRETSIG",
+          });
+        }
+        throw new Error("network down");
+      }),
+    });
+    const err = await rf.assets
+      .upload(new File(["x"], "a.png", { type: "image/png" }))
+      .catch((e: unknown) => e as Error);
+    expect((err as Error).message).not.toContain("SECRETSIG");
+    expect((err as Error).message).not.toContain("X-Amz-Signature");
+  });
+
+  it("assets.get(id) returns a freshly signed asset and validates the id", async () => {
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch((req) => {
+        const url = new URL(req.url);
+        if (req.method === "GET" && url.pathname === `/v1/assets/${ASSET_ID}`) {
+          return Response.json({
+            id: ASSET_ID,
+            name: "photo.png",
+            url: SIGNED_URL,
+            mime_type: "image/png",
+            size_bytes: 3,
+          });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    });
+    const asset = await rf.assets.get(ASSET_ID);
+    expect(asset.url).toBe(SIGNED_URL);
+    expect(asset.ref).toBe(`runflow://assets/${ASSET_ID}`);
+    await expect(rf.assets.get("../sneaky")).rejects.toThrow(/invalid asset id/);
+  });
+
   it("rejects a malformed upload-session response", async () => {
     const rf = new Runflow({
       apiKey: "rf_live_x",

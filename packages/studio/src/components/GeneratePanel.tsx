@@ -22,7 +22,7 @@
 // and a "+ New generation" button that resets the form so they can
 // fire off another batch without leaving the panel.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   type GenerationResolution,
   estimateGenerationCost,
@@ -98,6 +98,22 @@ export function GeneratePanel({
   const [referencePreview, setReferencePreview] = useState<string | null>(null);
   const [extraReferences, setExtraReferences] = useState<File[]>([]);
   const [extraReferencePreviews, setExtraReferencePreviews] = useState<string[]>([]);
+
+  // Unmount-only cleanup for blob previews. A ref mirror (not effect
+  // deps) so URLs are never revoked while still rendered.
+  const previewUrlsRef = useRef<{ primary: string | null; extras: string[] }>({
+    primary: null,
+    extras: [],
+  });
+  previewUrlsRef.current = { primary: referencePreview, extras: extraReferencePreviews };
+  useEffect(
+    () => () => {
+      const p = previewUrlsRef.current;
+      if (p.primary) URL.revokeObjectURL(p.primary);
+      for (const u of p.extras) URL.revokeObjectURL(u);
+    },
+    [],
+  );
 
   const cost = estimateGenerationCost(resolution, count);
   const canGenerate = prompt.trim().length > 0;

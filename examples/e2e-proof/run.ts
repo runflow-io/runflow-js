@@ -24,7 +24,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { runflowProxy } from "@runflow-io/proxy";
+import { DEFAULT_ALLOWED_PATHS, runflowProxy } from "@runflow-io/proxy";
 import { RunFailedError, Runflow, composePinPrompt } from "@runflow-io/sdk";
 import { buildSampleMask, fetchBytes } from "./fixtures.js";
 
@@ -165,8 +165,6 @@ async function main() {
     const start = Date.now();
     try {
       const dispatched = await rf.models.run(mod.model, mod.body);
-      const enrichedBody = { ...mod.body, client_ref: `e2e-${mod.modality}-${start}` };
-      void enrichedBody;
       const final = await rf.runs.wait(dispatched.id, {
         pollIntervalMs: 2_000,
         timeoutMs: mod.timeoutMs ?? 3 * 60_000,
@@ -310,7 +308,9 @@ async function main() {
     const mockProxy = runflowProxy({
       apiKey,
       basePath: "/api/runflow",
-      allowedPaths: [{ method: "GET", path: "/v1/runs" }],
+      // Replacement semantics (same as allowedModels): spread the
+      // defaults to extend them with a run-listing read.
+      allowedPaths: [...DEFAULT_ALLOWED_PATHS, { method: "GET", path: "/v1/runs" }],
       fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
         seen.push(new Request(input as RequestInfo, init).url);
         return new Response(JSON.stringify({ ok: true }), {
@@ -334,10 +334,32 @@ async function main() {
     if (refused.status !== 403) throw new Error(`expected 403 for billing, got ${refused.status}`);
     if (seen.length !== 2) throw new Error(`expected exactly 2 upstream calls, saw ${seen.length}`);
 
+    // A bare custom list REPLACES the defaults — forks can switch the
+    // asset routes off.
+    const optOutProxy = runflowProxy({
+      apiKey,
+      basePath: "/api/runflow",
+      allowedPaths: [],
+      fetch: (async () =>
+        new Response(JSON.stringify({ ok: true }), {
+          headers: { "Content-Type": "application/json" },
+        })) as typeof fetch,
+    });
+    const optedOut = await optOutProxy(
+      new Request("http://proof.local/api/runflow/v1/asset-uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    if (optedOut.status !== 403) {
+      throw new Error(`allowedPaths: [] should disable uploads, got ${optedOut.status}`);
+    }
+
     const liveListProxy = runflowProxy({
       apiKey,
       basePath: "/api/runflow",
-      allowedPaths: [{ method: "GET", path: "/v1/runs" }],
+      allowedPaths: [...DEFAULT_ALLOWED_PATHS, { method: "GET", path: "/v1/runs" }],
     });
     const live = await liveListProxy(new Request("http://proof.local/api/runflow/v1/runs?limit=3"));
     if (live.status !== 200) {
@@ -427,9 +449,9 @@ async function main() {
   await log("");
 
   // ── Mask + reference (runflow/reference-inpaint) ────────────────────
-  // Mirrors the prototype's mask-ref flow: upload source + mask + ref to
-  // R2 (using the same Sig V4 path /demos/api/upload uses), then dispatch
-  // reference-inpaint with three URLs in the body.
+  // Uploads source + mask + reference as Runflow assets via
+  // rf.assets.upload (through the proxy's default allow-list), then
+  // dispatches reference-inpaint with the three signed URLs.
   await log("▶ mask + reference — reference-inpaint");
   const maskStart = Date.now();
   try {

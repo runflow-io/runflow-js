@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runflowProxy } from "../src/index.js";
+import { DEFAULT_ALLOWED_PATHS, runflowProxy } from "../src/index.js";
 import type { ProxyConfig } from "../src/index.js";
 
 function mockUpstream(handler: (req: Request) => Response | Promise<Response>): typeof fetch {
@@ -44,6 +44,36 @@ describe("allowedPaths — defaults (asset uploads)", () => {
     expect(res.status).toBe(200);
     expect(seen[0]?.auth).toBe(`Bearer ${KEY}`);
     expect(seen[0]?.url).toBe("https://api.runflow.io/v1/asset-uploads");
+  });
+
+  it("forwards GET /v1/assets/{id} (rf.assets.get re-signing)", async () => {
+    const { proxy, seen } = spyProxy();
+    const res = await proxy(new Request(`http://app/api/runflow/v1/assets/${UUID}`));
+    expect(res.status).toBe(200);
+    expect(seen[0]?.url).toBe(`https://api.runflow.io/v1/assets/${UUID}`);
+  });
+
+  it("rejects empty path segments so matching always equals forwarding", async () => {
+    const { proxy, seen } = spyProxy();
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1//asset-uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(res.status).toBe(403);
+    expect(seen.length).toBe(0);
+  });
+
+  it("403 body carries an actionable message + machine code", async () => {
+    const { proxy } = spyProxy();
+    const res = await proxy(new Request("http://app/api/runflow/v1/secrets"));
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { error: string; code: string };
+    expect(body.code).toBe("path_not_allowed");
+    expect(body.error).toContain("GET /v1/secrets");
+    expect(body.error).toContain("allowedPaths");
   });
 
   it("forwards POST /v1/asset-uploads/{id}/confirmations", async () => {
@@ -130,7 +160,7 @@ describe("allowedPaths — custom rules", () => {
     expect(seen.map((s) => s.method)).toEqual(["GET", "DELETE"]);
   });
 
-  it("custom rules are additive — asset-upload defaults still work", async () => {
+  it("custom rules REPLACE the defaults (same semantics as allowedModels)", async () => {
     const { proxy } = spyProxy({ allowedPaths: [{ method: "GET", path: "/v1/runs" }] });
     const res = await proxy(
       new Request("http://app/api/runflow/v1/asset-uploads", {
@@ -139,7 +169,39 @@ describe("allowedPaths — custom rules", () => {
         body: "{}",
       }),
     );
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
+  });
+
+  it("spreading DEFAULT_ALLOWED_PATHS extends instead of replacing", async () => {
+    const { proxy } = spyProxy({
+      allowedPaths: [...DEFAULT_ALLOWED_PATHS, { method: "GET", path: "/v1/runs" }],
+    });
+    const upload = await proxy(
+      new Request("http://app/api/runflow/v1/asset-uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(upload.status).toBe(200);
+    const list = await proxy(new Request("http://app/api/runflow/v1/runs?limit=1"));
+    expect(list.status).toBe(200);
+  });
+
+  it("allowedPaths: [] disables the default asset routes entirely", async () => {
+    const { proxy, seen } = spyProxy({ allowedPaths: [] });
+    const res = await proxy(
+      new Request("http://app/api/runflow/v1/asset-uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      }),
+    );
+    expect(res.status).toBe(403);
+    // Built-ins are unaffected by the path allow-list.
+    const health = await proxy(new Request("http://app/api/runflow/v1/health"));
+    expect(health.status).toBe(200);
+    expect(seen.length).toBe(1);
   });
 });
 

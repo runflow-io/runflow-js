@@ -106,9 +106,21 @@ function assetFromSample(s: {
 export function StudioShell(props: StudioShellProps) {
   // Resolve the customization props once per change; zero props ⇒ the
   // built-in catalogue/samples/sentinel/copy (original behavior).
+  // Deps are field-level (not object identity) so idiomatic inline
+  // objects — copy={{...}} / sentinel={{...}} — don't re-mint the
+  // context value every parent render. `tools`/`source` arrays and the
+  // taskDescription function still compare by reference: pass stable
+  // values for those.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: field-level deps are deliberate (see above)
   const config = useMemo(
     () => resolveShellConfig(props),
-    [props.tools, props.source, props.sentinel, props.copy],
+    [
+      props.tools,
+      props.source,
+      props.sentinel?.enabled,
+      props.sentinel?.taskDescription,
+      JSON.stringify(props.copy ?? null),
+    ],
   );
   // Ref mirror for the stable-memo studioHandle closures below.
   const configRef = useRef(config);
@@ -157,10 +169,24 @@ export function StudioShell(props: StudioShellProps) {
   const [extraReferences, setExtraReferences] = useState<File[]>([]);
   const [extraReferencePreviews, setExtraReferencePreviews] = useState<string[]>([]);
   const [referencePrompt, setReferencePrompt] = useState("");
+  // Unmount-only blob-URL cleanup (ref mirror — never revoke while rendered).
+  const previewUrlsRef = useRef<{ primary: string | null; extras: string[] }>({
+    primary: null,
+    extras: [],
+  });
+  previewUrlsRef.current = { primary: referencePreview, extras: extraReferencePreviews };
+  useEffect(
+    () => () => {
+      const p = previewUrlsRef.current;
+      if (p.primary) URL.revokeObjectURL(p.primary);
+      for (const u of p.extras) URL.revokeObjectURL(u);
+    },
+    [],
+  );
   const [brushSize, setBrushSize] = useState(45);
   const [maskCoverage, setMaskCoverage] = useState(0);
   useEffect(() => {
-    maskCtlRef.current.setBrushSize(brushSize);
+    maskCtl.setBrushSize(brushSize);
   }, [brushSize]);
   const [error, setError] = useState<string | null>(null);
   // Non-blocking edit UX:
@@ -219,8 +245,13 @@ export function StudioShell(props: StudioShellProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const visibleMaskRef = useRef<HTMLCanvasElement>(null);
   // Brush engine — the same controller exported from ./headless, so the
-  // shell is itself a consumer of the public mask primitive.
-  const maskCtlRef = useRef(createMaskController({ brushSize: 45 }));
+  // shell is itself a consumer of the public mask primitive. Lazy init:
+  // the factory allocates closures, no need to redo that per render.
+  const maskCtlRef = useRef<ReturnType<typeof createMaskController> | null>(null);
+  if (maskCtlRef.current === null) {
+    maskCtlRef.current = createMaskController({ brushSize: 45 });
+  }
+  const maskCtl = maskCtlRef.current;
 
   // Always-fresh refs for the studioHandle. The chat agent can dispatch
   // multiple run_workflow calls in sequence, and each subsequent call
@@ -316,8 +347,8 @@ export function StudioShell(props: StudioShellProps) {
       const w = Math.round(rect.width);
       const h = Math.round(rect.height);
       if (w === 0 || h === 0) return;
-      maskCtlRef.current.attach(visible);
-      maskCtlRef.current.syncToDisplay(w, h, window.devicePixelRatio || 1);
+      maskCtl.attach(visible);
+      maskCtl.syncToDisplay(w, h, window.devicePixelRatio || 1);
       setMaskCoverage(0);
     };
     if (img.complete) sync();
@@ -331,29 +362,29 @@ export function StudioShell(props: StudioShellProps) {
     if (!isPainting) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    maskCtlRef.current.beginStroke(e.clientX - rect.left, e.clientY - rect.top);
+    maskCtl.beginStroke(e.clientX - rect.left, e.clientY - rect.top);
   };
   const onMaskMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!maskCtlRef.current.isStroking()) return;
+    if (!maskCtl.isStroking()) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    maskCtlRef.current.strokeTo(e.clientX - rect.left, e.clientY - rect.top);
+    maskCtl.strokeTo(e.clientX - rect.left, e.clientY - rect.top);
   };
   const onMaskUp = () => {
-    if (maskCtlRef.current.isStroking()) {
-      maskCtlRef.current.endStroke();
-      setMaskCoverage(maskCtlRef.current.coverage());
+    if (maskCtl.isStroking()) {
+      maskCtl.endStroke();
+      setMaskCoverage(maskCtl.coverage());
     }
   };
 
   const clearMask = () => {
-    maskCtlRef.current.clear();
+    maskCtl.clear();
     setMaskCoverage(0);
   };
 
   const generateMaskBlob = async (): Promise<Blob | null> => {
     const img = imgRef.current;
     if (!img || !img.naturalWidth) return null;
-    return maskCtlRef.current.toMaskBlob(img.naturalWidth, img.naturalHeight);
+    return maskCtl.toMaskBlob(img.naturalWidth, img.naturalHeight);
   };
 
   // ---------- Image click for AI-Edit pin (and chat-driven pin) ----------

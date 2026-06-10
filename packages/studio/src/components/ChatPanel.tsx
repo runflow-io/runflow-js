@@ -19,7 +19,7 @@
 //   5. when assistant returns no tool_use → stop
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { WORKFLOWS, type Workflow } from "../data/workflows";
+import type { Workflow } from "../data/workflows";
 import {
   type CapturedInputs,
   type ChatMessage,
@@ -39,10 +39,7 @@ import { useShellConfig } from "../lib/shell-config";
 import type { PartialStudioHandle } from "../lib/studio-handle";
 import { Icon } from "./icons";
 
-function workflowDisplayName(
-  workflowId: string,
-  workflows: ReadonlyArray<Workflow> = WORKFLOWS,
-): string {
+function workflowDisplayName(workflowId: string, workflows: ReadonlyArray<Workflow>): string {
   return workflows.find((w) => w.id === workflowId)?.name ?? workflowId;
 }
 

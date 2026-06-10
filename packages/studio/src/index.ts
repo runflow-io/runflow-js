@@ -74,6 +74,7 @@ export function mount(
     unmount() {
       root.unmount();
       el.removeAttribute("data-theme");
+      for (const [, cssVar] of THEME_VAR_MAP) el.style.removeProperty(cssVar);
     },
   };
 }
@@ -95,20 +96,21 @@ function applyThemeAttribute(el: HTMLElement, theme: StudioMountOptions["theme"]
   el.setAttribute("data-theme", mode);
 }
 
+const THEME_VAR_MAP: Array<[keyof ThemeOverrides, string]> = [
+  ["accent", "--rfs-accent"],
+  ["bg0", "--rfs-bg-0"],
+  ["bg1", "--rfs-bg-1"],
+  ["bg2", "--rfs-bg-2"],
+  ["bg3", "--rfs-bg-3"],
+  ["ink0", "--rfs-ink-0"],
+  ["ink1", "--rfs-ink-1"],
+  ["ink2", "--rfs-ink-2"],
+  ["ink3", "--rfs-ink-3"],
+];
+
 function applyThemeOverrides(el: HTMLElement, theme: StudioMountOptions["theme"]): void {
   if (!theme || typeof theme === "string") return;
-  const map: Array<[keyof ThemeOverrides, string]> = [
-    ["accent", "--rfs-accent"],
-    ["bg0", "--rfs-bg-0"],
-    ["bg1", "--rfs-bg-1"],
-    ["bg2", "--rfs-bg-2"],
-    ["bg3", "--rfs-bg-3"],
-    ["ink0", "--rfs-ink-0"],
-    ["ink1", "--rfs-ink-1"],
-    ["ink2", "--rfs-ink-2"],
-    ["ink3", "--rfs-ink-3"],
-  ];
-  for (const [key, cssVar] of map) {
+  for (const [key, cssVar] of THEME_VAR_MAP) {
     const v = theme[key];
     if (typeof v === "string") el.style.setProperty(cssVar, v);
   }

@@ -45,16 +45,27 @@ export interface StudioCopy {
   emptySubtitle: string;
 }
 
+/**
+ * StudioShell customization. Two contracts to know:
+ *
+ * - `source` seeds the canvas at MOUNT — changing it later does not
+ *   reset the user's assets (their edit history would be lost).
+ * - Pass stable references for `tools`, `source` arrays, and
+ *   `sentinel.taskDescription`; inline object literals for `copy` and
+ *   `sentinel` are fine (compared field-wise).
+ */
 export interface StudioShellProps {
   /**
    * The workflow catalogue the shell offers — cards, chat-agent tools,
-   * package steps. Defaults to the built-in `WORKFLOWS`. Pass a filtered
-   * or extended list to build a vertical studio.
+   * package steps. Defaults to the built-in `WORKFLOWS` (import it from
+   * `@runflow-io/studio/headless` to filter/extend). Takes `Workflow[]`
+   * — the card catalogue — NOT the SDK's `ToolDef`s.
    */
   tools?: ReadonlyArray<Workflow>;
   /**
-   * Initial canvas content. A URL string loads as a single starting
-   * asset; an array of `SampleAsset`s replaces the bundled samples.
+   * Initial canvas content, read once at mount. A URL string loads as a
+   * single starting asset; an array of `SampleAsset`s replaces the
+   * bundled samples.
    */
   source?: string | ReadonlyArray<SampleAsset>;
   /** Sentinel (quality evaluation) configuration. */
@@ -107,14 +118,24 @@ const ShellConfigContext = createContext<ResolvedShellConfig | null>(null);
 export const ShellConfigProvider = ShellConfigContext.Provider;
 
 let fallbackConfig: ResolvedShellConfig | null = null;
+let warnedFallback = false;
 
 /**
  * Read the shell configuration. Components rendered outside a
- * StudioShell (storybooks, tests) fall back to the defaults.
+ * StudioShell (storybooks, tests) fall back to the defaults — loudly,
+ * because in an app that passed custom props this means the component
+ * silently ignores them.
  */
 export function useShellConfig(): ResolvedShellConfig {
   const fromContext = useContext(ShellConfigContext);
   if (fromContext) return fromContext;
+  const isTest = typeof process !== "undefined" && process.env?.NODE_ENV === "test";
+  if (!warnedFallback && typeof console !== "undefined" && !isTest) {
+    warnedFallback = true;
+    console.warn(
+      "[@runflow-io/studio] a component rendered outside <StudioShell> is using the built-in defaults — custom tools/source/sentinel/copy props do not reach it.",
+    );
+  }
   if (!fallbackConfig) fallbackConfig = resolveShellConfig({});
   return fallbackConfig;
 }

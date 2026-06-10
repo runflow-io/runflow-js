@@ -7,10 +7,10 @@
 // The future Chat tab can call this same function — pass a workflow id
 // + already-resolved inputs and it'll run the same path.
 
-import { composePinPrompt, composeRegionPrompt } from "@runflow-io/sdk";
+import { Runflow, composePinPrompt, composeRegionPrompt } from "@runflow-io/sdk";
 import type { Workflow } from "../data/workflows";
 
-import { URLS } from "./urls";
+import { URLS, isUrlCustomized } from "./urls";
 // Endpoint constants flow through the module-level URLS registry;
 // callers configure them in mount() via setStudioUrls(). The original
 // prototype hardcoded /demos/api/* paths here.
@@ -72,6 +72,17 @@ export async function uploadFile(
   // (e.g. some fetch responses arrive as application/octet-stream).
   const type = body.type?.startsWith("image/") ? body.type : fallbackType;
   const file = new File([body], name, { type });
+
+  // Default path: the SDK's presigned flow through the Runflow proxy —
+  // works zero-config because @runflow-io/proxy allows the asset-upload
+  // routes by default (and the SDK retries transient failures itself).
+  // Hosts that explicitly configured a multipart `upload` endpoint (the
+  // pre-0.1 contract) keep their behavior.
+  if (!isUrlCustomized("upload")) {
+    const rf = new Runflow({ baseUrl: URLS.runflowProxy });
+    const asset = await rf.assets.upload(file, { filename: name });
+    return asset.url;
+  }
 
   const totalAttempts = UPLOAD_RETRY_DELAYS_MS.length + 1;
   let lastTransientReason: string | null = null;

@@ -28,9 +28,19 @@ export const URLS = {
 
 export type StudioUrls = typeof URLS;
 
+const customized = new Set<keyof StudioUrls>();
+
 export function setStudioUrls(overrides: Partial<StudioUrls>): void {
   for (const key of Object.keys(overrides) as Array<keyof StudioUrls>) {
     const v = overrides[key];
-    if (typeof v === "string") URLS[key] = v;
+    if (typeof v === "string") {
+      URLS[key] = v;
+      customized.add(key);
+    }
   }
+}
+
+/** Whether the host explicitly overrode an endpoint via setStudioUrls. */
+export function isUrlCustomized(key: keyof StudioUrls): boolean {
+  return customized.has(key);
 }

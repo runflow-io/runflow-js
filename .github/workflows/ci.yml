@@ -36,6 +36,21 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      # Warning ratchet: biome warnings (mostly the studio components'
+      # downgraded a11y/hooks rules) must not grow past the checked-in
+      # budget. Lower the budget as warnings get fixed; raising it is a
+      # conscious review decision.
+      - name: Lint warning ratchet
+        run: |
+          BUDGET=45
+          count=$(bunx biome check . 2>&1 | grep -oE 'Found [0-9]+ warnings' | grep -oE '[0-9]+' | head -1)
+          count=${count:-0}
+          echo "biome warnings: $count (budget: $BUDGET)"
+          if [ "$count" -gt "$BUDGET" ]; then
+            echo "::error::Warning count $count exceeds the budget of $BUDGET — fix the new warnings or consciously raise the budget in ci.yml."
+            exit 1
+          fi
+
       # The live e2e proof (examples/e2e-proof) needs RUNFLOW_API_KEY and
       # spends real credits, so it stays a local/manual gate — see
       # `bun run proof`.
