@@ -14,6 +14,7 @@
 import {
   type ToolDef,
   colorInput,
+  composePinPrompt,
   defineTool,
   extractFirstImageUrl,
   imageInput,
@@ -75,16 +76,12 @@ export const aiEdit = defineTool({
     }),
   },
   output: { image: imageOutput() },
-  buildRequest: ({ image, pin, instruction }) => {
-    const yLabel = pin.y < 0.33 ? "upper" : pin.y < 0.66 ? "middle" : "lower";
-    const xLabel = pin.x < 0.33 ? "left" : pin.x < 0.66 ? "center" : "right";
-    return {
-      input: {
-        prompt: `Edit the ${yLabel}-${xLabel} area of this image: ${instruction}. Photoreal product photography, preserve the rest of the image, true colors and lighting.`,
-        image_urls: [image],
-      },
-    };
-  },
+  buildRequest: ({ image, pin, instruction }) => ({
+    input: {
+      prompt: composePinPrompt(pin, instruction),
+      image_urls: [image],
+    },
+  }),
   extractOutput: extractImage,
 });
 

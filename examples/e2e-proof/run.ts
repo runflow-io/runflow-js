@@ -25,7 +25,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runflowProxy } from "@runflow-io/proxy";
-import { RunFailedError, Runflow } from "@runflow-io/sdk";
+import { RunFailedError, Runflow, composePinPrompt } from "@runflow-io/sdk";
 import { buildSampleMask, fetchBytes, uploadAndPresign } from "./uploads.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -92,11 +92,10 @@ const MODALITIES: Modality[] = [
     model: "google/nano-banana-pro/edit",
     body: {
       input: {
-        // The pin builder in @runflow-io/studio's ai-edit tool produces this
-        // exact preamble; we match it here to prove the dispatched body
-        // shape works upstream.
-        prompt:
-          "Edit the upper-center area of this image: remove the price tag. Photoreal product photography, preserve the rest of the image, true colors and lighting.",
+        // composePinPrompt is the same helper @runflow-io/studio's ai-edit
+        // tool uses, so this dispatch proves the shared pin contract works
+        // upstream. {x: 0.5, y: 0.2} → "upper-center".
+        prompt: composePinPrompt({ x: 0.5, y: 0.2 }, "remove the price tag"),
         image_urls: [SOURCE_URL],
       },
     },
@@ -535,13 +534,11 @@ async function main() {
     ];
     const pin = { x: 0.25, y: 0.25 };
     const instruction = "remove the price tag";
-    // Build the ai-edit prompt exactly the way @runflow-io/studio's ai-edit
-    // tool does (positional words from normalized coords).
-    const yLabel = pin.y < 0.33 ? "upper" : pin.y < 0.66 ? "middle" : "lower";
-    const xLabel = pin.x < 0.33 ? "left" : pin.x < 0.66 ? "center" : "right";
+    // composePinPrompt is the exact helper @runflow-io/studio's ai-edit
+    // tool uses (positional words from normalized coords).
     const body = {
       input: {
-        prompt: `Edit the ${yLabel}-${xLabel} area of this image: ${instruction}. Photoreal product photography, preserve the rest of the image, true colors and lighting.`,
+        prompt: composePinPrompt(pin, instruction),
         image_urls: [SOURCE_URL],
       },
     };

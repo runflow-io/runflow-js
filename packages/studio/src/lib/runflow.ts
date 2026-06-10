@@ -7,6 +7,7 @@
 // The future Chat tab can call this same function — pass a workflow id
 // + already-resolved inputs and it'll run the same path.
 
+import { composePinPrompt, composeRegionPrompt } from "@runflow-io/sdk";
 import type { Workflow } from "../data/workflows";
 
 import { URLS } from "./urls";
@@ -45,12 +46,6 @@ export type DispatchInputs = {
   // Generic key/value for select/text/color/textarea inputs.
   values: Record<string, string>;
 };
-
-function pinPhrase(p: { x: number; y: number }) {
-  const yLabel = p.y < 0.33 ? "upper" : p.y < 0.66 ? "middle" : "lower";
-  const xLabel = p.x < 0.33 ? "left" : p.x < 0.66 ? "center" : "right";
-  return `${yLabel}-${xLabel}`;
-}
 
 // Fetch a remote image through our same-origin proxy to dodge the
 // no-cors-cache "Failed to fetch" trap on cross-origin sources.
@@ -151,11 +146,13 @@ async function buildBody(
     };
   }
   if (wf.kind === "pin") {
-    const region = inputs.pin ? pinPhrase(inputs.pin) : "center";
     const text = inputs.prompt || "";
+    const prompt = inputs.pin
+      ? composePinPrompt(inputs.pin, text)
+      : composeRegionPrompt("center", text);
     return {
       input: {
-        prompt: `Edit the ${region} area of this image: ${text}. Photoreal product photography, preserve the rest of the image, true colors and lighting.`,
+        prompt,
         image_urls: [sourceUrl],
       },
     };
