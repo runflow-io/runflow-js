@@ -1,0 +1,50 @@
+name: Release
+
+# Changesets release loop: while changesets exist on main, this keeps a
+# "release: version packages" PR open with the version bumps + changelogs.
+# Merging THAT PR publishes every bumped package to npm and creates the
+# GitHub releases. Publishing auth is npm Trusted Publishing (OIDC) — no
+# NPM_TOKEN secret anywhere; each @runflow-io package trusts exactly this
+# workflow file on this repo.
+
+on:
+  push:
+    branches: [main]
+
+concurrency: release
+
+permissions:
+  contents: write # version commit, tags, GitHub releases
+  pull-requests: write # the "Version Packages" PR
+  id-token: write # npm Trusted Publishing (OIDC) + provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      # `changeset publish` shells out to the npm CLI; OIDC trusted
+      # publishing needs npm >= 11.5, which Node 24 bundles.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Open version PR or publish to npm
+        uses: changesets/action@v1
+        with:
+          version: bun run changeset version
+          publish: bun run release
+          commit: "release: version packages"
+          title: "release: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
