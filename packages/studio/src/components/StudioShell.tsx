@@ -30,6 +30,7 @@ import {
 } from "../data/workflows";
 import type { CustomWorkflow } from "../lib/custom-workflows";
 import { type GenerationResolution, dispatchGeneration } from "../lib/generation";
+import { createMaskController } from "../lib/mask";
 import {
   type ResBucket,
   TOPAZ_MAX_OUTPUT_MP,
@@ -148,6 +149,9 @@ export function StudioShell() {
   const [referencePrompt, setReferencePrompt] = useState("");
   const [brushSize, setBrushSize] = useState(45);
   const [maskCoverage, setMaskCoverage] = useState(0);
+  useEffect(() => {
+    maskCtlRef.current.setBrushSize(brushSize);
+  }, [brushSize]);
   const [error, setError] = useState<string | null>(null);
   // Non-blocking edit UX:
   //   - Each Apply synchronously adds a *pending* Version to the asset's
@@ -204,9 +208,9 @@ export function StudioShell() {
 
   const imgRef = useRef<HTMLImageElement>(null);
   const visibleMaskRef = useRef<HTMLCanvasElement>(null);
-  const hiddenMaskRef = useRef<HTMLCanvasElement | null>(null);
-  const drawingRef = useRef(false);
-  const lastPosRef = useRef<{ x: number; y: number } | null>(null);
+  // Brush engine — the same controller exported from ./headless, so the
+  // shell is itself a consumer of the public mask primitive.
+  const maskCtlRef = useRef(createMaskController({ brushSize: 45 }));
 
   // Always-fresh refs for the studioHandle. The chat agent can dispatch
   // multiple run_workflow calls in sequence, and each subsequent call
@@ -299,24 +303,8 @@ export function StudioShell() {
       const w = Math.round(rect.width);
       const h = Math.round(rect.height);
       if (w === 0 || h === 0) return;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      visible.width = w * dpr;
-      visible.height = h * dpr;
-      visible.style.width = `${w}px`;
-      visible.style.height = `${h}px`;
-      const vctx = visible.getContext("2d");
-      if (!vctx) return;
-      vctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      vctx.clearRect(0, 0, w, h);
-      const hidden = document.createElement("canvas");
-      hidden.width = w;
-      hidden.height = h;
-      const hctx = hidden.getContext("2d");
-      if (hctx) {
-        hctx.fillStyle = "black";
-        hctx.fillRect(0, 0, w, h);
-      }
-      hiddenMaskRef.current = hidden;
+      maskCtlRef.current.attach(visible);
+      maskCtlRef.current.syncToDisplay(w, h, window.devicePixelRatio || 1);
       setMaskCoverage(0);
     };
     if (img.complete) sync();
@@ -326,119 +314,33 @@ export function StudioShell() {
     return () => ro.disconnect();
   }, [isPainting, currentVersion?.url]);
 
-  const paintAt = (x: number, y: number) => {
-    const visible = visibleMaskRef.current;
-    const hidden = hiddenMaskRef.current;
-    if (!visible || !hidden) return;
-    const r = brushSize;
-    const vctx = visible.getContext("2d");
-    if (vctx) {
-      vctx.fillStyle = "rgba(251,191,36,0.55)";
-      vctx.beginPath();
-      vctx.arc(x, y, r, 0, Math.PI * 2);
-      vctx.fill();
-    }
-    const hctx = hidden.getContext("2d");
-    if (hctx) {
-      hctx.fillStyle = "white";
-      hctx.beginPath();
-      hctx.arc(x, y, r, 0, Math.PI * 2);
-      hctx.fill();
-    }
-  };
-
-  const updateCoverage = () => {
-    const hidden = hiddenMaskRef.current;
-    if (!hidden) return;
-    const ctx = hidden.getContext("2d");
-    if (!ctx) return;
-    const data = ctx.getImageData(0, 0, hidden.width, hidden.height).data;
-    let white = 0;
-    let total = 0;
-    const step = 8;
-    for (let yy = 0; yy < hidden.height; yy += step) {
-      for (let xx = 0; xx < hidden.width; xx += step) {
-        const i = (yy * hidden.width + xx) * 4;
-        if (data[i] > 200) white += 1;
-        total += 1;
-      }
-    }
-    setMaskCoverage((white / total) * 100);
-  };
-
   const onMaskDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isPainting) return;
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
-    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    drawingRef.current = true;
-    lastPosRef.current = p;
-    paintAt(p.x, p.y);
+    maskCtlRef.current.beginStroke(e.clientX - rect.left, e.clientY - rect.top);
   };
   const onMaskMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!drawingRef.current) return;
+    if (!maskCtlRef.current.isStroking()) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    const last = lastPosRef.current;
-    if (last) {
-      const dist = Math.hypot(p.x - last.x, p.y - last.y);
-      const steps = Math.max(1, Math.ceil(dist / (brushSize * 0.4)));
-      for (let i = 1; i <= steps; i++) {
-        const t = i / steps;
-        paintAt(last.x + (p.x - last.x) * t, last.y + (p.y - last.y) * t);
-      }
-    } else {
-      paintAt(p.x, p.y);
-    }
-    lastPosRef.current = p;
+    maskCtlRef.current.strokeTo(e.clientX - rect.left, e.clientY - rect.top);
   };
   const onMaskUp = () => {
-    if (drawingRef.current) {
-      drawingRef.current = false;
-      lastPosRef.current = null;
-      updateCoverage();
+    if (maskCtlRef.current.isStroking()) {
+      maskCtlRef.current.endStroke();
+      setMaskCoverage(maskCtlRef.current.coverage());
     }
   };
 
   const clearMask = () => {
-    const visible = visibleMaskRef.current;
-    const hidden = hiddenMaskRef.current;
-    if (visible) {
-      const vctx = visible.getContext("2d");
-      vctx?.clearRect(0, 0, visible.width, visible.height);
-    }
-    if (hidden) {
-      const hctx = hidden.getContext("2d");
-      if (hctx) {
-        hctx.fillStyle = "black";
-        hctx.fillRect(0, 0, hidden.width, hidden.height);
-      }
-    }
+    maskCtlRef.current.clear();
     setMaskCoverage(0);
   };
 
   const generateMaskBlob = async (): Promise<Blob | null> => {
     const img = imgRef.current;
-    const hidden = hiddenMaskRef.current;
-    if (!img || !hidden || !img.naturalWidth) return null;
-    const out = document.createElement("canvas");
-    out.width = img.naturalWidth;
-    out.height = img.naturalHeight;
-    const ctx = out.getContext("2d");
-    if (!ctx) return null;
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, out.width, out.height);
-    ctx.drawImage(hidden, 0, 0, out.width, out.height);
-    const id = ctx.getImageData(0, 0, out.width, out.height);
-    for (let i = 0; i < id.data.length; i += 4) {
-      const v = id.data[i] > 127 ? 255 : 0;
-      id.data[i] = v;
-      id.data[i + 1] = v;
-      id.data[i + 2] = v;
-      id.data[i + 3] = 255;
-    }
-    ctx.putImageData(id, 0, 0);
-    return new Promise((resolve) => out.toBlob((b) => resolve(b), "image/png"));
+    if (!img || !img.naturalWidth) return null;
+    return maskCtlRef.current.toMaskBlob(img.naturalWidth, img.naturalHeight);
   };
 
   // ---------- Image click for AI-Edit pin (and chat-driven pin) ----------

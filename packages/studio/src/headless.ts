@@ -25,6 +25,11 @@ export {
   type DispatchInputs,
 } from "./lib/runflow.js";
 
+// Brush + mask creation — framework-free dual-canvas painting engine.
+// The same controller StudioShell uses internally for its mask workflows.
+export { createMaskController } from "./lib/mask.js";
+export type { MaskController, MaskControllerOptions } from "./lib/mask.js";
+
 // Sentinel evaluation client.
 export {
   evaluate as sentinelEvaluate,
