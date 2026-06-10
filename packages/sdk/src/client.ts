@@ -1,7 +1,7 @@
 import { RunflowError } from "./errors.js";
-import type { Run, RunDispatched, RunflowConfig, WaitOptions } from "./types.js";
 import { RunFailedError, RunTimeoutError } from "./errors.js";
 import { ToolsResource } from "./tools/run.js";
+import type { Run, RunDispatched, RunflowConfig, WaitOptions } from "./types.js";
 
 const DEFAULT_API_BASE = "https://api.runflow.io";
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
@@ -72,10 +72,13 @@ export class Runflow {
       res = await this.fetcher(url, { method, headers, body, signal: controller.signal });
     } catch (err) {
       if (controller.timedOut()) {
-        throw new RunflowError(`Request timed out (${this.requestTimeoutMs}ms): ${method} ${path}`, {
-          code: "request_timeout",
-          cause: err,
-        });
+        throw new RunflowError(
+          `Request timed out (${this.requestTimeoutMs}ms): ${method} ${path}`,
+          {
+            code: "request_timeout",
+            cause: err,
+          },
+        );
       }
       throw new RunflowError(`Request failed: ${method} ${path}`, {
         code: "network_error",
@@ -166,7 +169,11 @@ export class RunsResource {
       }
       opts.onPoll?.(run);
       yield run;
-      if (run.status_code === "succeeded" || run.status_code === "failed" || run.status_code === "canceled") {
+      if (
+        run.status_code === "succeeded" ||
+        run.status_code === "failed" ||
+        run.status_code === "canceled"
+      ) {
         return;
       }
       await sleep(interval);
@@ -189,10 +196,11 @@ export class RunsResource {
       throw new RunflowError(`Run ${id} produced no status updates`, { code: "no_status" });
     }
     if (last.status_code === "failed" || last.status_code === "canceled") {
-      throw new RunFailedError(
-        last.error?.message ?? `Run ${id} ${last.status_code}`,
-        { id: last.id, status: last.status_code, error: last.error },
-      );
+      throw new RunFailedError(last.error?.message ?? `Run ${id} ${last.status_code}`, {
+        id: last.id,
+        status: last.status_code,
+        error: last.error,
+      });
     }
     return last;
   }
@@ -223,9 +231,12 @@ function encodeModelId(model: string): string {
   const parts = model.split("/");
   for (const p of parts) {
     if (p === "" || p === "." || p === "..") {
-      throw new RunflowError(`models.run: invalid model id segment ${JSON.stringify(p)} in ${JSON.stringify(model)}`, {
-        code: "invalid_model_id",
-      });
+      throw new RunflowError(
+        `models.run: invalid model id segment ${JSON.stringify(p)} in ${JSON.stringify(model)}`,
+        {
+          code: "invalid_model_id",
+        },
+      );
     }
   }
   return parts.map(encodeURIComponent).join("/");

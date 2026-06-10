@@ -24,12 +24,12 @@
 
 import { useState } from "react";
 import {
+  type GenerationResolution,
   estimateGenerationCost,
   formatCostUsd,
-  type GenerationResolution,
 } from "../lib/generation";
-import { Icon } from "./icons";
 import { ReferenceGallery } from "./ReferenceGallery";
+import { Icon } from "./icons";
 
 const ASPECT_OPTIONS: { value: string; label: string }[] = [
   { value: "1:1", label: "1:1 — square" },
@@ -115,10 +115,12 @@ export function GeneratePanel({
   const onAddReferenceFiles = (files: File[]) => {
     if (files.length === 0) return;
     const remaining = files.slice();
-    if (!reference && remaining.length > 0) {
-      const head = remaining.shift()!;
-      setReference(head);
-      setReferencePreview(URL.createObjectURL(head));
+    if (!reference) {
+      const head = remaining.shift();
+      if (head) {
+        setReference(head);
+        setReferencePreview(URL.createObjectURL(head));
+      }
     }
     if (remaining.length === 0) return;
     const room = MAX_GENERATE_REFERENCES - 1 - extraReferences.length;
@@ -181,9 +183,7 @@ export function GeneratePanel({
             </span>
           </div>
           {inFlightPrompt ? (
-            <div className="rfs-generate-inflight-prompt">
-              {inFlightPrompt}
-            </div>
+            <div className="rfs-generate-inflight-prompt">{inFlightPrompt}</div>
           ) : null}
           <div className="rfs-generate-inflight-hint">
             Watch the canvas — each variation will fill in as the model finishes.
@@ -202,8 +202,11 @@ export function GeneratePanel({
 
       <div className="rfs-generate-panel-body">
         <div className="rfs-input-group">
-          <label className="rfs-label">Prompt</label>
+          <label className="rfs-label" htmlFor="rfs-generate-prompt">
+            Prompt
+          </label>
           <textarea
+            id="rfs-generate-prompt"
             className="rfs-textarea"
             placeholder="e.g. premium minimalist white sneaker on a clean off-white backdrop, studio lighting"
             maxLength={400}
@@ -214,14 +217,19 @@ export function GeneratePanel({
         </div>
 
         <div className="rfs-input-group">
-          <label className="rfs-label">Aspect ratio</label>
+          <label className="rfs-label" htmlFor="rfs-generate-aspect">
+            Aspect ratio
+          </label>
           <select
+            id="rfs-generate-aspect"
             className="rfs-select"
             value={aspectRatio}
             onChange={(e) => setAspectRatio(e.target.value)}
           >
             {ASPECT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -263,22 +271,24 @@ export function GeneratePanel({
             maxReferences={MAX_GENERATE_REFERENCES}
           />
           <div className="rfs-help">
-            Drop in up to {MAX_GENERATE_REFERENCES} shots the model should
-            take cues from — style, subject, framing.
+            Drop in up to {MAX_GENERATE_REFERENCES} shots the model should take cues from — style,
+            subject, framing.
           </div>
         </div>
 
         <div className="rfs-input-group">
           <label className="rfs-label">
             Variations
-            <span className="rfs-label-meta">{count} image{count === 1 ? "" : "s"}</span>
+            <span className="rfs-label-meta">
+              {count} image{count === 1 ? "" : "s"}
+            </span>
           </label>
           <input
             type="range"
             min={1}
             max={MAX_VARIATIONS}
             value={count}
-            onChange={(e) => setCount(parseInt(e.target.value, 10))}
+            onChange={(e) => setCount(Number.parseInt(e.target.value, 10))}
             className="rfs-generate-count"
           />
         </div>
@@ -291,9 +301,7 @@ export function GeneratePanel({
           onClick={onSubmit}
           disabled={!canGenerate}
           title={
-            !canGenerate
-              ? "Enter a prompt"
-              : `Generate ${count} image${count === 1 ? "" : "s"}`
+            !canGenerate ? "Enter a prompt" : `Generate ${count} image${count === 1 ? "" : "s"}`
           }
         >
           {Icon.generate}

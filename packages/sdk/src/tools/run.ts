@@ -56,12 +56,14 @@ export class ToolsResource {
     const dispatched = await this.client.models.run(tool.model, enriched, { signal: opts.signal });
     const final = await this.client.runs.wait(dispatched.id, opts);
     if (final.status_code !== "succeeded") {
-      throw new RunFailedError(
-        final.error?.message ?? `Run ${final.id} ${final.status_code}`,
-        { id: final.id, status: final.status_code, error: final.error },
-      );
+      throw new RunFailedError(final.error?.message ?? `Run ${final.id} ${final.status_code}`, {
+        id: final.id,
+        status: final.status_code,
+        error: final.error,
+      });
     }
-    const extractor = tool.extractOutput ?? (defaultExtract as unknown as (raw: unknown) => OutputValues<O>);
+    const extractor =
+      tool.extractOutput ?? (defaultExtract as unknown as (raw: unknown) => OutputValues<O>);
     const extracted = extractor(final.output);
     return { runId: final.id, status: "succeeded", output: extracted, raw: final };
   }

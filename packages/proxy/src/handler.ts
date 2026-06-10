@@ -39,7 +39,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
   }
   const allowed = cfg.allowedModels ?? DEFAULT_ALLOWED_MODELS;
   const allowedModelsFor =
-    typeof allowed === "function" ? allowed : (() => allowed as ReadonlyArray<string>);
+    typeof allowed === "function" ? allowed : () => allowed as ReadonlyArray<string>;
   return {
     apiKey: cfg.apiKey,
     basePath: stripTrailing(cfg.basePath ?? DEFAULT_BASE_PATH),
@@ -67,10 +67,7 @@ function normalize(cfg: ProxyConfig): NormalizedConfig {
  * header. `false` opts out entirely (not recommended). An explicit
  * array of origins is matched case-insensitively on scheme + host + port.
  */
-function originAllowed(
-  req: Request,
-  policy: NormalizedConfig["allowedOrigins"],
-): boolean {
+function originAllowed(req: Request, policy: NormalizedConfig["allowedOrigins"]): boolean {
   if (policy === false) return true;
   const origin = req.headers.get("origin");
   if (!origin) {
@@ -135,7 +132,10 @@ async function handle(c: NormalizedConfig, req: Request): Promise<Response> {
   const segments = upstreamPath.split("/").filter(Boolean);
   const { isDispatch, model, runId } = classify(req.method, segments);
   const isHealth =
-    req.method === "GET" && segments.length === 2 && segments[0] === "v1" && segments[1] === "health";
+    req.method === "GET" &&
+    segments.length === 2 &&
+    segments[0] === "v1" &&
+    segments[1] === "health";
 
   if (!isDispatch && !runId && !isHealth) {
     return json({ error: "Not allowed" }, 403);
@@ -339,7 +339,11 @@ async function readBoundedBody(req: Request, max: number): Promise<string> {
   return new TextDecoder().decode(merged);
 }
 
-function json(payload: unknown, status: number, extraHeaders: Record<string, string> = {}): Response {
+function json(
+  payload: unknown,
+  status: number,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(payload), {
     status,
     headers: { "Content-Type": "application/json", ...extraHeaders },

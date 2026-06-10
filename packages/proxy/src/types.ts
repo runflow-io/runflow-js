@@ -23,7 +23,7 @@ export interface RateLimitDeniedResult {
 export interface RateLimitAllowedResult {
   status: 0;
 }
-export type RateLimitResult = RateLimitDeniedResult | RateLimitAllowedResult | void;
+export type RateLimitResult = RateLimitDeniedResult | RateLimitAllowedResult | undefined;
 
 export interface ProxyRequestContext {
   method: string;

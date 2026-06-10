@@ -65,7 +65,8 @@ function toHeaders(h: IncomingMessage["headers"]): Headers {
 
 async function collectBody(req: IncomingMessage): Promise<Uint8Array> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  for await (const chunk of req)
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   return Buffer.concat(chunks);
 }
 

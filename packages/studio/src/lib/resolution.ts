@@ -32,11 +32,7 @@ export function isResBucket(v: unknown): v is ResBucket {
 // honors the requested param) just confirmed "2K". When `requested`
 // is missing (uploaded photos, samples, workflows that don't take a
 // resolution input), we fall back to the dimension-derived bucket.
-export function displayBucket(
-  width: number,
-  height: number,
-  requested?: string,
-): ResBucket {
+export function displayBucket(width: number, height: number, requested?: string): ResBucket {
   if (isResBucket(requested)) return requested;
   return resBucket(width, height);
 }
@@ -55,17 +51,22 @@ export function formatRes(width: number, height: number): string {
 // Falls back to the reduced gcd form for anything unusual.
 const COMMON_RATIOS: Array<[number, number]> = [
   [1, 1],
-  [4, 5], [5, 4],
-  [9, 16], [16, 9],
-  [9, 21], [21, 9],
-  [3, 4], [4, 3],
-  [2, 3], [3, 2],
+  [4, 5],
+  [5, 4],
+  [9, 16],
+  [16, 9],
+  [9, 21],
+  [21, 9],
+  [3, 4],
+  [4, 3],
+  [2, 3],
+  [3, 2],
 ];
 export function aspectRatioLabel(width: number, height: number): string {
   if (!width || !height) return "";
   const r = width / height;
   let best: [number, number] | null = null;
-  let bestDiff = Infinity;
+  let bestDiff = Number.POSITIVE_INFINITY;
   for (const [w, h] of COMMON_RATIOS) {
     const diff = Math.abs(r - w / h) / (w / h);
     if (diff < bestDiff) {

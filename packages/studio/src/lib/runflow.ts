@@ -68,10 +68,14 @@ async function fetchSourceBlob(url: string): Promise<Blob> {
 // a deterministic 4xx (auth, payload-too-large, etc.) feel sluggish.
 const UPLOAD_RETRY_DELAYS_MS = [250, 750];
 
-export async function uploadFile(name: string, body: Blob, fallbackType = "image/png"): Promise<string> {
+export async function uploadFile(
+  name: string,
+  body: Blob,
+  fallbackType = "image/png",
+): Promise<string> {
   // Server only accepts PNG/JPEG/WebP. Rewrap if the blob lost its type
   // (e.g. some fetch responses arrive as application/octet-stream).
-  const type = body.type && body.type.startsWith("image/") ? body.type : fallbackType;
+  const type = body.type?.startsWith("image/") ? body.type : fallbackType;
   const file = new File([body], name, { type });
 
   const totalAttempts = UPLOAD_RETRY_DELAYS_MS.length + 1;
@@ -374,8 +378,7 @@ export async function runWorkflow(
       }
       if (status === "succeeded") {
         const out = r.output || {};
-        const outputUrl =
-          out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
+        const outputUrl = out.outputs?.[0]?.url ?? out.image_urls?.[0] ?? out.image?.url ?? null;
         if (!outputUrl) {
           onProgress({ phase: "error", message: "No image in output" });
           return { status: "failed", outputUrl: null, error: "no output url" };

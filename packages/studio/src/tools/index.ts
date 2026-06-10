@@ -12,9 +12,9 @@
  */
 
 import {
-  defineTool,
   type ToolDef,
   colorInput,
+  defineTool,
   extractFirstImageUrl,
   imageInput,
   imageOutput,

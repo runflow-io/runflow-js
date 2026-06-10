@@ -15,10 +15,10 @@
  * ```
  */
 
-import { createRoot, type Root } from "react-dom/client";
 import { createElement } from "react";
+import { type Root, createRoot } from "react-dom/client";
 import { StudioShell } from "./components/StudioShell.js";
-import { setStudioUrls, type StudioUrls } from "./lib/urls.js";
+import { type StudioUrls, setStudioUrls } from "./lib/urls.js";
 import { injectStyles } from "./styles.js";
 
 export interface ThemeOverrides {
@@ -82,8 +82,7 @@ function applyThemeAttribute(el: HTMLElement, theme: StudioMountOptions["theme"]
   if (theme === "light") mode = "light";
   else if (theme === "auto") {
     mode =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-color-scheme: light)").matches
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: light)").matches
         ? "light"
         : "dark";
   }

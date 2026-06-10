@@ -47,8 +47,23 @@ export type WorkflowGroup = "magic" | "compose" | "cleanup" | "enhance" | "packa
 
 export type WorkflowInput =
   | { type: "color"; key: string; label: string; default?: string; help?: string }
-  | { type: "text"; key: string; label: string; placeholder?: string; maxlength?: number; help?: string; optional?: boolean }
-  | { type: "textarea"; key: string; label: string; placeholder?: string; maxlength?: number; help?: string }
+  | {
+      type: "text";
+      key: string;
+      label: string;
+      placeholder?: string;
+      maxlength?: number;
+      help?: string;
+      optional?: boolean;
+    }
+  | {
+      type: "textarea";
+      key: string;
+      label: string;
+      placeholder?: string;
+      maxlength?: number;
+      help?: string;
+    }
   | {
       type: "select";
       key: string;
@@ -143,9 +158,9 @@ export type Workflow = {
 const hex2rgb = (hex: string) => {
   const h = hex.replace("#", "");
   return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
+    r: Number.parseInt(h.slice(0, 2), 16),
+    g: Number.parseInt(h.slice(2, 4), 16),
+    b: Number.parseInt(h.slice(4, 6), 16),
   };
 };
 
@@ -517,7 +532,7 @@ export const WORKFLOWS: Workflow[] = [
         input: {
           image_url: img,
           model: vals.model || "Standard V2",
-          upscale_factor: parseFloat(vals.upscale_factor || "2"),
+          upscale_factor: Number.parseFloat(vals.upscale_factor || "2"),
           output_format: "png",
           ...(faceOn
             ? {
@@ -577,7 +592,11 @@ export const WORKFLOWS: Workflow[] = [
       prep: [
         { workflowId: "tag-removal", params: {}, label: "Remove price tag" },
         { workflowId: "model-removal", params: {}, label: "Remove the mannequin" },
-        { workflowId: "background-color", params: { color: "#F1F1F1" }, label: "Apply Zalando grey" },
+        {
+          workflowId: "background-color",
+          params: { color: "#F1F1F1" },
+          label: "Apply Zalando grey",
+        },
       ],
     },
   },

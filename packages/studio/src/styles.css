@@ -17,22 +17,22 @@
 */
 
 .rfs-root {
-  --rfs-bg-0: #0A0A0B;
-  --rfs-bg-1: #18181B;
-  --rfs-bg-2: #27272A;
-  --rfs-bg-3: #3F3F46;
-  --rfs-ink-0: #FAFAFA;
-  --rfs-ink-1: #D4D4D8;
-  --rfs-ink-2: #A1A1AA;
-  --rfs-ink-3: #71717A;
-  --rfs-accent: #FBBF24;
-  --rfs-accent-dim: #F59E0B;
-  --rfs-accent-soft: rgba(251,191,36,0.12);
-  --rfs-success: #22C55E;
-  --rfs-danger:  #F87171;
-  --rfs-radius:  12px;
+  --rfs-bg-0: #0a0a0b;
+  --rfs-bg-1: #18181b;
+  --rfs-bg-2: #27272a;
+  --rfs-bg-3: #3f3f46;
+  --rfs-ink-0: #fafafa;
+  --rfs-ink-1: #d4d4d8;
+  --rfs-ink-2: #a1a1aa;
+  --rfs-ink-3: #71717a;
+  --rfs-accent: #fbbf24;
+  --rfs-accent-dim: #f59e0b;
+  --rfs-accent-soft: rgba(251, 191, 36, 0.12);
+  --rfs-success: #22c55e;
+  --rfs-danger: #f87171;
+  --rfs-radius: 12px;
   --rfs-radius-lg: 16px;
-  --rfs-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.2);
+  --rfs-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
 
   --rfs-left-w: 268px;
   font-family: Outfit, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -58,7 +58,9 @@
 /* ============ Header ============ */
 .rfs-header {
   grid-area: header;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0 1rem;
   border-bottom: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
@@ -66,31 +68,41 @@
   z-index: 5;
 }
 .rfs-brand {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.25rem 0.375rem;
 }
 .rfs-brand-mark {
-  width: 36px; height: 12px;
+  width: 36px;
+  height: 12px;
   border-radius: 6px;
-  background: linear-gradient(90deg, #09090B, var(--rfs-accent));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  background: linear-gradient(90deg, #09090b, var(--rfs-accent));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 .rfs-brand-name {
-  font-weight: 800; font-size: 1rem; letter-spacing: -0.03em;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.03em;
 }
-.rfs-brand-name span { color: var(--rfs-accent); }
+.rfs-brand-name span {
+  color: var(--rfs-accent);
+}
 .rfs-brand-tag {
   margin-left: 0.5rem;
   padding: 2px 6px;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.6875rem; font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 600;
   border-radius: 4px;
   letter-spacing: 0.04em;
 }
 
 .rfs-project {
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.8125rem;
   color: var(--rfs-ink-2);
 }
@@ -113,7 +125,10 @@
   background: var(--rfs-bg-2);
   border-color: var(--rfs-bg-3);
 }
-.rfs-project-name:disabled { cursor: default; opacity: 0.6; }
+.rfs-project-name:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
 .rfs-project-name-input {
   color: var(--rfs-ink-0);
   background: var(--rfs-bg-1);
@@ -127,10 +142,17 @@
   width: 240px;
 }
 
-.rfs-header-right { display: flex; align-items: center; gap: 0.375rem; }
+.rfs-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
 .rfs-iconbtn {
-  width: 32px; height: 32px;
-  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
   background: transparent;
   border: 1px solid transparent;
@@ -138,35 +160,63 @@
   cursor: pointer;
   transition: background 120ms, color 120ms, border-color 120ms;
 }
-.rfs-iconbtn:hover { background: var(--rfs-bg-2); color: var(--rfs-ink-0); }
-.rfs-iconbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.rfs-iconbtn:hover {
+  background: var(--rfs-bg-2);
+  color: var(--rfs-ink-0);
+}
+.rfs-iconbtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
 .rfs-btn {
-  display: inline-flex; align-items: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.375rem 0.75rem;
   border: 1px solid var(--rfs-bg-3);
   border-radius: 8px;
   background: var(--rfs-bg-1);
   color: var(--rfs-ink-0);
-  font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 120ms, border-color 120ms;
 }
-.rfs-btn:hover { background: var(--rfs-bg-2); border-color: var(--rfs-bg-3); }
+.rfs-btn:hover {
+  background: var(--rfs-bg-2);
+  border-color: var(--rfs-bg-3);
+}
 .rfs-btn-primary {
   background: var(--rfs-accent);
   border-color: var(--rfs-accent);
-  color: #09090B;
+  color: #09090b;
 }
-.rfs-btn-primary:hover { background: var(--rfs-accent-dim); border-color: var(--rfs-accent-dim); }
-.rfs-btn-primary:disabled { background: var(--rfs-bg-3); color: var(--rfs-ink-3); border-color: var(--rfs-bg-3); cursor: not-allowed; }
-.rfs-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.rfs-btn-primary:hover {
+  background: var(--rfs-accent-dim);
+  border-color: var(--rfs-accent-dim);
+}
+.rfs-btn-primary:disabled {
+  background: var(--rfs-bg-3);
+  color: var(--rfs-ink-3);
+  border-color: var(--rfs-bg-3);
+  cursor: not-allowed;
+}
+.rfs-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .rfs-avatar {
-  width: 28px; height: 28px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #FCD34D, #F59E0B);
-  display: inline-flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 0.75rem;
-  color: #09090B;
+  background: linear-gradient(135deg, #fcd34d, #f59e0b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #09090b;
   margin-left: 0.25rem;
 }
 
@@ -175,7 +225,8 @@
   grid-area: left;
   border-right: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
@@ -185,7 +236,9 @@
 .rfs-left-header {
   flex-shrink: 0;
   padding: 0.875rem 0.875rem 0.5rem;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .rfs-left-title {
   font-size: 0.6875rem;
@@ -204,13 +257,18 @@
 .rfs-left-upload-btn {
   width: 100%;
   box-sizing: border-box;
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
   padding: 0.5rem 0.625rem;
   background: var(--rfs-bg-1);
   border: 1px dashed var(--rfs-bg-3);
   border-radius: 10px;
   color: var(--rfs-ink-1);
-  font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
   transition: border-color 120ms, color 120ms, background 120ms;
 }
@@ -219,7 +277,9 @@
   color: var(--rfs-accent);
   background: var(--rfs-accent-soft);
 }
-.rfs-left-upload-btn input[type="file"] { display: none; }
+.rfs-left-upload-btn input[type="file"] {
+  display: none;
+}
 
 /* Two-button "+ New asset" row — Upload + Generate. Lays out as a
    flex row so each button takes 50% of the rail. Generate inherits
@@ -229,19 +289,26 @@
 .rfs-left-newasset {
   flex-shrink: 0;
   padding: 0 calc(0.875rem + 6px) 0.75rem 0.875rem;
-  display: flex; gap: 0.4375rem;
+  display: flex;
+  gap: 0.4375rem;
   box-sizing: border-box;
 }
 .rfs-left-newasset-btn {
-  flex: 1; min-width: 0;
+  flex: 1;
+  min-width: 0;
   box-sizing: border-box;
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
   padding: 0.5rem 0.5rem;
   background: var(--rfs-bg-1);
   border: 1px dashed var(--rfs-bg-3);
   border-radius: 10px;
   color: var(--rfs-ink-1);
-  font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
   transition: border-color 120ms, color 120ms, background 120ms;
 }
@@ -250,7 +317,9 @@
   color: var(--rfs-accent);
   background: var(--rfs-accent-soft);
 }
-.rfs-left-newasset-btn input[type="file"] { display: none; }
+.rfs-left-newasset-btn input[type="file"] {
+  display: none;
+}
 .rfs-left-newasset-generate {
   /* Slight accent on idle so the sparkle reads as the "creative"
      option vs. Upload's neutral file-bring-your-own affordance.
@@ -267,35 +336,48 @@
 .rfs-generate-panel {
   flex: 1;
   min-height: 0;
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   background: var(--rfs-bg-0);
 }
 .rfs-generate-panel-header {
   flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 0.4375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
   padding: 0.75rem 0.875rem;
   border-bottom: 1px solid var(--rfs-bg-2);
 }
 .rfs-generate-back {
-  display: inline-flex; align-items: center; gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
   align-self: flex-start;
 }
 .rfs-generate-panel-title {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  font-size: 0.9375rem; font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
   color: var(--rfs-ink-0);
 }
-.rfs-generate-panel-title svg { color: var(--rfs-accent); }
+.rfs-generate-panel-title svg {
+  color: var(--rfs-accent);
+}
 .rfs-generate-panel-body {
   flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   padding: 0.875rem;
   border-bottom: 1px solid var(--rfs-bg-2);
 }
 .rfs-generate-res-row {
-  display: flex; gap: 0.375rem;
+  display: flex;
+  gap: 0.375rem;
 }
 .rfs-generate-res-btn {
   flex: 1;
@@ -304,11 +386,16 @@
   border: 1px solid var(--rfs-bg-2);
   border-radius: 8px;
   color: var(--rfs-ink-2);
-  font-family: inherit; font-size: 0.75rem; font-weight: 700;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background 120ms, color 120ms, border-color 120ms;
 }
-.rfs-generate-res-btn:hover { color: var(--rfs-ink-0); border-color: var(--rfs-bg-3); }
+.rfs-generate-res-btn:hover {
+  color: var(--rfs-ink-0);
+  border-color: var(--rfs-bg-3);
+}
 .rfs-generate-res-btn.is-selected {
   background: var(--rfs-accent-soft);
   color: var(--rfs-accent);
@@ -325,7 +412,10 @@
 }
 .rfs-generate-go {
   width: 100%;
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4375rem;
 }
 
 /* In-flight summary — shown above the form while at least one
@@ -334,13 +424,17 @@
    way to launch a brand-new batch without leaving the panel. */
 .rfs-generate-inflight {
   flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.75rem 0.875rem;
-  background: rgba(251,191,36,0.06);
+  background: rgba(251, 191, 36, 0.06);
   border-bottom: 1px solid var(--rfs-bg-2);
 }
 .rfs-generate-inflight-status {
-  display: inline-flex; align-items: center; gap: 0.4375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--rfs-ink-0);
@@ -368,7 +462,9 @@
 }
 .rfs-generate-newrun {
   align-self: flex-start;
-  display: inline-flex; align-items: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   margin-top: 0.25rem;
   font-size: 0.75rem;
 }
@@ -380,26 +476,37 @@
   min-height: 0;
   overflow-y: auto;
   padding: 0.875rem;
-  display: flex; flex-direction: column; gap: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 }
 .rfs-generate-results-label {
-  font-size: 0.625rem; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--rfs-ink-3);
-  display: flex; gap: 0.4375rem;
+  display: flex;
+  gap: 0.4375rem;
 }
 .rfs-generate-tiles {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
 }
 .rfs-generate-tile {
-  display: flex; flex-direction: column; gap: 0.4375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
   padding: 0.4375rem;
   background: var(--rfs-bg-1);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 10px;
   transition: border-color 140ms;
 }
-.rfs-generate-tile:hover { border-color: var(--rfs-bg-3); }
+.rfs-generate-tile:hover {
+  border-color: var(--rfs-bg-3);
+}
 .rfs-generate-tile-img {
   position: relative;
   aspect-ratio: 1 / 1;
@@ -408,26 +515,36 @@
   background: var(--rfs-bg-0);
 }
 .rfs-generate-tile-img img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
 .rfs-generate-tile-pending,
 .rfs-generate-tile-failed {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.625rem;
   text-align: center;
 }
 .rfs-generate-tile-spinner {
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   border: 2px solid var(--rfs-bg-3);
   border-top-color: var(--rfs-accent);
   border-radius: 999px;
   animation: rfs-spin 1s linear infinite;
 }
-@keyframes rfs-spin { to { transform: rotate(360deg); } }
+@keyframes rfs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .rfs-generate-tile-phrase {
   font-size: 0.6875rem;
   color: var(--rfs-ink-2);
@@ -446,12 +563,16 @@
 }
 .rfs-generate-tile-sentinel {
   position: absolute;
-  top: 0.4375rem; right: 0.4375rem;
+  top: 0.4375rem;
+  right: 0.4375rem;
 }
 .rfs-generate-tile-sentinel-pending {
-  width: 18px; height: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.55);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
   color: var(--rfs-ink-1);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 999px;
@@ -465,19 +586,24 @@
   border-radius: 6px;
 }
 .rfs-generate-tile-hint-red {
-  background: rgba(248,113,113,0.12);
+  background: rgba(248, 113, 113, 0.12);
   color: var(--rfs-danger);
 }
 .rfs-generate-tile-hint-failed {
-  background: rgba(161,161,170,0.12);
+  background: rgba(161, 161, 170, 0.12);
   color: var(--rfs-ink-2);
 }
 .rfs-generate-tile-actions {
-  display: flex; align-items: center; gap: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 .rfs-generate-tile-keep {
   flex: 1;
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
   padding: 0.4375rem 0.5rem;
   font-size: 0.75rem;
 }
@@ -497,12 +623,19 @@
   scrollbar-width: thin;
   scrollbar-color: var(--rfs-bg-3) transparent;
 }
-.rfs-asset-list::-webkit-scrollbar { width: 6px; }
-.rfs-asset-list::-webkit-scrollbar-track { background: transparent; }
-.rfs-asset-list::-webkit-scrollbar-thumb {
-  background: var(--rfs-bg-3); border-radius: 999px;
+.rfs-asset-list::-webkit-scrollbar {
+  width: 6px;
 }
-.rfs-asset-list::-webkit-scrollbar-thumb:hover { background: var(--rfs-ink-3); }
+.rfs-asset-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.rfs-asset-list::-webkit-scrollbar-thumb {
+  background: var(--rfs-bg-3);
+  border-radius: 999px;
+}
+.rfs-asset-list::-webkit-scrollbar-thumb:hover {
+  background: var(--rfs-ink-3);
+}
 
 /* Asset cards — square, image fills the entire card edge-to-edge.
    The 1rem grid gap between cards is doing the visual-separation
@@ -545,11 +678,12 @@
    thumbnail. */
 .rfs-asset-count {
   position: absolute;
-  bottom: 6px; right: 6px;
+  bottom: 6px;
+  right: 6px;
   min-width: 22px;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(9,9,11,0.88);
+  background: rgba(9, 9, 11, 0.88);
   backdrop-filter: blur(6px);
   color: var(--rfs-ink-0);
   border: 1px solid var(--rfs-bg-3);
@@ -557,7 +691,7 @@
   font-weight: 700;
   text-align: center;
   line-height: 1;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* Re-open the rail when collapsed — small floating button */
@@ -572,7 +706,8 @@
 /* ============ Center canvas ============ */
 .rfs-center {
   grid-area: center;
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   background: var(--rfs-bg-0);
 }
@@ -581,7 +716,8 @@
   min-height: 0;
   position: relative;
   display: flex;
-  align-items: center; justify-content: center;
+  align-items: center;
+  justify-content: center;
   padding: 1.5rem;
   overflow: hidden;
 }
@@ -590,12 +726,15 @@
   color: var(--rfs-ink-2);
 }
 .rfs-canvas-empty h2 {
-  font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--rfs-ink-0);
   margin: 0 0 0.5rem;
 }
 .rfs-canvas-empty p {
-  margin: 0; font-size: 0.875rem;
+  margin: 0;
+  font-size: 0.875rem;
   max-width: 360px;
 }
 .rfs-image-frame {
@@ -617,8 +756,12 @@
   user-select: none;
   -webkit-user-drag: none;
 }
-.rfs-canvas.is-pinning .rfs-image-frame img { cursor: crosshair; }
-.rfs-canvas.is-painting .rfs-image-frame img { cursor: cell; }
+.rfs-canvas.is-pinning .rfs-image-frame img {
+  cursor: crosshair;
+}
+.rfs-canvas.is-painting .rfs-image-frame img {
+  cursor: cell;
+}
 
 /* Persistent Compare button — graduated out of the hover tools row so
    the side-by-side scrub is discoverable without the user knowing to
@@ -635,7 +778,7 @@
   gap: 0.375rem;
   height: 32px;
   padding: 0 0.625rem;
-  background: rgba(24,24,27,0.78);
+  background: rgba(24, 24, 27, 0.78);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 8px;
@@ -650,7 +793,7 @@
 }
 .rfs-canvas-compare-btn:hover:not(:disabled) {
   color: var(--rfs-ink-0);
-  background: rgba(39,39,42,0.92);
+  background: rgba(39, 39, 42, 0.92);
   border-color: var(--rfs-accent);
 }
 .rfs-canvas-compare-btn:disabled {
@@ -667,9 +810,11 @@
    used to live here; it's now a persistent floating button. */
 .rfs-canvas-tools {
   position: absolute;
-  right: 0.625rem; bottom: 0.625rem;
-  display: flex; gap: 0.25rem;
-  background: rgba(24,24,27,0.78);
+  right: 0.625rem;
+  bottom: 0.625rem;
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(24, 24, 27, 0.78);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 10px;
@@ -683,8 +828,16 @@
 .rfs-canvas-tools:focus-within {
   opacity: 1;
 }
-.rfs-canvas-tools .rfs-iconbtn { color: var(--rfs-ink-1); width: 30px; height: 30px; border-radius: 8px; }
-.rfs-canvas-tools .rfs-iconbtn:hover { background: var(--rfs-bg-2); color: var(--rfs-ink-0); }
+.rfs-canvas-tools .rfs-iconbtn {
+  color: var(--rfs-ink-1);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+.rfs-canvas-tools .rfs-iconbtn:hover {
+  background: var(--rfs-bg-2);
+  color: var(--rfs-ink-0);
+}
 
 /* Info pills inside the canvas-tools group — resolution bucket
    (1K/2K/4K, colour-coded) and aspect ratio. Hover the resolution pill
@@ -692,7 +845,9 @@
    compare/download icon buttons so the canvas stays calm when nobody's
    hovering — info reveals together with the actions. */
 .rfs-canvas-tools-pill {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 30px;
   padding: 0 0.5rem;
   font-size: 0.6875rem;
@@ -702,18 +857,32 @@
   color: var(--rfs-ink-1);
   user-select: none;
 }
-.rfs-canvas-tools-pill[title] { cursor: help; }
-.rfs-canvas-tools-pill-muted { color: var(--rfs-ink-2); font-weight: 600; }
-.rfs-canvas-res-1k { color: #94A3B8; }
-.rfs-canvas-res-2k { color: #38BDF8; }
-.rfs-canvas-res-4k { color: var(--rfs-accent); }
+.rfs-canvas-tools-pill[title] {
+  cursor: help;
+}
+.rfs-canvas-tools-pill-muted {
+  color: var(--rfs-ink-2);
+  font-weight: 600;
+}
+.rfs-canvas-res-1k {
+  color: #94a3b8;
+}
+.rfs-canvas-res-2k {
+  color: #38bdf8;
+}
+.rfs-canvas-res-4k {
+  color: var(--rfs-accent);
+}
 
 .rfs-stage-hint {
   position: absolute;
-  left: 50%; bottom: 1.75rem;
+  left: 50%;
+  bottom: 1.75rem;
   transform: translateX(-50%);
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: rgba(24,24,27,0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 999px;
@@ -724,30 +893,44 @@
   box-shadow: var(--rfs-shadow);
   z-index: 3;
 }
-.rfs-stage-hint b { color: var(--rfs-accent); font-weight: 600; }
+.rfs-stage-hint b {
+  color: var(--rfs-accent);
+  font-weight: 600;
+}
 .rfs-stage-hint-dot {
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: var(--rfs-accent);
   animation: rfs-pulse-dot 1400ms ease-in-out infinite;
 }
 @keyframes rfs-pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .rfs-canvas-overlay {
-  position: absolute; inset: 1.5rem;
-  background: rgba(10,10,11,0.82);
+  position: absolute;
+  inset: 1.5rem;
+  background: rgba(10, 10, 11, 0.82);
   backdrop-filter: blur(12px);
   border-radius: var(--rfs-radius-lg);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 0.625rem;
   color: var(--rfs-ink-0);
   z-index: 4;
 }
 .rfs-spinner {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   border: 3px solid var(--rfs-bg-3);
   border-top-color: var(--rfs-accent);
@@ -762,14 +945,15 @@
    has a coherent "studio overlay" look. */
 .rfs-canvas-pending {
   position: absolute;
-  left: 50%; bottom: 1rem;
+  left: 50%;
+  bottom: 1rem;
   transform: translateX(-50%);
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   height: 32px;
   padding: 0 0.75rem;
-  background: rgba(24,24,27,0.85);
+  background: rgba(24, 24, 27, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 8px;
@@ -788,23 +972,36 @@
      mid-word — wrap to two lines instead. */
   max-width: calc(100% - 2.5rem);
 }
-.rfs-canvas-pending:hover { border-color: var(--rfs-accent); }
-.rfs-canvas-pending strong { color: var(--rfs-ink-0); font-weight: 700; }
+.rfs-canvas-pending:hover {
+  border-color: var(--rfs-accent);
+}
+.rfs-canvas-pending strong {
+  color: var(--rfs-ink-0);
+  font-weight: 700;
+}
 .rfs-canvas-pending-spinner {
-  width: 12px; height: 12px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
   border-radius: 999px;
-  border: 2px solid rgba(255,255,255,0.18);
+  border: 2px solid rgba(255, 255, 255, 0.18);
   border-top-color: var(--rfs-accent);
   animation: rfs-spin 800ms linear infinite;
 }
-@keyframes rfs-spin { to { transform: rotate(360deg); } }
+@keyframes rfs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Animated trailing dots after the rotating microcopy phrase. Three
    dots that pulse one after another, like Claude Code's status line.
    Conveys "still working" without a static spinner being the only
    life sign. */
-.rfs-canvas-pending-phrase { display: inline-flex; align-items: baseline; }
+.rfs-canvas-pending-phrase {
+  display: inline-flex;
+  align-items: baseline;
+}
 .rfs-canvas-pending-dots {
   display: inline-flex;
   gap: 2px;
@@ -812,19 +1009,38 @@
   align-items: center;
 }
 .rfs-canvas-pending-dots span {
-  width: 3px; height: 3px;
+  width: 3px;
+  height: 3px;
   border-radius: 999px;
   background: var(--rfs-ink-2);
   animation: rfs-pending-dot 1.2s infinite ease-in-out;
 }
-.rfs-canvas-pending-dots span:nth-child(2) { animation-delay: 0.18s; }
-.rfs-canvas-pending-dots span:nth-child(3) { animation-delay: 0.36s; }
-@keyframes rfs-pending-dot {
-  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-1px); }
+.rfs-canvas-pending-dots span:nth-child(2) {
+  animation-delay: 0.18s;
 }
-.rfs-canvas-overlay strong { font-size: 1rem; letter-spacing: -0.01em; }
-.rfs-canvas-overlay-sub { color: var(--rfs-ink-2); font-size: 0.8125rem; }
+.rfs-canvas-pending-dots span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes rfs-pending-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+.rfs-canvas-overlay strong {
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+.rfs-canvas-overlay-sub {
+  color: var(--rfs-ink-2);
+  font-size: 0.8125rem;
+}
 
 /* Generation skeleton — shown when the active version is a pending
    text-to-image generation (no source image yet). A shimmering
@@ -842,31 +1058,37 @@
   border: 1px solid var(--rfs-bg-2);
 }
 .rfs-canvas-generation-skeleton {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     100deg,
-    rgba(39,39,42,0.6) 30%,
-    rgba(63,63,70,0.85) 50%,
-    rgba(39,39,42,0.6) 70%
+    rgba(39, 39, 42, 0.6) 30%,
+    rgba(63, 63, 70, 0.85) 50%,
+    rgba(39, 39, 42, 0.6) 70%
   );
   background-size: 200% 100%;
   animation: rfs-shimmer 2.4s ease-in-out infinite;
 }
 .rfs-canvas-generation-shimmer {
-  position: absolute; inset: 0;
-  background: radial-gradient(
-    600px 240px at center,
-    rgba(251,191,36,0.06),
-    transparent 70%
-  );
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px 240px at center, rgba(251, 191, 36, 0.06), transparent 70%);
 }
 @keyframes rfs-shimmer {
-  0%   { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 .rfs-canvas-generation-overlay {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 1.25rem;
   padding: 2rem;
   text-align: center;
@@ -881,13 +1103,23 @@
      not a hardcoded label. */
   font-style: italic;
 }
-.rfs-canvas-generation-prompt::before { content: "“"; opacity: 0.5; margin-right: 2px; }
-.rfs-canvas-generation-prompt::after  { content: "”"; opacity: 0.5; margin-left: 2px; }
+.rfs-canvas-generation-prompt::before {
+  content: "“";
+  opacity: 0.5;
+  margin-right: 2px;
+}
+.rfs-canvas-generation-prompt::after {
+  content: "”";
+  opacity: 0.5;
+  margin-left: 2px;
+}
 .rfs-canvas-generation-status {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   height: 32px;
   padding: 0 0.75rem;
-  background: rgba(24,24,27,0.85);
+  background: rgba(24, 24, 27, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 8px;
@@ -901,13 +1133,15 @@
 .rfs-canvas-generation-failed {
   background: var(--rfs-bg-1);
 }
-.rfs-canvas-generation-failed .rfs-canvas-generation-skeleton { display: none; }
+.rfs-canvas-generation-failed .rfs-canvas-generation-skeleton {
+  display: none;
+}
 .rfs-canvas-generation-failed-pill {
   display: inline-block;
   max-width: 480px;
   padding: 0.5rem 0.875rem;
-  background: rgba(248,113,113,0.12);
-  border: 1px solid rgba(248,113,113,0.32);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.32);
   border-radius: 8px;
   color: var(--rfs-danger);
   font-size: 0.75rem;
@@ -922,12 +1156,13 @@
 .rfs-asset-skeleton,
 .rfs-version-thumb-skeleton {
   display: block;
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(
     100deg,
-    rgba(39,39,42,0.6) 30%,
-    rgba(63,63,70,0.85) 50%,
-    rgba(39,39,42,0.6) 70%
+    rgba(39, 39, 42, 0.6) 30%,
+    rgba(63, 63, 70, 0.85) 50%,
+    rgba(39, 39, 42, 0.6) 70%
   );
   background-size: 200% 100%;
   animation: rfs-shimmer 2.4s ease-in-out infinite;
@@ -935,13 +1170,14 @@
 
 .rfs-canvas-error {
   position: absolute;
-  left: 50%; top: 1.75rem;
+  left: 50%;
+  top: 1.75rem;
   transform: translateX(-50%);
-  background: #7F1D1D;
-  border: 1px solid #B91C1C;
+  background: #7f1d1d;
+  border: 1px solid #b91c1c;
   border-radius: 10px;
   padding: 0.5rem 0.875rem;
-  color: #FECACA;
+  color: #fecaca;
   font-size: 0.8125rem;
   font-weight: 500;
   max-width: 80%;
@@ -957,8 +1193,10 @@
 */
 .rfs-sentinel-dot {
   position: absolute;
-  bottom: 5px; right: 5px;
-  width: 11px; height: 11px;
+  bottom: 5px;
+  right: 5px;
+  width: 11px;
+  height: 11px;
   border-radius: 999px;
   border: 2px solid var(--rfs-bg-0);
   box-sizing: content-box;
@@ -976,13 +1214,28 @@
   animation: rfs-sentinel-pulse 1600ms ease-in-out infinite;
 }
 @keyframes rfs-sentinel-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%      { opacity: 0.55; transform: scale(0.82); }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.82);
+  }
 }
-.rfs-sentinel-dot.is-green  { background: var(--rfs-success); }
-.rfs-sentinel-dot.is-amber  { background: #F59E0B; }
-.rfs-sentinel-dot.is-red    { background: var(--rfs-danger); }
-.rfs-sentinel-dot.is-failed { background: var(--rfs-bg-3); }
+.rfs-sentinel-dot.is-green {
+  background: var(--rfs-success);
+}
+.rfs-sentinel-dot.is-amber {
+  background: #f59e0b;
+}
+.rfs-sentinel-dot.is-red {
+  background: var(--rfs-danger);
+}
+.rfs-sentinel-dot.is-failed {
+  background: var(--rfs-bg-3);
+}
 
 /* Question-mark glyph for the `failed` (eval errored) state — visually
    distinct from the solid red dot of `red` (judges actually failed) so
@@ -1007,32 +1260,53 @@
    is the first thing the user sees on a generated frame. */
 .rfs-sentinel-badge {
   position: absolute;
-  left: 0.625rem; bottom: 0.625rem;
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  left: 0.625rem;
+  bottom: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.4375rem 0.75rem 0.4375rem 0.625rem;
-  background: rgba(24,24,27,0.92);
+  background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 999px;
   color: var(--rfs-ink-0);
-  font-family: inherit; font-size: 0.75rem; font-weight: 600;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   z-index: 4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
-.rfs-sentinel-badge:hover { border-color: var(--rfs-accent); }
+.rfs-sentinel-badge:hover {
+  border-color: var(--rfs-accent);
+}
 .rfs-sentinel-badge .rfs-sentinel-dot {
   position: static;
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border: none;
   flex-shrink: 0;
 }
-.rfs-sentinel-badge.is-green  { color: var(--rfs-success); }
-.rfs-sentinel-badge.is-amber  { color: #F59E0B; }
-.rfs-sentinel-badge.is-red    { color: var(--rfs-danger); }
-.rfs-sentinel-badge.is-pending { color: var(--rfs-accent); }
-.rfs-sentinel-badge.is-failed { color: var(--rfs-ink-3); }
-.rfs-sentinel-badge.is-skipped { color: var(--rfs-ink-3); cursor: help; }
+.rfs-sentinel-badge.is-green {
+  color: var(--rfs-success);
+}
+.rfs-sentinel-badge.is-amber {
+  color: #f59e0b;
+}
+.rfs-sentinel-badge.is-red {
+  color: var(--rfs-danger);
+}
+.rfs-sentinel-badge.is-pending {
+  color: var(--rfs-accent);
+}
+.rfs-sentinel-badge.is-failed {
+  color: var(--rfs-ink-3);
+}
+.rfs-sentinel-badge.is-skipped {
+  color: var(--rfs-ink-3);
+  cursor: help;
+}
 /* Elapsed-time chip on the pending badge — neutral monospace so it
    reads as a clock without competing with the colored state label. */
 .rfs-sentinel-badge-elapsed {
@@ -1047,37 +1321,64 @@
    cards. Same dot palette as the badge but flatter and tooltip-only.
    .sm sits inside a card row; .xs is small enough to overlay a thumb. */
 .rfs-sentinel-chip {
-  display: inline-flex; align-items: center; gap: 0.3125rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
   padding: 0.1875rem 0.4375rem;
-  background: rgba(24,24,27,0.92);
+  background: rgba(24, 24, 27, 0.92);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 999px;
-  font-family: inherit; font-weight: 600;
+  font-family: inherit;
+  font-weight: 600;
   cursor: help;
   white-space: nowrap;
   line-height: 1;
 }
-.rfs-sentinel-chip-sm { font-size: 0.6875rem; }
+.rfs-sentinel-chip-sm {
+  font-size: 0.6875rem;
+}
 .rfs-sentinel-chip .rfs-sentinel-dot {
   position: static;
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border: none;
   flex-shrink: 0;
 }
-.rfs-sentinel-chip.is-green   { color: var(--rfs-success); border-color: rgba(34,197,94,0.4); }
-.rfs-sentinel-chip.is-amber   { color: #F59E0B; border-color: rgba(245,158,11,0.4); }
-.rfs-sentinel-chip.is-red     { color: var(--rfs-danger); border-color: rgba(248,113,113,0.4); }
-.rfs-sentinel-chip.is-pending { color: var(--rfs-accent); border-color: var(--rfs-bg-3); }
-.rfs-sentinel-chip.is-failed  { color: var(--rfs-ink-3); border-color: var(--rfs-bg-3); }
-.rfs-sentinel-chip.is-skipped { color: var(--rfs-ink-3); border-color: var(--rfs-bg-3); }
+.rfs-sentinel-chip.is-green {
+  color: var(--rfs-success);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+.rfs-sentinel-chip.is-amber {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.rfs-sentinel-chip.is-red {
+  color: var(--rfs-danger);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+.rfs-sentinel-chip.is-pending {
+  color: var(--rfs-accent);
+  border-color: var(--rfs-bg-3);
+}
+.rfs-sentinel-chip.is-failed {
+  color: var(--rfs-ink-3);
+  border-color: var(--rfs-bg-3);
+}
+.rfs-sentinel-chip.is-skipped {
+  color: var(--rfs-ink-3);
+  border-color: var(--rfs-bg-3);
+}
 
 /* xs variant — dot-only, used on version stripe thumbs where text
    would overflow the 56px tile. Hover the dot to read the full
    sentinel state (state label · judges passed · score · top issue). */
 .rfs-sentinel-chip-xs {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 14px; height: 14px;
-  background: rgba(24,24,27,0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: rgba(24, 24, 27, 0.92);
   border: 1.5px solid var(--rfs-bg-3);
   border-radius: 999px;
   cursor: help;
@@ -1085,25 +1386,39 @@
 }
 .rfs-sentinel-chip-xs .rfs-sentinel-dot {
   position: static;
-  width: 7px; height: 7px;
+  width: 7px;
+  height: 7px;
   border: none;
 }
-.rfs-sentinel-chip-xs.is-green   { border-color: var(--rfs-success); }
-.rfs-sentinel-chip-xs.is-amber   { border-color: #F59E0B; }
-.rfs-sentinel-chip-xs.is-red     { border-color: var(--rfs-danger); }
+.rfs-sentinel-chip-xs.is-green {
+  border-color: var(--rfs-success);
+}
+.rfs-sentinel-chip-xs.is-amber {
+  border-color: #f59e0b;
+}
+.rfs-sentinel-chip-xs.is-red {
+  border-color: var(--rfs-danger);
+}
 .rfs-sentinel-chip-xs.is-pending {
   border-color: var(--rfs-accent);
   animation: rfs-sentinel-chip-pulse 1600ms ease-in-out infinite;
 }
 .rfs-sentinel-chip-xs.is-failed,
-.rfs-sentinel-chip-xs.is-skipped { border-color: var(--rfs-bg-3); }
+.rfs-sentinel-chip-xs.is-skipped {
+  border-color: var(--rfs-bg-3);
+}
 /* Same pulse for the sm chip used in compact contexts. */
 .rfs-sentinel-chip.is-pending {
   animation: rfs-sentinel-chip-pulse 1600ms ease-in-out infinite;
 }
 @keyframes rfs-sentinel-chip-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.0); }
-  50%      { box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+  }
 }
 
 /* Position the chip in the top-left of a version thumb (top-right is
@@ -1111,7 +1426,8 @@
    the title tooltip works without stealing the click from the thumb. */
 .rfs-version-thumb-sentinel {
   position: absolute;
-  top: 6px; left: 6px;
+  top: 6px;
+  left: 6px;
   z-index: 2;
 }
 
@@ -1119,31 +1435,39 @@
    right. The whole head is still a click target — chip relies on the
    native title tooltip so it doesn't need its own click handler. */
 .rfs-history-card-name-row {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
 }
 
 .rfs-sentinel-panel {
   position: absolute;
-  left: 0.625rem; bottom: 3.25rem;
+  left: 0.625rem;
+  bottom: 3.25rem;
   width: 280px;
   background: var(--rfs-bg-1);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 12px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
   z-index: 5;
   overflow: hidden;
 }
 .rfs-sentinel-panel-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.75rem 0.875rem;
   border-bottom: 1px solid var(--rfs-bg-2);
 }
 .rfs-sentinel-panel-title {
-  font-size: 0.8125rem; font-weight: 700;
+  font-size: 0.8125rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .rfs-sentinel-panel-score {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
@@ -1152,7 +1476,9 @@
 }
 .rfs-sentinel-judges {
   padding: 0.5rem;
-  display: flex; flex-direction: column; gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   max-height: 320px;
   overflow-y: auto;
 }
@@ -1164,11 +1490,18 @@
   font-size: 0.8125rem;
   color: var(--rfs-ink-1);
 }
-.rfs-sentinel-judge.is-pass { background: transparent; }
-.rfs-sentinel-judge.is-fail { background: rgba(248,113,113,0.07); color: var(--rfs-ink-0); }
+.rfs-sentinel-judge.is-pass {
+  background: transparent;
+}
+.rfs-sentinel-judge.is-fail {
+  background: rgba(248, 113, 113, 0.07);
+  color: var(--rfs-ink-0);
+}
 .rfs-sentinel-judge-header {
   width: 100%;
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.625rem;
   background: transparent;
   border: none;
@@ -1178,20 +1511,32 @@
   text-align: left;
   cursor: pointer;
 }
-.rfs-sentinel-judge-header:disabled { cursor: default; }
+.rfs-sentinel-judge-header:disabled {
+  cursor: default;
+}
 .rfs-sentinel-judge-header:hover:not(:disabled) {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
 .rfs-sentinel-judge-mark {
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.625rem; font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 800;
   flex-shrink: 0;
 }
-.rfs-sentinel-judge.is-pass .rfs-sentinel-judge-mark { background: rgba(34,197,94,0.18); color: var(--rfs-success); }
-.rfs-sentinel-judge.is-fail .rfs-sentinel-judge-mark { background: rgba(248,113,113,0.18); color: var(--rfs-danger); }
+.rfs-sentinel-judge.is-pass .rfs-sentinel-judge-mark {
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--rfs-success);
+}
+.rfs-sentinel-judge.is-fail .rfs-sentinel-judge-mark {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--rfs-danger);
+}
 .rfs-sentinel-judge-name {
   flex: 1;
   min-width: 0;
@@ -1214,12 +1559,20 @@
   font-size: 0.6875rem;
   transition: transform 120ms;
 }
-.rfs-sentinel-judge-chev.is-open { transform: rotate(180deg); }
+.rfs-sentinel-judge-chev.is-open {
+  transform: rotate(180deg);
+}
 .rfs-sentinel-judge-body {
   padding: 0 0.625rem 0.625rem 2.125rem;
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-.rfs-sentinel-judge-section { display: flex; flex-direction: column; gap: 0.25rem; }
+.rfs-sentinel-judge-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 .rfs-sentinel-judge-section-label {
   font-size: 0.6875rem;
   font-weight: 700;
@@ -1231,7 +1584,9 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex; flex-direction: column; gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .rfs-sentinel-judge-issues li {
   font-size: 0.75rem;
@@ -1265,13 +1620,15 @@
 .rfs-sentinel-hardgate {
   margin: 0 0.5rem;
   padding: 0.5rem 0.625rem;
-  background: rgba(248,113,113,0.12);
-  border: 1px solid rgba(248,113,113,0.35);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
   border-radius: 8px;
   font-size: 0.75rem;
   color: var(--rfs-danger);
 }
-.rfs-sentinel-hardgate strong { color: #FCA5A5; }
+.rfs-sentinel-hardgate strong {
+  color: #fca5a5;
+}
 
 /* Curated top_issues / top_strengths summaries — collapsible. */
 .rfs-sentinel-summary {
@@ -1280,8 +1637,11 @@
 }
 .rfs-sentinel-summary-header {
   width: 100%;
-  display: flex; align-items: center; gap: 0.5rem;
-  background: transparent; border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
   padding: 0.375rem 0.5rem;
   font-family: inherit;
   font-size: 0.75rem;
@@ -1289,22 +1649,38 @@
   cursor: pointer;
   border-radius: 6px;
 }
-.rfs-sentinel-summary-header:hover { background: rgba(255,255,255,0.03); }
+.rfs-sentinel-summary-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
 .rfs-sentinel-summary-icon {
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   border-radius: 999px;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 0.6875rem; font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 800;
   flex-shrink: 0;
 }
-.rfs-sentinel-summary-issue .rfs-sentinel-summary-icon { background: rgba(248,113,113,0.18); color: var(--rfs-danger); }
-.rfs-sentinel-summary-strength .rfs-sentinel-summary-icon { background: rgba(34,197,94,0.18); color: var(--rfs-success); }
-.rfs-sentinel-summary-title { flex: 1; }
+.rfs-sentinel-summary-issue .rfs-sentinel-summary-icon {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--rfs-danger);
+}
+.rfs-sentinel-summary-strength .rfs-sentinel-summary-icon {
+  background: rgba(34, 197, 94, 0.18);
+  color: var(--rfs-success);
+}
+.rfs-sentinel-summary-title {
+  flex: 1;
+}
 .rfs-sentinel-summary-list {
   list-style: none;
   margin: 0;
   padding: 0.25rem 0.5rem 0.5rem;
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   max-height: 220px;
   overflow-y: auto;
 }
@@ -1352,45 +1728,60 @@
 /* Pin marker */
 .rfs-pin {
   position: absolute;
-  width: 0; height: 0;
+  width: 0;
+  height: 0;
   pointer-events: none;
   z-index: 5;
 }
 .rfs-pin-dot {
   position: absolute;
-  left: -7px; top: -7px;
-  width: 14px; height: 14px;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
   border-radius: 999px;
   background: var(--rfs-accent);
-  border: 2px solid #0A0A0B;
-  box-shadow: 0 2px 12px rgba(251,191,36,0.55);
+  border: 2px solid #0a0a0b;
+  box-shadow: 0 2px 12px rgba(251, 191, 36, 0.55);
 }
 .rfs-pin-pulse {
   position: absolute;
-  left: -16px; top: -16px;
-  width: 32px; height: 32px;
+  left: -16px;
+  top: -16px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
   border: 2px solid var(--rfs-accent);
   opacity: 0.6;
   animation: rfs-pulse 1500ms ease-out infinite;
 }
 @keyframes rfs-pulse {
-  0%   { transform: scale(0.6); opacity: 0.6; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
 }
 
 /* Brush mask canvas */
 .rfs-mask-canvas {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   pointer-events: auto;
   cursor: cell;
   touch-action: none;
 }
 .rfs-brush-toolbar {
   position: absolute;
-  left: 1.75rem; top: 1.75rem;
-  display: inline-flex; align-items: center; gap: 0.625rem;
-  background: rgba(24,24,27,0.92);
+  left: 1.75rem;
+  top: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: rgba(24, 24, 27, 0.92);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rfs-bg-3);
   border-radius: 10px;
@@ -1398,25 +1789,41 @@
   z-index: 3;
 }
 .rfs-brush-label {
-  font-size: 0.6875rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--rfs-ink-3);
 }
-.rfs-brush-range { width: 100px; accent-color: var(--rfs-accent); }
+.rfs-brush-range {
+  width: 100px;
+  accent-color: var(--rfs-accent);
+}
 .rfs-brush-size {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.75rem;
   color: var(--rfs-ink-2);
-  min-width: 36px; text-align: right;
+  min-width: 36px;
+  text-align: right;
 }
 .rfs-brush-clear {
-  background: none; border: none;
+  background: none;
+  border: none;
   color: var(--rfs-accent);
-  font-family: inherit; font-size: 0.75rem; font-weight: 600;
-  cursor: pointer; padding: 0.125rem 0.375rem; border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
 }
-.rfs-brush-clear:hover:not(:disabled) { background: var(--rfs-accent-soft); }
-.rfs-brush-clear:disabled { opacity: 0.4; cursor: not-allowed; }
+.rfs-brush-clear:hover:not(:disabled) {
+  background: var(--rfs-accent-soft);
+}
+.rfs-brush-clear:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .rfs-brush-divider {
   width: 1px;
   height: 18px;
@@ -1426,33 +1833,45 @@
 .rfs-brush-confirm {
   background: var(--rfs-accent);
   border: none;
-  color: #09090B;
-  font-family: inherit; font-size: 0.75rem; font-weight: 700;
+  color: #09090b;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
   padding: 0.3125rem 0.625rem;
   border-radius: 6px;
   cursor: pointer;
 }
-.rfs-brush-confirm:hover:not(:disabled) { background: var(--rfs-accent-dim); }
-.rfs-brush-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+.rfs-brush-confirm:hover:not(:disabled) {
+  background: var(--rfs-accent-dim);
+}
+.rfs-brush-confirm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* Version stripe under canvas */
 .rfs-version-stripe {
   flex-shrink: 0;
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   border-top: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
   overflow-x: auto;
 }
 .rfs-version-stripe-label {
-  font-size: 0.6875rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--rfs-ink-3);
   flex-shrink: 0;
 }
 .rfs-version-thumb {
   flex-shrink: 0;
-  width: 56px; height: 56px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   overflow: hidden;
   background: var(--rfs-bg-1);
@@ -1466,12 +1885,17 @@
   transition: border-color 160ms;
 }
 .rfs-version-thumb img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 /* In-flight workflow — image at low opacity, ring pulses, spinner
    centred on the thumb. Visually distinct from a sentinel-pending
    thumb (which uses the same pulsing border but has the real image). */
-.rfs-version-thumb.is-pending img { opacity: 0.4; }
+.rfs-version-thumb.is-pending img {
+  opacity: 0.4;
+}
 .rfs-version-thumb.is-pending {
   border-color: var(--rfs-accent);
   animation: rfs-border-pulse 1500ms ease-in-out infinite;
@@ -1488,8 +1912,9 @@
   pointer-events: none;
 }
 .rfs-version-thumb-spinner-ring {
-  width: 18px; height: 18px;
-  border: 2px solid rgba(255,255,255,0.25);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
   border-top-color: var(--rfs-accent);
   border-radius: 999px;
   animation: rfs-spin 800ms linear infinite;
@@ -1499,23 +1924,36 @@
   border-color: var(--rfs-accent);
   animation: rfs-border-pulse 1500ms ease-in-out infinite;
 }
-.rfs-version-thumb.sentinel-green  { border-color: var(--rfs-success); }
-.rfs-version-thumb.sentinel-amber  { border-color: #F59E0B; }
-.rfs-version-thumb.sentinel-red    { border-color: var(--rfs-danger); }
-.rfs-version-thumb.sentinel-failed { border-color: var(--rfs-bg-3); }
+.rfs-version-thumb.sentinel-green {
+  border-color: var(--rfs-success);
+}
+.rfs-version-thumb.sentinel-amber {
+  border-color: #f59e0b;
+}
+.rfs-version-thumb.sentinel-red {
+  border-color: var(--rfs-danger);
+}
+.rfs-version-thumb.sentinel-failed {
+  border-color: var(--rfs-bg-3);
+}
 /* Selection ring sits OUTSIDE the border so a sentinel-colored frame
    can coexist with the selected affordance. */
 .rfs-version-thumb.is-current {
   box-shadow: 0 0 0 2px var(--rfs-accent);
 }
 @keyframes rfs-border-pulse {
-  0%, 100% { border-color: var(--rfs-accent); }
-  50%      { border-color: rgba(251,191,36,0.4); }
+  0%,
+  100% {
+    border-color: var(--rfs-accent);
+  }
+  50% {
+    border-color: rgba(251, 191, 36, 0.4);
+  }
 }
 .rfs-version-thumb-label {
   position: absolute;
   inset: auto 0 0 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(9,9,11,0.85) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(9, 9, 11, 0.85) 100%);
   color: var(--rfs-ink-0);
   font-size: 0.625rem;
   font-weight: 600;
@@ -1531,28 +1969,39 @@
    matches a 4K canvas badge. */
 .rfs-version-thumb-res {
   position: absolute;
-  top: 3px; right: 3px;
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 14px;
+  top: 3px;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 14px;
   padding: 0 4px;
   border-radius: 999px;
   font-size: 0.5625rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: rgba(24,24,27,0.9);
+  background: rgba(24, 24, 27, 0.9);
   color: var(--rfs-ink-0);
   pointer-events: none;
 }
-.rfs-version-thumb-res-1k { color: #94A3B8; }
-.rfs-version-thumb-res-2k { color: #38BDF8; }
-.rfs-version-thumb-res-4k { color: var(--rfs-accent); }
+.rfs-version-thumb-res-1k {
+  color: #94a3b8;
+}
+.rfs-version-thumb-res-2k {
+  color: #38bdf8;
+}
+.rfs-version-thumb-res-4k {
+  color: var(--rfs-accent);
+}
 
 /* ============ Right rail (workflows / chat / history) ============ */
 .rfs-right {
   grid-area: right;
   border-left: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 .rfs-tabs {
@@ -1562,39 +2011,60 @@
 }
 .rfs-tab {
   flex: 1;
-  display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
-  background: transparent; border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  background: transparent;
+  border: none;
   padding: 0.875rem 0.5rem;
-  font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--rfs-ink-3);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   transition: color 120ms, border-color 120ms;
 }
-.rfs-tab:hover:not(:disabled) { color: var(--rfs-ink-0); }
-.rfs-tab.is-active { color: var(--rfs-ink-0); border-bottom-color: var(--rfs-accent); }
-.rfs-tab:disabled { color: var(--rfs-ink-3); cursor: not-allowed; }
+.rfs-tab:hover:not(:disabled) {
+  color: var(--rfs-ink-0);
+}
+.rfs-tab.is-active {
+  color: var(--rfs-ink-0);
+  border-bottom-color: var(--rfs-accent);
+}
+.rfs-tab:disabled {
+  color: var(--rfs-ink-3);
+  cursor: not-allowed;
+}
 .rfs-tab-soon {
   display: inline-block;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.5625rem; font-weight: 700;
+  font-size: 0.5625rem;
+  font-weight: 700;
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0.04em;
   margin-left: 4px;
 }
 .rfs-tab-count {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
   padding: 0 5px;
   background: var(--rfs-bg-2);
   border-radius: 999px;
   font-size: 0.625rem;
   color: var(--rfs-ink-2);
 }
-.rfs-tab.is-active .rfs-tab-count { background: var(--rfs-accent-soft); color: var(--rfs-accent); }
+.rfs-tab.is-active .rfs-tab-count {
+  background: var(--rfs-accent-soft);
+  color: var(--rfs-accent);
+}
 
 .rfs-search {
   flex-shrink: 0;
@@ -1611,14 +2081,17 @@
   border: 1px solid var(--rfs-bg-2);
   border-radius: 8px;
   color: var(--rfs-ink-0);
-  font-family: inherit; font-size: 0.8125rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
 }
 .rfs-search input:focus {
   outline: none;
   border-color: var(--rfs-accent);
   background: var(--rfs-bg-0);
 }
-.rfs-search input::placeholder { color: var(--rfs-ink-3); }
+.rfs-search input::placeholder {
+  color: var(--rfs-ink-3);
+}
 
 /* Breadcrumb shown in the focused configure view — replaces the
    search bar + card grid so the user can attend to one workflow at
@@ -1627,14 +2100,19 @@
    to browse. */
 .rfs-breadcrumb {
   flex-shrink: 0;
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
 }
 .rfs-breadcrumb-back {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   background: transparent;
   border: 1px solid var(--rfs-bg-2);
   border-radius: 8px;
@@ -1649,23 +2127,33 @@
   background: var(--rfs-bg-1);
 }
 .rfs-breadcrumb-trail {
-  display: inline-flex; align-items: baseline; gap: 0.375rem;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
   font-size: 0.75rem;
   color: var(--rfs-ink-2);
   min-width: 0;
 }
 .rfs-breadcrumb-link {
-  background: none; border: none; padding: 0;
+  background: none;
+  border: none;
+  padding: 0;
   font: inherit;
   color: var(--rfs-ink-2);
   cursor: pointer;
 }
-.rfs-breadcrumb-link:hover { color: var(--rfs-ink-0); }
-.rfs-breadcrumb-sep { color: var(--rfs-ink-3); }
+.rfs-breadcrumb-link:hover {
+  color: var(--rfs-ink-0);
+}
+.rfs-breadcrumb-sep {
+  color: var(--rfs-ink-3);
+}
 .rfs-breadcrumb-current {
   color: var(--rfs-ink-0);
   font-weight: 600;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 0;
 }
 
@@ -1674,18 +2162,26 @@
   min-height: 0;
   overflow-y: auto;
   padding: 0 0.875rem 0.5rem;
-  display: flex; flex-direction: column; gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 .rfs-cards-group-label {
-  font-size: 0.625rem; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--rfs-ink-3);
   padding: 0 0.125rem;
   margin-top: 0.25rem;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .rfs-cards-group {
-  display: flex; flex-direction: column; gap: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 
 /* Quiet footer rows below the live workflow groups — house the
@@ -1694,11 +2190,15 @@
    scrollable rfs-cards container so they only show when scrolled
    into view, keeping the first impression tight. */
 .rfs-cards-footer {
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-top: 0.25rem;
 }
 .rfs-cards-disclosure {
-  display: inline-flex; align-items: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   align-self: flex-start;
   padding: 0.375rem 0.5rem;
   background: transparent;
@@ -1738,7 +2238,9 @@
 }
 
 .rfs-card {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.625rem;
   background: var(--rfs-bg-1);
   border: 1px solid transparent;
@@ -1749,7 +2251,9 @@
   position: relative;
   transition: background 120ms, border-color 120ms;
 }
-.rfs-card:hover:not(:disabled) { background: var(--rfs-bg-2); }
+.rfs-card:hover:not(:disabled) {
+  background: var(--rfs-bg-2);
+}
 /* Selected state is purely a transitional cue now — the cards grid
    collapses into the focused configure view as soon as a card is
    picked, so the chrome only flashes for one frame. Border-only,
@@ -1764,9 +2268,12 @@
    asset has no recommendation for this card. */
 .rfs-card.is-recommended .rfs-card-icon {
   background: var(--rfs-accent);
-  color: #09090B;
+  color: #09090b;
 }
-.rfs-card:disabled { cursor: not-allowed; opacity: 0.5; }
+.rfs-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 /* Wrapper around a disabled card — carries the tooltip that a
    disabled <button> can't surface natively. `display: contents` so
    the wrapper doesn't add a layout box; the card sits in the
@@ -1800,18 +2307,27 @@
   flex-shrink: 0;
 }
 .rfs-card-icon {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: var(--rfs-bg-2);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--rfs-ink-1);
   flex-shrink: 0;
 }
-.rfs-card-text { flex: 1; min-width: 0; }
+.rfs-card-text {
+  flex: 1;
+  min-width: 0;
+}
 .rfs-card-name {
-  font-weight: 600; font-size: 0.8125rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
   color: var(--rfs-ink-0);
-  display: flex; align-items: center; gap: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 .rfs-card-desc {
   font-size: 0.6875rem;
@@ -1823,7 +2339,8 @@
   display: inline-block;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.5625rem; font-weight: 700;
+  font-size: 0.5625rem;
+  font-weight: 700;
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0.04em;
@@ -1834,11 +2351,15 @@
    and a small delete affordance on the right. */
 .rfs-card-custom {
   padding: 0;
-  display: flex; align-items: stretch; gap: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
 }
 .rfs-card-custom-body {
   flex: 1;
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.625rem;
   background: transparent;
   border: none;
@@ -1868,14 +2389,28 @@
   cursor: pointer;
   opacity: 0;
   transition: opacity 140ms, color 140ms, background 140ms;
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.rfs-card-custom-edit { font-size: 0.875rem; }
-.rfs-card-custom-delete { font-size: 1.25rem; font-weight: 400; }
+.rfs-card-custom-edit {
+  font-size: 0.875rem;
+}
+.rfs-card-custom-delete {
+  font-size: 1.25rem;
+  font-weight: 400;
+}
 .rfs-card-custom:hover .rfs-card-custom-edit,
-.rfs-card-custom:hover .rfs-card-custom-delete { opacity: 1; }
-.rfs-card-custom-edit:hover { color: var(--rfs-ink-0); background: var(--rfs-bg-2); }
-.rfs-card-custom-delete:hover { color: var(--rfs-danger); }
+.rfs-card-custom:hover .rfs-card-custom-delete {
+  opacity: 1;
+}
+.rfs-card-custom-edit:hover {
+  color: var(--rfs-ink-0);
+  background: var(--rfs-bg-2);
+}
+.rfs-card-custom-delete:hover {
+  color: var(--rfs-danger);
+}
 
 /* "+ New recipe" tile — first item in the Custom group, always
    visible so the user can build a recipe from scratch without first
@@ -1883,7 +2418,9 @@
    dashed-accent border so it reads as a creative affordance, not a
    saved item. */
 .rfs-card-custom-new {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.625rem;
   background: transparent;
   border: 1px dashed var(--rfs-bg-3);
@@ -1896,7 +2433,7 @@
 }
 .rfs-card-custom-new:hover {
   border-color: var(--rfs-accent);
-  background: rgba(24,24,27,0.4);
+  background: rgba(24, 24, 27, 0.4);
 }
 .rfs-card-custom-new .rfs-card-icon-custom {
   background: var(--rfs-accent-soft);
@@ -1910,26 +2447,36 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex; flex-direction: column; gap: 0.4375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
 }
 .rfs-custom-step {
-  display: flex; align-items: flex-start; gap: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
   padding: 0.4375rem 0.5rem;
-  background: rgba(24,24,27,0.4);
+  background: rgba(24, 24, 27, 0.4);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 8px;
 }
 .rfs-custom-step-num {
   flex-shrink: 0;
-  width: 18px; height: 18px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-1);
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.625rem;
   font-weight: 700;
 }
-.rfs-custom-step-text { flex: 1; min-width: 0; }
+.rfs-custom-step-text {
+  flex: 1;
+  min-width: 0;
+}
 .rfs-custom-step-name {
   font-size: 0.75rem;
   font-weight: 600;
@@ -1958,9 +2505,13 @@
   cursor: pointer;
   padding: 0;
 }
-.rfs-custom-override-toggle:hover { text-decoration: underline; }
+.rfs-custom-override-toggle:hover {
+  text-decoration: underline;
+}
 .rfs-custom-override-body {
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-top: 0.5rem;
 }
 /* Pre-flight validation for recipes — surfaces "step N: input is
@@ -1969,8 +2520,8 @@
 .rfs-custom-replay-validation {
   margin-top: 0.625rem;
   padding: 0.4375rem 0.625rem;
-  background: rgba(248,113,113,0.10);
-  border: 1px solid rgba(248,113,113,0.32);
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.32);
   border-radius: 6px;
   font-size: 0.75rem;
   color: var(--rfs-danger);
@@ -1983,7 +2534,9 @@
    the title attribute so the explanation surfaces on hover over any
    part of the control. */
 .rfs-header-toggle {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   cursor: pointer;
@@ -1992,17 +2545,22 @@
   color: var(--rfs-ink-2);
   transition: color 120ms ease, background 120ms ease;
 }
-.rfs-header-toggle:hover { color: var(--rfs-ink-0); background: var(--rfs-bg-1); }
+.rfs-header-toggle:hover {
+  color: var(--rfs-ink-0);
+  background: var(--rfs-bg-1);
+}
 .rfs-header-toggle input[type="checkbox"] {
   /* Hide the native control; the styled track below is the visual. */
   position: absolute;
-  width: 1px; height: 1px;
+  width: 1px;
+  height: 1px;
   opacity: 0;
   pointer-events: none;
 }
 .rfs-header-toggle-track {
   position: relative;
-  width: 28px; height: 16px;
+  width: 28px;
+  height: 16px;
   border-radius: 999px;
   background: var(--rfs-bg-3);
   transition: background 140ms ease;
@@ -2010,8 +2568,10 @@
 }
 .rfs-header-toggle-knob {
   position: absolute;
-  top: 2px; left: 2px;
-  width: 12px; height: 12px;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
   background: var(--rfs-ink-1);
   transition: transform 140ms ease, background 140ms ease;
@@ -2021,7 +2581,7 @@
 }
 .rfs-header-toggle input:checked ~ .rfs-header-toggle-track .rfs-header-toggle-knob {
   transform: translateX(12px);
-  background: #09090B;
+  background: #09090b;
 }
 .rfs-header-toggle input:focus-visible ~ .rfs-header-toggle-track {
   outline: 2px solid var(--rfs-accent);
@@ -2041,7 +2601,9 @@
   gap: 0.5rem;
 }
 .rfs-history-card-head {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -2056,7 +2618,9 @@
    form when clicked. The Save flash sits in for ~2s after a
    successful save. */
 .rfs-history-save-row {
-  display: flex; flex-wrap: wrap; align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.4375rem;
   padding-top: 0.25rem;
 }
@@ -2082,7 +2646,9 @@
   cursor: not-allowed;
 }
 .rfs-history-save-form {
-  display: flex; align-items: center; gap: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   width: 100%;
 }
 .rfs-history-save-input {
@@ -2096,7 +2662,10 @@
   font-family: inherit;
   font-size: 0.75rem;
 }
-.rfs-history-save-input:focus { outline: none; border-color: var(--rfs-accent); }
+.rfs-history-save-input:focus {
+  outline: none;
+  border-color: var(--rfs-accent);
+}
 .rfs-history-save-flash {
   font-size: 0.6875rem;
   font-weight: 600;
@@ -2104,16 +2673,19 @@
   padding: 0.25rem 0.5rem;
 }
 .rfs-history-request {
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   gap: 0.25rem;
   margin: 0;
   padding: 0.5rem 0.625rem;
-  background: rgba(24,24,27,0.4);
+  background: rgba(24, 24, 27, 0.4);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 8px;
 }
 .rfs-history-row {
-  display: flex; align-items: baseline; gap: 0.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   font-size: 0.6875rem;
   line-height: 1.4;
 }
@@ -2139,25 +2711,37 @@
   font-style: italic;
   color: var(--rfs-ink-0);
 }
-.rfs-history-row-quote .rfs-history-row-value::before { content: "“"; color: var(--rfs-ink-3); }
-.rfs-history-row-quote .rfs-history-row-value::after { content: "”"; color: var(--rfs-ink-3); }
-.rfs-history-swatch-row { display: inline-flex; align-items: center; gap: 0.4375rem; }
+.rfs-history-row-quote .rfs-history-row-value::before {
+  content: "“";
+  color: var(--rfs-ink-3);
+}
+.rfs-history-row-quote .rfs-history-row-value::after {
+  content: "”";
+  color: var(--rfs-ink-3);
+}
+.rfs-history-swatch-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+}
 .rfs-history-swatch {
-  width: 14px; height: 14px;
+  width: 14px;
+  height: 14px;
   border-radius: 4px;
   border: 1px solid var(--rfs-bg-3);
   flex-shrink: 0;
 }
 .rfs-history-card.is-selected .rfs-history-request {
-  background: rgba(251,191,36,0.06);
-  border-color: rgba(251,191,36,0.25);
+  background: rgba(251, 191, 36, 0.06);
+  border-color: rgba(251, 191, 36, 0.25);
 }
 
 /* Pinned action region (visible when a card is selected) */
 .rfs-action-pin {
   flex-shrink: 0;
   max-height: min(50vh, 460px);
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   border-top: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-1);
 }
@@ -2176,12 +2760,16 @@
 }
 .rfs-action-pin-header {
   flex-shrink: 0;
-  display: flex; flex-direction: column; gap: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   padding: 0.75rem 0.875rem;
   border-bottom: 1px solid var(--rfs-bg-2);
 }
 .rfs-action-pin-header-row {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
 }
 /* Examples affordance — collapsed = a subtle pill in the header row;
    expanded = a horizontal strip of curated demo thumbnails the user
@@ -2189,7 +2777,9 @@
    at least one curated sample for the selected workflow, and it
    never auto-opens. Speed users see a quiet sparkle and ignore it. */
 .rfs-action-examples-toggle {
-  display: inline-flex; align-items: center; gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   padding: 0.25rem 0.5rem;
   background: transparent;
   border: 1px solid var(--rfs-bg-3);
@@ -2212,9 +2802,13 @@
   border-color: var(--rfs-accent);
   background: var(--rfs-accent-soft);
 }
-.rfs-action-examples-toggle-label { letter-spacing: 0.02em; }
+.rfs-action-examples-toggle-label {
+  letter-spacing: 0.02em;
+}
 .rfs-action-examples {
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding-top: 0.5rem;
   border-top: 1px dashed var(--rfs-bg-2);
 }
@@ -2224,14 +2818,18 @@
   line-height: 1.4;
 }
 .rfs-action-examples-strip {
-  display: flex; gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
   overflow-x: auto;
-  margin: 0 -0.25rem; padding: 0 0.25rem 0.25rem;
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem 0.25rem;
 }
 .rfs-action-example {
   flex: 0 0 auto;
   width: 88px;
-  display: flex; flex-direction: column; gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding: 0;
   background: transparent;
   border: none;
@@ -2241,7 +2839,8 @@
   color: inherit;
 }
 .rfs-action-example img {
-  width: 88px; height: 88px;
+  width: 88px;
+  height: 88px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--rfs-bg-2);
@@ -2259,33 +2858,47 @@
   text-overflow: ellipsis;
 }
 .rfs-action-pin-icon {
-  width: 30px; height: 30px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   background: var(--rfs-accent);
-  color: #09090B;
-  display: flex; align-items: center; justify-content: center;
+  color: #09090b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
-.rfs-action-pin-title { flex: 1; min-width: 0; }
+.rfs-action-pin-title {
+  flex: 1;
+  min-width: 0;
+}
 .rfs-action-pin-name {
-  font-size: 0.875rem; font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .rfs-action-pin-desc {
-  font-size: 0.6875rem; color: var(--rfs-ink-2);
+  font-size: 0.6875rem;
+  color: var(--rfs-ink-2);
   margin-top: 1px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .rfs-action-pin-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 0.875rem;
-  display: flex; flex-direction: column; gap: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 .rfs-action-footer {
   flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.75rem 0.875rem;
   border-top: 1px solid var(--rfs-bg-2);
@@ -2293,11 +2906,18 @@
 }
 
 /* ============ Form inputs ============ */
-.rfs-input-group { display: flex; flex-direction: column; gap: 0.375rem; }
+.rfs-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
 .rfs-label {
-  font-size: 0.75rem; font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--rfs-ink-1);
-  display: flex; align-items: baseline; justify-content: space-between;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 .rfs-label-meta {
@@ -2306,15 +2926,21 @@
   color: var(--rfs-ink-3);
   letter-spacing: 0.02em;
 }
-.rfs-help { font-size: 0.6875rem; color: var(--rfs-ink-3); line-height: 1.4; }
+.rfs-help {
+  font-size: 0.6875rem;
+  color: var(--rfs-ink-3);
+  line-height: 1.4;
+}
 .rfs-help-warn {
-  color: #F59E0B;
+  color: #f59e0b;
   background: rgba(245, 158, 11, 0.08);
   border: 1px solid rgba(245, 158, 11, 0.22);
   border-radius: 6px;
   padding: 0.4375rem 0.5625rem;
 }
-.rfs-text, .rfs-textarea, .rfs-select {
+.rfs-text,
+.rfs-textarea,
+.rfs-select {
   /* Border-box so width:100% includes padding + border. The action
      panel padding hid the overflow before, but the recipe editor's
      name input made it visible — same pattern, same fix. */
@@ -2325,10 +2951,16 @@
   border: 1px solid var(--rfs-bg-3);
   border-radius: 8px;
   color: var(--rfs-ink-0);
-  font-family: inherit; font-size: 0.8125rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
 }
-.rfs-text::placeholder, .rfs-textarea::placeholder { color: var(--rfs-ink-3); }
-.rfs-text:focus, .rfs-textarea:focus, .rfs-select:focus {
+.rfs-text::placeholder,
+.rfs-textarea::placeholder {
+  color: var(--rfs-ink-3);
+}
+.rfs-text:focus,
+.rfs-textarea:focus,
+.rfs-select:focus {
   outline: none;
   border-color: var(--rfs-accent);
 }
@@ -2339,11 +2971,18 @@
   height: 84px;
   line-height: 1.4;
 }
-.rfs-color-row { display: flex; align-items: center; gap: 0.5rem; }
+.rfs-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .rfs-color-row input[type="color"] {
-  width: 40px; height: 32px; padding: 0;
+  width: 40px;
+  height: 32px;
+  padding: 0;
   background: transparent;
-  border: 1px solid var(--rfs-bg-3); border-radius: 6px;
+  border: 1px solid var(--rfs-bg-3);
+  border-radius: 6px;
   cursor: pointer;
 }
 .rfs-color-hex {
@@ -2355,46 +2994,79 @@
 
 /* Step indicator */
 .rfs-step {
-  display: flex; align-items: flex-start; gap: 0.625rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
   padding: 0.625rem;
   background: var(--rfs-bg-0);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 10px;
 }
 .rfs-step-num {
-  width: 22px; height: 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.6875rem; font-weight: 700;
-  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
-.rfs-step-num.is-active { background: var(--rfs-accent); color: #09090B; }
-.rfs-step-num.is-done { background: var(--rfs-success); color: #052e16; }
-.rfs-step-num.is-done { font-size: 0; }
+.rfs-step-num.is-active {
+  background: var(--rfs-accent);
+  color: #09090b;
+}
+.rfs-step-num.is-done {
+  background: var(--rfs-success);
+  color: #052e16;
+}
+.rfs-step-num.is-done {
+  font-size: 0;
+}
 .rfs-step-num.is-done::before {
   content: "";
-  width: 9px; height: 5px;
+  width: 9px;
+  height: 5px;
   border-left: 2px solid #052e16;
   border-bottom: 2px solid #052e16;
   transform: rotate(-45deg) translate(1px, -2px);
 }
 .rfs-step-text {
-  display: flex; flex-direction: column; gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   min-width: 0;
 }
-.rfs-step-title { font-size: 0.8125rem; font-weight: 600; color: var(--rfs-ink-0); }
-.rfs-step-sub { font-size: 0.6875rem; color: var(--rfs-ink-2); }
+.rfs-step-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rfs-ink-0);
+}
+.rfs-step-sub {
+  font-size: 0.6875rem;
+  color: var(--rfs-ink-2);
+}
 .rfs-link {
-  background: none; border: none;
+  background: none;
+  border: none;
   color: var(--rfs-accent);
-  font-family: inherit; font-size: inherit; font-weight: 600;
-  cursor: pointer; padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
   text-decoration: none;
 }
-.rfs-link:hover:not(:disabled) { text-decoration: underline; }
-.rfs-link:disabled { color: var(--rfs-ink-3); cursor: not-allowed; }
+.rfs-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.rfs-link:disabled {
+  color: var(--rfs-ink-3);
+  cursor: not-allowed;
+}
 
 /* Reference uploader */
 .rfs-drop {
@@ -2413,17 +3085,23 @@
   color: var(--rfs-accent);
   background: var(--rfs-accent-soft);
 }
-.rfs-drop input[type="file"] { display: none; }
+.rfs-drop input[type="file"] {
+  display: none;
+}
 .rfs-ref-preview {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.5rem;
   border: 1px solid var(--rfs-bg-3);
   border-radius: 10px;
   background: var(--rfs-bg-0);
 }
 .rfs-ref-preview img {
-  width: 56px; height: 56px;
-  object-fit: cover; border-radius: 8px;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
   background: var(--rfs-bg-2);
 }
 
@@ -2499,14 +3177,18 @@
   color: var(--rfs-accent);
   background: var(--rfs-accent-soft);
 }
-.rfs-ref-add input[type="file"] { display: none; }
+.rfs-ref-add input[type="file"] {
+  display: none;
+}
 .rfs-ref-add-icon {
   font-size: 1.25rem;
   font-weight: 400;
   line-height: 1;
   color: var(--rfs-ink-1);
 }
-.rfs-ref-add:hover .rfs-ref-add-icon { color: var(--rfs-accent); }
+.rfs-ref-add:hover .rfs-ref-add-icon {
+  color: var(--rfs-accent);
+}
 .rfs-ref-cap-note {
   align-self: center;
   font-size: 0.6875rem;
@@ -2517,21 +3199,28 @@
 /* Chat / history empty states */
 .rfs-empty {
   flex: 1;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 2rem 1.5rem;
   text-align: center;
   color: var(--rfs-ink-2);
 }
 .rfs-empty-icon {
-  width: 48px; height: 48px;
+  width: 48px;
+  height: 48px;
   border-radius: 999px;
   background: var(--rfs-bg-1);
-  display: flex; align-items: center; justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 0.75rem;
   color: var(--rfs-ink-3);
 }
 .rfs-empty h3 {
-  font-size: 0.9375rem; font-weight: 700;
+  font-size: 0.9375rem;
+  font-weight: 700;
   color: var(--rfs-ink-0);
   margin: 0 0 0.375rem;
 }
@@ -2563,9 +3252,15 @@
   flex-direction: column;
   gap: 0.25rem;
 }
-.rfs-chat-msg-user { align-items: flex-end; }
-.rfs-chat-msg-assistant { align-items: flex-start; }
-.rfs-chat-msg-system { align-items: stretch; }
+.rfs-chat-msg-user {
+  align-items: flex-end;
+}
+.rfs-chat-msg-assistant {
+  align-items: flex-start;
+}
+.rfs-chat-msg-system {
+  align-items: stretch;
+}
 .rfs-chat-bubble {
   max-width: 85%;
   padding: 0.5rem 0.75rem;
@@ -2577,7 +3272,7 @@
 }
 .rfs-chat-msg-user .rfs-chat-bubble {
   background: var(--rfs-accent);
-  color: #09090B;
+  color: #09090b;
   border-bottom-right-radius: 4px;
   font-weight: 500;
 }
@@ -2597,13 +3292,16 @@
   font-size: 0.6875rem;
   color: var(--rfs-ink-2);
 }
-.rfs-chat-tool-icon { font-size: 0.6875rem; opacity: 0.7; }
+.rfs-chat-tool-icon {
+  font-size: 0.6875rem;
+  opacity: 0.7;
+}
 .rfs-chat-tool-result {
   font-size: 0.6875rem;
   color: var(--rfs-ink-3);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   padding: 4px 8px;
-  background: rgba(255,255,255,0.02);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 6px;
   border-left: 2px solid var(--rfs-bg-2);
 }
@@ -2623,7 +3321,11 @@
   flex-direction: column;
   gap: 0.5rem;
 }
-.rfs-chat-plan-header { display: flex; flex-direction: column; gap: 4px; }
+.rfs-chat-plan-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .rfs-chat-plan-eyebrow {
   font-size: 0.625rem;
   letter-spacing: 0.1em;
@@ -2653,10 +3355,11 @@
   border-radius: 8px;
 }
 .rfs-chat-plan-num {
-  width: 22px; height: 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   background: var(--rfs-accent);
-  color: #09090B;
+  color: #09090b;
   font-size: 0.6875rem;
   font-weight: 700;
   display: inline-flex;
@@ -2664,8 +3367,17 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.rfs-chat-plan-step-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.rfs-chat-plan-step-desc { font-size: 0.8125rem; color: var(--rfs-ink-0); line-height: 1.35; }
+.rfs-chat-plan-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.rfs-chat-plan-step-desc {
+  font-size: 0.8125rem;
+  color: var(--rfs-ink-0);
+  line-height: 1.35;
+}
 .rfs-chat-plan-step-id {
   font-size: 0.625rem;
   color: var(--rfs-ink-3);
@@ -2737,21 +3449,34 @@
   align-self: flex-start;
 }
 .rfs-chat-thinking-dot {
-  width: 6px; height: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: var(--rfs-ink-3);
   animation: rfs-chat-bounce 1200ms infinite ease-in-out;
 }
-.rfs-chat-thinking-dot:nth-child(2) { animation-delay: 150ms; }
-.rfs-chat-thinking-dot:nth-child(3) { animation-delay: 300ms; }
+.rfs-chat-thinking-dot:nth-child(2) {
+  animation-delay: 150ms;
+}
+.rfs-chat-thinking-dot:nth-child(3) {
+  animation-delay: 300ms;
+}
 @keyframes rfs-chat-bounce {
-  0%, 60%, 100% { opacity: 0.35; transform: scale(0.85); }
-  30%           { opacity: 1; transform: scale(1.1); }
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
 }
 .rfs-chat-error {
-  background: rgba(248,113,113,0.1);
+  background: rgba(248, 113, 113, 0.1);
   color: var(--rfs-danger);
-  border: 1px solid rgba(248,113,113,0.4);
+  border: 1px solid rgba(248, 113, 113, 0.4);
   padding: 8px 10px;
   border-radius: 10px;
   font-size: 0.75rem;
@@ -2785,22 +3510,31 @@
   border-color: var(--rfs-accent);
   background: var(--rfs-bg-0);
 }
-.rfs-chat-input::placeholder { color: var(--rfs-ink-3); }
-.rfs-chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.rfs-chat-input::placeholder {
+  color: var(--rfs-ink-3);
+}
+.rfs-chat-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .rfs-chat-footer-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.375rem;
 }
-.rfs-chat-send { margin-left: auto; }
+.rfs-chat-send {
+  margin-left: auto;
+}
 
 /* Chat header — thin strip above the transcript with the Reset
    button. Always visible inside the Chat tab so a stuck transcript
    can be wiped without hunting through the footer. */
 .rfs-chat-header {
   flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
@@ -2813,7 +3547,9 @@
   color: var(--rfs-ink-3);
 }
 .rfs-chat-reset {
-  display: inline-flex; align-items: center; gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
   background: none;
   border: 1px solid transparent;
   color: var(--rfs-ink-2);
@@ -2830,11 +3566,15 @@
   background: var(--rfs-bg-2);
   border-color: var(--rfs-bg-3);
 }
-.rfs-chat-reset:disabled { opacity: 0.4; cursor: not-allowed; }
+.rfs-chat-reset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* Color picker bubble — preset swatches + native picker + hex input */
 .rfs-chat-color {
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
   margin-top: 4px;
   padding: 0.625rem;
@@ -2850,22 +3590,27 @@
 .rfs-chat-color-swatch {
   aspect-ratio: 1 / 1;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   cursor: pointer;
   padding: 0;
   position: relative;
   transition: transform 80ms;
 }
-.rfs-chat-color-swatch:hover { transform: scale(1.08); }
+.rfs-chat-color-swatch:hover {
+  transform: scale(1.08);
+}
 .rfs-chat-color-swatch.is-picked {
   border-color: var(--rfs-accent);
   box-shadow: 0 0 0 2px var(--rfs-accent), 0 0 0 4px var(--rfs-bg-1);
 }
 .rfs-chat-color-row {
-  display: flex; align-items: center; gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .rfs-chat-color-native {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: 1px solid var(--rfs-bg-3);
   border-radius: 6px;
@@ -2883,7 +3628,10 @@
   color: var(--rfs-ink-0);
   text-transform: uppercase;
 }
-.rfs-chat-color-hex:focus { outline: none; border-color: var(--rfs-accent); }
+.rfs-chat-color-hex:focus {
+  outline: none;
+  border-color: var(--rfs-accent);
+}
 
 /* ============ Chat: aspect-ratio bubble ============
    Wrapping pill row of "[shape] [label]" buttons. Each pill is
@@ -2894,7 +3642,9 @@
    stretches to fill the chat-message column so wrapping works. */
 .rfs-chat-aspect {
   align-self: stretch;
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.375rem 0 0;
 }
 .rfs-chat-aspect-grid {
@@ -2903,7 +3653,9 @@
   gap: 6px;
 }
 .rfs-chat-aspect-tile {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
   padding: 0 10px 0 6px;
   border: 1px solid var(--rfs-bg-3);
@@ -2926,8 +3678,10 @@
    centres inside this box. */
 .rfs-chat-aspect-shape-wrap {
   display: inline-flex;
-  align-items: center; justify-content: center;
-  width: 16px; height: 16px;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
 }
 .rfs-chat-aspect-shape {
@@ -2949,7 +3703,9 @@
   color: var(--rfs-ink-0);
 }
 .rfs-chat-aspect-custom {
-  display: flex; align-items: center; gap: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   padding: 0.4375rem 0.5625rem;
   border: 1px dashed var(--rfs-bg-3);
   border-radius: 8px;
@@ -2976,10 +3732,14 @@
   font-size: 0.8125rem;
   text-align: center;
 }
-.rfs-chat-aspect-num:focus { outline: none; border-color: var(--rfs-accent); }
+.rfs-chat-aspect-num:focus {
+  outline: none;
+  border-color: var(--rfs-accent);
+}
 .rfs-chat-aspect-num::-webkit-inner-spin-button,
 .rfs-chat-aspect-num::-webkit-outer-spin-button {
-  -webkit-appearance: none; margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* ============ Chat: resolution bubble ============
@@ -2987,7 +3747,9 @@
    resolution pill (1K=slate, 2K=sky, 4K=amber). Source-bucket meta sits
    below the segments; upscale warning reuses .rfs-help-warn. */
 .rfs-chat-resolution {
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.5rem 0;
 }
 .rfs-chat-resolution-segmented {
@@ -3011,22 +3773,38 @@
   cursor: pointer;
   transition: background 140ms, color 140ms;
 }
-.rfs-chat-resolution-btn:hover { color: var(--rfs-ink-0); }
+.rfs-chat-resolution-btn:hover {
+  color: var(--rfs-ink-0);
+}
 .rfs-chat-resolution-btn.is-picked {
   background: var(--rfs-bg-3);
   color: var(--rfs-ink-0);
 }
-.rfs-chat-resolution-btn-1k.is-picked { color: #94A3B8; background: rgba(148,163,184,0.18); }
-.rfs-chat-resolution-btn-2k.is-picked { color: #38BDF8; background: rgba(56,189,248,0.18); }
-.rfs-chat-resolution-btn-4k.is-picked { color: var(--rfs-accent); background: var(--rfs-accent-soft); }
+.rfs-chat-resolution-btn-1k.is-picked {
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.18);
+}
+.rfs-chat-resolution-btn-2k.is-picked {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18);
+}
+.rfs-chat-resolution-btn-4k.is-picked {
+  color: var(--rfs-accent);
+  background: var(--rfs-accent-soft);
+}
 .rfs-chat-resolution-meta {
   font-size: 0.6875rem;
   color: var(--rfs-ink-3);
   letter-spacing: 0.01em;
 }
-.rfs-chat-resolution-meta strong { color: var(--rfs-ink-1); font-weight: 700; }
+.rfs-chat-resolution-meta strong {
+  color: var(--rfs-ink-1);
+  font-weight: 700;
+}
 .rfs-chat-resolution-actions {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 
@@ -3034,7 +3812,9 @@
    Vertical button stack — single-click submits. Falls back when no
    workflow-specific tool fits. */
 .rfs-chat-choice {
-  display: flex; flex-direction: column; gap: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
   padding: 0.5rem 0;
 }
 .rfs-chat-choice-btn {
@@ -3067,29 +3847,37 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(10,10,11,0.92);
+  background: rgba(10, 10, 11, 0.92);
   backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
 }
 .rfs-compare-header {
   flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--rfs-bg-2);
   background: var(--rfs-bg-0);
 }
 .rfs-compare-title {
-  display: inline-flex; align-items: center; gap: 0.625rem;
-  font-size: 0.9375rem; font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .rfs-compare-title-mark {
-  width: 28px; height: 28px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   background: var(--rfs-accent);
-  color: #09090B;
-  display: inline-flex; align-items: center; justify-content: center;
+  color: #09090b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .rfs-compare-title-meta {
   margin-left: 0.5rem;
@@ -3099,7 +3887,11 @@
   text-transform: uppercase;
   color: var(--rfs-ink-3);
 }
-.rfs-compare-header-actions { display: flex; gap: 0.5rem; align-items: center; }
+.rfs-compare-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
 
 .rfs-compare-body {
   flex: 1;
@@ -3119,7 +3911,9 @@
 }
 .rfs-compare-pane-header {
   flex-shrink: 0;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
 }
 .rfs-compare-pane-label {
@@ -3166,7 +3960,9 @@
   cursor: grab;
   user-select: none;
 }
-.rfs-compare-stage:active { cursor: grabbing; }
+.rfs-compare-stage:active {
+  cursor: grabbing;
+}
 .rfs-compare-stage img {
   max-width: 100%;
   max-height: 100%;
@@ -3196,7 +3992,8 @@
   user-select: none;
 }
 .rfs-compare-sync input[type="checkbox"] {
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   accent-color: var(--rfs-accent);
   cursor: pointer;
 }
@@ -3212,7 +4009,9 @@
 }
 
 @media (max-width: 900px) {
-  .rfs-compare-body { grid-template-columns: 1fr; }
+  .rfs-compare-body {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============ Toasts ============
@@ -3239,24 +4038,40 @@
   border: 1px solid var(--rfs-bg-3);
   border-left-width: 3px;
   border-radius: 12px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
   animation: rfs-toast-in 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
-.rfs-toast-success { border-left-color: var(--rfs-success); }
-.rfs-toast-warning { border-left-color: #F59E0B; }
-.rfs-toast-error   { border-left-color: var(--rfs-danger); }
+.rfs-toast-success {
+  border-left-color: var(--rfs-success);
+}
+.rfs-toast-warning {
+  border-left-color: #f59e0b;
+}
+.rfs-toast-error {
+  border-left-color: var(--rfs-danger);
+}
 @keyframes rfs-toast-in {
-  from { transform: translateX(40px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 .rfs-toast-thumb {
-  width: 40px; height: 40px;
+  width: 40px;
+  height: 40px;
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;
   background: var(--rfs-bg-2);
 }
-.rfs-toast-text { flex: 1; min-width: 0; }
+.rfs-toast-text {
+  flex: 1;
+  min-width: 0;
+}
 .rfs-toast-title {
   font-size: 0.8125rem;
   font-weight: 700;
@@ -3275,7 +4090,7 @@
 .rfs-toast-action {
   flex-shrink: 0;
   background: var(--rfs-accent);
-  color: #09090B;
+  color: #09090b;
   border: none;
   font-family: inherit;
   font-size: 0.75rem;
@@ -3284,10 +4099,13 @@
   border-radius: 8px;
   cursor: pointer;
 }
-.rfs-toast-action:hover { background: var(--rfs-accent-dim); }
+.rfs-toast-action:hover {
+  background: var(--rfs-accent-dim);
+}
 .rfs-toast-close {
   flex-shrink: 0;
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   background: transparent;
   border: none;
   color: var(--rfs-ink-3);
@@ -3297,7 +4115,10 @@
   align-items: center;
   justify-content: center;
 }
-.rfs-toast-close:hover { background: var(--rfs-bg-2); color: var(--rfs-ink-0); }
+.rfs-toast-close:hover {
+  background: var(--rfs-bg-2);
+  color: var(--rfs-ink-0);
+}
 
 /* Focus ring on all interactive */
 .rfs-root button:focus-visible,
@@ -3315,51 +4136,72 @@
    skip steps before clicking Apply. Per-run only; the workflow
    definition isn't mutated. */
 .rfs-package-list {
-  display: flex; flex-direction: column; gap: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 .rfs-package-row {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.5rem 0.625rem;
   background: var(--rfs-bg-0);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 10px;
 }
 .rfs-package-row-num {
-  width: 22px; height: 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   background: var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.6875rem; font-weight: 700;
-  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 .rfs-package-row-text {
-  display: flex; flex-direction: column; gap: 0.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
   min-width: 0;
   flex: 1;
 }
 .rfs-package-row-name {
-  font-size: 0.8125rem; font-weight: 600; color: var(--rfs-ink-0);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rfs-ink-0);
 }
 .rfs-package-row-file {
-  font-size: 0.6875rem; color: var(--rfs-ink-3);
+  font-size: 0.6875rem;
+  color: var(--rfs-ink-3);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .rfs-package-row-actions {
-  display: inline-flex; align-items: center; gap: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
 }
 .rfs-package-row-btn {
-  width: 24px; height: 24px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   background: transparent;
   border: 1px solid var(--rfs-bg-2);
   color: var(--rfs-ink-2);
-  font-size: 0.875rem; line-height: 1;
+  font-size: 0.875rem;
+  line-height: 1;
   font-family: inherit;
   cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 .rfs-package-row-btn:hover:not(:disabled) {
@@ -3381,7 +4223,9 @@
    Subtle uppercase title + a muted meta count (e.g. "3 steps" or
    "5 of 5 selected"). */
 .rfs-package-section-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0.25rem 0 0.5rem;
   padding-bottom: 0.375rem;
   border-bottom: 1px solid var(--rfs-bg-2);
@@ -3404,10 +4248,13 @@
    picks above a custom textarea; selecting a chip writes its prompt
    into the textarea, typing custom text deselects all chips. */
 .rfs-package-creative {
-  display: flex; flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 .rfs-package-creative-chips {
-  display: flex; flex-wrap: wrap; gap: 0.375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
   margin-bottom: 0.5rem;
 }
 .rfs-package-creative-chip {
@@ -3427,9 +4274,9 @@
   color: var(--rfs-ink-0);
 }
 .rfs-package-creative-chip.is-on {
-  background: var(--rfs-accent, #FBBF24);
-  border-color: var(--rfs-accent, #FBBF24);
-  color: #09090B;
+  background: var(--rfs-accent, #fbbf24);
+  border-color: var(--rfs-accent, #fbbf24);
+  color: #09090b;
 }
 .rfs-package-creative-textarea {
   font-family: inherit;
@@ -3448,7 +4295,7 @@
 }
 .rfs-package-creative-textarea:focus {
   outline: none;
-  border-color: var(--rfs-accent, #FBBF24);
+  border-color: var(--rfs-accent, #fbbf24);
 }
 .rfs-package-creative-textarea::placeholder {
   color: var(--rfs-ink-3);
@@ -3459,10 +4306,14 @@
    row is itself the clickable target (label-wrapped) so hits register
    anywhere from the checkbox to the ratio chip. */
 .rfs-package-variant-list {
-  display: flex; flex-direction: column; gap: 0.3125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
 }
 .rfs-package-variant-row {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.5rem 0.625rem;
   background: var(--rfs-bg-0);
   border: 1px solid var(--rfs-bg-2);
@@ -3479,7 +4330,8 @@
   background: color-mix(in srgb, var(--rfs-accent, #4f46e5) 6%, var(--rfs-bg-0));
 }
 .rfs-package-variant-row input[type="checkbox"] {
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   accent-color: var(--rfs-accent, #4f46e5);
   cursor: pointer;
@@ -3527,7 +4379,9 @@
   border-top: none;
 }
 .rfs-custom-editor .rfs-action-pin-body {
-  display: flex; flex-direction: column; gap: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 .rfs-custom-editor-steps-label {
   font-size: 0.6875rem;
@@ -3538,7 +4392,9 @@
   margin-top: 0.125rem;
 }
 .rfs-custom-editor-row {
-  display: flex; flex-direction: column; gap: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 .rfs-custom-editor-row .rfs-package-row {
   border-radius: 10px;
@@ -3550,7 +4406,9 @@
 }
 .rfs-custom-editor-row-text {
   flex: 1;
-  display: flex; flex-direction: column; gap: 0.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
   min-width: 0;
   background: transparent;
   border: none;
@@ -3566,16 +4424,20 @@
   border-radius: 4px;
 }
 .rfs-custom-editor-step-params {
-  display: flex; flex-direction: column; gap: 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   padding: 0.625rem;
-  background: rgba(24,24,27,0.45);
+  background: rgba(24, 24, 27, 0.45);
   border: 1px solid var(--rfs-bg-2);
   border-top: none;
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
 }
 .rfs-custom-editor-add {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 0.625rem;
   background: transparent;
   border: 1px dashed var(--rfs-bg-3);
@@ -3590,17 +4452,21 @@
 .rfs-custom-editor-add:hover {
   border-color: var(--rfs-accent);
   color: var(--rfs-accent);
-  background: rgba(24,24,27,0.4);
+  background: rgba(24, 24, 27, 0.4);
 }
 .rfs-custom-editor-picker {
-  display: flex; flex-direction: column; gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.625rem;
-  background: rgba(24,24,27,0.45);
+  background: rgba(24, 24, 27, 0.45);
   border: 1px solid var(--rfs-bg-2);
   border-radius: 10px;
 }
 .rfs-custom-editor-picker-header {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--rfs-ink-3);
@@ -3608,14 +4474,18 @@
   letter-spacing: 0.06em;
 }
 .rfs-custom-editor-picker-list {
-  display: flex; flex-direction: column; gap: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
   /* No inner scroll: the editor body is the single scroll context,
      so the picker can grow to its content and the user scrolls the
      whole rail. Inside the package action panel (capped pin) the
      body still scrolls; nothing renders cropped here. */
 }
 .rfs-custom-editor-picker-item {
-  display: flex; align-items: center; gap: 0.625rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   padding: 0.5rem 0.625rem;
   background: var(--rfs-bg-0);
   border: 1px solid var(--rfs-bg-2);
@@ -3628,7 +4498,7 @@
 }
 .rfs-custom-editor-picker-item:hover {
   border-color: var(--rfs-accent);
-  background: rgba(24,24,27,0.6);
+  background: rgba(24, 24, 27, 0.6);
 }
 
 @media (max-width: 1100px) {
@@ -3642,7 +4512,9 @@
 .rfs-mobile-fab,
 .rfs-mobile-backdrop,
 .rfs-sheet-close,
-.rfs-canvas-info { display: none; }
+.rfs-canvas-info {
+  display: none;
+}
 
 /* ============================================================
    Mobile (≤768px)
@@ -3688,16 +4560,32 @@
   .rfs-header-toggle {
     display: none;
   }
-  .rfs-brand-mark { width: 24px; height: 10px; flex-shrink: 0; }
-  .rfs-brand-name { font-size: 0.875rem; flex-shrink: 0; }
-  .rfs-project { min-width: 0; flex: 1; }
+  .rfs-brand-mark {
+    width: 24px;
+    height: 10px;
+    flex-shrink: 0;
+  }
+  .rfs-brand-name {
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  .rfs-project {
+    min-width: 0;
+    flex: 1;
+  }
   .rfs-project-name {
     max-width: 100%;
     padding: 0.25rem 0.375rem;
     font-size: 0.8125rem;
   }
-  .rfs-project-name-input { width: 100%; max-width: 220px; }
-  .rfs-header-right { gap: 0.125rem; flex-shrink: 0; }
+  .rfs-project-name-input {
+    width: 100%;
+    max-width: 220px;
+  }
+  .rfs-header-right {
+    gap: 0.125rem;
+    flex-shrink: 0;
+  }
   /* Hide undo/redo + share on mobile. Versions stripe is the canonical
      undo/redo affordance; share is rarely needed mid-edit on a phone. */
   .rfs-header-right .rfs-iconbtn[aria-label="Step to previous version"],
@@ -3709,18 +4597,23 @@
     padding: 0.4375rem 0.625rem;
     font-size: 0.8125rem;
   }
-  .rfs-iconbtn { width: 36px; height: 36px; }
+  .rfs-iconbtn {
+    width: 36px;
+    height: 36px;
+  }
 
   /* ---------- Left rail as slide-over drawer ---------- */
   .rfs-left {
     position: fixed;
-    top: 48px; left: 0; bottom: 0;
+    top: 48px;
+    left: 0;
+    bottom: 0;
     width: min(86vw, 340px);
     border-right: 1px solid var(--rfs-bg-2);
     transform: translateX(-100%);
     transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 30;
-    box-shadow: 8px 0 32px rgba(0,0,0,0.5);
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.5);
     /* Cover bottom safe area on devices with home indicators. */
     padding-bottom: env(safe-area-inset-bottom);
     visibility: hidden;
@@ -3747,12 +4640,21 @@
     padding: 0.875rem;
     gap: 1rem;
   }
-  .rfs-left-newasset-btn { padding: 0.625rem 0.5rem; min-height: 40px; }
+  .rfs-left-newasset-btn {
+    padding: 0.625rem 0.5rem;
+    min-height: 40px;
+  }
 
   /* ---------- Center / canvas ---------- */
-  .rfs-center { grid-area: center; }
-  .rfs-canvas { padding: 0.5rem; }
-  .rfs-canvas-empty p { max-width: 320px; }
+  .rfs-center {
+    grid-area: center;
+  }
+  .rfs-canvas {
+    padding: 0.5rem;
+  }
+  .rfs-canvas-empty p {
+    max-width: 320px;
+  }
 
   /* Mobile chrome cleanup. The desktop canvas-tools row (resolution +
      aspect + copy-link + download + copy-as-file) collided with the
@@ -3760,9 +4662,18 @@
      version stripe thumbs carry a 1K/2K/4K badge, Export in the header
      is the canonical download CTA. Hide it on phones — info that's
      still useful (quality + size) moves into a small "?" toggle. */
-  .rfs-canvas-tools { display: none; }
-  .rfs-canvas-compare-btn { top: 0.5rem; right: 0.5rem; height: 36px; padding: 0 0.75rem; }
-  .rfs-canvas-compare-btn-label { display: inline; }
+  .rfs-canvas-tools {
+    display: none;
+  }
+  .rfs-canvas-compare-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+    height: 36px;
+    padding: 0 0.75rem;
+  }
+  .rfs-canvas-compare-btn-label {
+    display: inline;
+  }
 
   /* "?" info chip — tap to reveal resolution / aspect / dimensions.
      Uses the native <details>/<summary> toggle so no React state is
@@ -3794,7 +4705,9 @@
     cursor: pointer;
     user-select: none;
   }
-  .rfs-canvas-info-btn::-webkit-details-marker { display: none; }
+  .rfs-canvas-info-btn::-webkit-details-marker {
+    display: none;
+  }
   .rfs-canvas-info[open] .rfs-canvas-info-btn {
     color: var(--rfs-ink-0);
     border-color: var(--rfs-accent);
@@ -3829,8 +4742,14 @@
     border-left: 1px solid var(--rfs-bg-3);
     margin-left: 0.125rem;
   }
-  .rfs-image-frame { border-radius: var(--rfs-radius); }
-  .rfs-stage-hint { bottom: 1rem; font-size: 0.75rem; padding: 0.4375rem 0.75rem; }
+  .rfs-image-frame {
+    border-radius: var(--rfs-radius);
+  }
+  .rfs-stage-hint {
+    bottom: 1rem;
+    font-size: 0.75rem;
+    padding: 0.4375rem 0.75rem;
+  }
 
   /* Sentinel badge moves to the TOP-LEFT corner so it no longer fights
      the bottom-right hover tools (now hidden anyway) and isn't covered
@@ -3855,13 +4774,19 @@
        so the last thumb isn't covered by the button. */
     scroll-padding-right: 7rem;
   }
-  .rfs-version-stripe-label { display: none; }
-  .rfs-version-thumb { width: 60px; height: 60px; }
+  .rfs-version-stripe-label {
+    display: none;
+  }
+  .rfs-version-thumb {
+    width: 60px;
+    height: 60px;
+  }
 
   /* ---------- Right panel as bottom sheet ---------- */
   .rfs-right {
     position: fixed;
-    left: 0; right: 0;
+    left: 0;
+    right: 0;
     /* Anchor with top + height (both in dvh) so the sheet's bottom
        tracks the dynamic viewport. Using `bottom: 0` on iOS Safari
        sticks to the LARGE viewport bottom — i.e. underneath the URL
@@ -3876,7 +4801,7 @@
     border-top-left-radius: 18px;
     border-top-right-radius: 18px;
     background: var(--rfs-bg-0);
-    box-shadow: 0 -16px 48px rgba(0,0,0,0.55);
+    box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.55);
     transform: translateY(100%);
     transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 35;
@@ -3901,8 +4826,10 @@
   .rfs-right::before {
     content: "";
     position: absolute;
-    top: 8px; left: 50%;
-    width: 36px; height: 4px;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
     margin-left: -18px;
     background: var(--rfs-bg-3);
     border-radius: 999px;
@@ -3914,11 +4841,21 @@
   .rfs-right > .rfs-breadcrumb {
     padding-top: 18px;
   }
-  .rfs-tab { padding: 1rem 0.5rem; font-size: 0.875rem; min-height: 52px; }
+  .rfs-tab {
+    padding: 1rem 0.5rem;
+    font-size: 0.875rem;
+    min-height: 52px;
+  }
   /* The pinned action region stops being capped at 50vh — inside the
      sheet there's nothing above it competing for space. */
-  .rfs-action-pin { max-height: none; flex: 1; }
-  .rfs-action-pin-body { padding: 1rem; gap: 1rem; }
+  .rfs-action-pin {
+    max-height: none;
+    flex: 1;
+  }
+  .rfs-action-pin-body {
+    padding: 1rem;
+    gap: 1rem;
+  }
   .rfs-action-footer {
     padding: 0.875rem 1rem;
     padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
@@ -3947,18 +4884,22 @@
     height: 48px;
     padding: 0 1.125rem;
     background: var(--rfs-accent);
-    color: #09090B;
+    color: #09090b;
     font-family: inherit;
     font-size: 0.9375rem;
     font-weight: 700;
     letter-spacing: -0.01em;
     border: none;
     border-radius: 999px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
     cursor: pointer;
   }
-  .rfs-mobile-fab svg { color: #09090B; }
-  .rfs-mobile-fab:active { transform: translateY(1px); }
+  .rfs-mobile-fab svg {
+    color: #09090b;
+  }
+  .rfs-mobile-fab:active {
+    transform: translateY(1px);
+  }
   /* Tuck the FAB away while a sheet or drawer is up so it doesn't
      overlap the active surface. */
   .rfs-root.is-right-open .rfs-mobile-fab,
@@ -3970,22 +4911,42 @@
   .rfs-mobile-backdrop {
     display: block;
     position: fixed;
-    background: rgba(0,0,0,0.55);
+    background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(2px);
     border: none;
     padding: 0;
     cursor: default;
     animation: rfs-fade-in 160ms ease-out;
   }
-  .rfs-mobile-backdrop-left { top: 48px; left: 0; right: 0; bottom: 0; z-index: 25; }
-  .rfs-mobile-backdrop-right { inset: 0; z-index: 32; }
-  @keyframes rfs-fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .rfs-mobile-backdrop-left {
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+  }
+  .rfs-mobile-backdrop-right {
+    inset: 0;
+    z-index: 32;
+  }
+  @keyframes rfs-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
   .rfs-sheet-close {
     position: fixed;
-    top: 8px; right: 12px;
-    width: 36px; height: 36px;
-    display: inline-flex; align-items: center; justify-content: center;
+    top: 8px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: var(--rfs-bg-1);
     border: 1px solid var(--rfs-bg-3);
     border-radius: 999px;
@@ -3993,7 +4954,9 @@
     z-index: 40;
     cursor: pointer;
   }
-  .rfs-sheet-close:active { transform: scale(0.95); }
+  .rfs-sheet-close:active {
+    transform: scale(0.95);
+  }
 
   /* ---------- Toasts span the top edge so they're tappable ---------- */
   .rfs-toasts {
@@ -4002,12 +4965,23 @@
     right: 0.5rem;
     max-width: none;
   }
-  .rfs-toast { padding: 0.75rem; }
-  .rfs-toast-action { padding: 0.5rem 0.875rem; min-height: 40px; }
+  .rfs-toast {
+    padding: 0.75rem;
+  }
+  .rfs-toast-action {
+    padding: 0.5rem 0.875rem;
+    min-height: 40px;
+  }
 
   /* ---------- Misc tap-target bumps inside the sheet ---------- */
-  .rfs-card { padding: 0.875rem; }
-  .rfs-package-row-btn { width: 32px; height: 32px; font-size: 1rem; }
+  .rfs-card {
+    padding: 0.875rem;
+  }
+  .rfs-package-row-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
   /* Custom recipe delete/edit buttons appear on hover on desktop — show
      them on mobile so they're reachable with a tap. */
   .rfs-card-custom-edit,
@@ -4018,13 +4992,20 @@
 
 /* Smaller phones: tighten the project name. */
 @media (max-width: 380px) {
-  .rfs-project-name { max-width: 96px; }
-  .rfs-project-name-input { width: 96px; }
+  .rfs-project-name {
+    max-width: 96px;
+  }
+  .rfs-project-name-input {
+    width: 96px;
+  }
 }
 
 /* Honor reduced-motion for the sheet/drawer slide. */
 @media (prefers-reduced-motion: reduce) {
-  .rfs-left, .rfs-right { transition: none; }
+  .rfs-left,
+  .rfs-right {
+    transition: none;
+  }
 }
 
 /* Stop the body from rubber-banding when a sheet is open on iOS Safari. */

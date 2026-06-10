@@ -24,8 +24,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { Runflow, RunFailedError } from "@runflow-io/sdk";
 import { runflowProxy } from "@runflow-io/proxy";
+import { RunFailedError, Runflow } from "@runflow-io/sdk";
 import { buildSampleMask, fetchBytes, uploadAndPresign } from "./uploads.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,13 +38,7 @@ const SOURCE_URL =
 
 interface Modality {
   name: string;
-  modality:
-    | "simple"
-    | "prompt"
-    | "color"
-    | "select"
-    | "pin"
-    | "text-to-image";
+  modality: "simple" | "prompt" | "color" | "select" | "pin" | "text-to-image";
   model: string;
   body: Record<string, unknown>;
   /** Some workflows take longer; bump the timeout where needed. */
@@ -291,7 +285,7 @@ async function main() {
       uploadAndPresign(`demos/${sessId}/mask.png`, maskBytes, "image/png"),
       uploadAndPresign(`demos/${sessId}/reference.jpg`, refBytes, "image/jpeg"),
     ]);
-    await log(`    uploaded source + mask + reference to R2`);
+    await log("    uploaded source + mask + reference to R2");
 
     const dispatched = await rf.models.run("runflow/reference-inpaint", {
       input: {
@@ -301,7 +295,10 @@ async function main() {
         prompt: "match the reference style in the masked area",
       },
     });
-    const final = await rf.runs.wait(dispatched.id, { pollIntervalMs: 2_000, timeoutMs: 5 * 60_000 });
+    const final = await rf.runs.wait(dispatched.id, {
+      pollIntervalMs: 2_000,
+      timeoutMs: 5 * 60_000,
+    });
     const elapsed = +((Date.now() - maskStart) / 1000).toFixed(1);
     const outputUrl = extractImage(final.output);
     await log(`  ✓ SUCCEEDED in ${elapsed}s — ${outputUrl}`);
@@ -313,7 +310,12 @@ async function main() {
           modality: "mask-reference",
           name: "reference-inpaint",
           model: "runflow/reference-inpaint",
-          inputs: { image: imageUrl, mask: maskUrl, reference: referenceUrl, prompt: "match the reference style in the masked area" },
+          inputs: {
+            image: imageUrl,
+            mask: maskUrl,
+            reference: referenceUrl,
+            prompt: "match the reference style in the masked area",
+          },
           runId: dispatched.id,
           output: { image: outputUrl },
           rawOutput: final.output,
@@ -358,8 +360,14 @@ async function main() {
   try {
     const prep = await runChain(rf, SOURCE_URL, [
       { model: "runflow/tag-removal", extra: {} },
-      { model: "runflow/product-isolation", extra: { aspect_ratio: "1:1", resolution: "2K", prompt: "the sneaker" } },
-      { model: "runflow/background-color", extra: { color_red: 255, color_green: 255, color_blue: 255 } },
+      {
+        model: "runflow/product-isolation",
+        extra: { aspect_ratio: "1:1", resolution: "2K", prompt: "the sneaker" },
+      },
+      {
+        model: "runflow/background-color",
+        extra: { color_red: 255, color_green: 255, color_blue: 255 },
+      },
     ]);
     await log(`    prep done → ${prep.outputUrl.slice(0, 80)}…`);
 
@@ -375,7 +383,12 @@ async function main() {
           input: { image_url: prep.outputUrl, aspect_ratio: v.aspect_ratio, resolution: "2K" },
         });
         const r = await rf.runs.wait(d.id, { pollIntervalMs: 2_000, timeoutMs: 5 * 60_000 });
-        return { variant: v.id, ratio: v.aspect_ratio, runId: d.id, output: extractImage(r.output) };
+        return {
+          variant: v.id,
+          ratio: v.aspect_ratio,
+          runId: d.id,
+          output: extractImage(r.output),
+        };
       }),
     );
 
@@ -383,7 +396,7 @@ async function main() {
     await log(`  ✓ SUCCEEDED in ${elapsed}s — 4 variants`);
     for (const v of variantRuns) await log(`    · ${v.variant} (${v.ratio}): ${v.output}`);
     await writeFile(
-      resolve(PROOF_DIR, `package-fanout-omnichannel.json`),
+      resolve(PROOF_DIR, "package-fanout-omnichannel.json"),
       JSON.stringify(
         {
           ok: true,
@@ -432,24 +445,36 @@ async function main() {
       "on a sun-warmed cobblestone street at golden hour, mid-stride pose, low three-quarter angle, soft long shadows, blurred city backdrop, editorial photoreal product photography, true colors and materials preserved";
     const prep = await runChain(rf, SOURCE_URL, [
       { model: "runflow/tag-removal", extra: {} },
-      { model: "runflow/product-isolation", extra: { aspect_ratio: "1:1", resolution: "2K", prompt: "the sneaker" } },
-      { model: "runflow/background-color", extra: { color_red: 255, color_green: 255, color_blue: 255 } },
+      {
+        model: "runflow/product-isolation",
+        extra: { aspect_ratio: "1:1", resolution: "2K", prompt: "the sneaker" },
+      },
+      {
+        model: "runflow/background-color",
+        extra: { color_red: 255, color_green: 255, color_blue: 255 },
+      },
     ]);
-    await log(`    prep done`);
+    await log("    prep done");
     const sceneDispatched = await rf.models.run("google/nano-banana-pro/edit", {
       input: {
         prompt: `Place the subject of this image ${direction}.`,
         image_urls: [prep.outputUrl],
       },
     });
-    const scene = await rf.runs.wait(sceneDispatched.id, { pollIntervalMs: 2_000, timeoutMs: 5 * 60_000 });
+    const scene = await rf.runs.wait(sceneDispatched.id, {
+      pollIntervalMs: 2_000,
+      timeoutMs: 5 * 60_000,
+    });
     const sceneUrl = extractImage(scene.output);
     if (!sceneUrl) throw new Error("ai-scene returned no image");
-    await log(`    creative direction injected, scene generated`);
+    await log("    creative direction injected, scene generated");
     const variantD = await rf.models.run("runflow/smart-resize", {
       input: { image_url: sceneUrl, aspect_ratio: "1:1", resolution: "2K" },
     });
-    const variant = await rf.runs.wait(variantD.id, { pollIntervalMs: 2_000, timeoutMs: 5 * 60_000 });
+    const variant = await rf.runs.wait(variantD.id, {
+      pollIntervalMs: 2_000,
+      timeoutMs: 5 * 60_000,
+    });
     const elapsed = +((Date.now() - cdStart) / 1000).toFixed(1);
     const finalUrl = extractImage(variant.output);
     await log(`  ✓ SUCCEEDED in ${elapsed}s — ${finalUrl}`);
@@ -505,7 +530,9 @@ async function main() {
   const chatStart = Date.now();
   try {
     // Simulate the chat agent's plan: one ai-edit step with pin coords.
-    const planSteps = [{ workflow_id: "ai-edit", description: "Remove the price tag in the upper-left" }];
+    const planSteps = [
+      { workflow_id: "ai-edit", description: "Remove the price tag in the upper-left" },
+    ];
     const pin = { x: 0.25, y: 0.25 };
     const instruction = "remove the price tag";
     // Build the ai-edit prompt exactly the way @runflow-io/studio's ai-edit
@@ -583,7 +610,11 @@ async function main() {
         );
         await writeFile(
           resolve(PROOF_DIR, `sentinel-${verdict.evalId}.json`),
-          JSON.stringify({ ok: true, modality: "sentinel", ...verdict, elapsedSeconds: elapsed }, null, 2),
+          JSON.stringify(
+            { ok: true, modality: "sentinel", ...verdict, elapsedSeconds: elapsed },
+            null,
+            2,
+          ),
         );
         summary.push({
           modality: "sentinel",
@@ -608,12 +639,16 @@ async function main() {
       await log("");
     }
   } else {
-    await log("▶ sentinel — skipped (SENTINEL_API_KEY missing or no successful output to evaluate)");
+    await log(
+      "▶ sentinel — skipped (SENTINEL_API_KEY missing or no successful output to evaluate)",
+    );
     await log("");
   }
 
   const ok = summary.every((s) => s.ok);
-  await log(`== summary: ${summary.filter((s) => s.ok).length}/${summary.length} modalities succeeded ==`);
+  await log(
+    `== summary: ${summary.filter((s) => s.ok).length}/${summary.length} modalities succeeded ==`,
+  );
   await writeFile(
     resolve(PROOF_DIR, "summary.json"),
     JSON.stringify({ ok, summary, completedAt: new Date().toISOString() }, null, 2),
@@ -634,7 +669,10 @@ async function runChain(
     const dispatched = await rf.models.run(step.model, {
       input: { image_url: current, ...step.extra },
     });
-    const final = await rf.runs.wait(dispatched.id, { pollIntervalMs: 2_000, timeoutMs: 3 * 60_000 });
+    const final = await rf.runs.wait(dispatched.id, {
+      pollIntervalMs: 2_000,
+      timeoutMs: 3 * 60_000,
+    });
     const url = extractImage(final.output);
     if (!url) throw new Error(`No output URL from ${step.model} run ${dispatched.id}`);
     current = url;
@@ -648,7 +686,13 @@ async function runSentinel(
   apiKey: string,
   inputUrl: string,
   outputUrl: string,
-): Promise<{ evalId: string; state: string; judgesPassed: number; judgesTotal: number; summary?: string }> {
+): Promise<{
+  evalId: string;
+  state: string;
+  judgesPassed: number;
+  judgesTotal: number;
+  summary?: string;
+}> {
   const SENTINEL = "https://sentinel.runflow.io/api/v1";
   const post = await fetch(`${SENTINEL}/evaluate?sync=false`, {
     method: "POST",
@@ -661,11 +705,15 @@ async function runSentinel(
       generated_image_url: outputUrl,
       task_type: "product_photography",
       task_description: "Background removed and replaced with the requested backdrop.",
-      reference_images: [{ url: inputUrl, role: "reference_image", description: "Original source image" }],
+      reference_images: [
+        { url: inputUrl, role: "reference_image", description: "Original source image" },
+      ],
     }),
   });
   if (!post.ok) {
-    throw new Error(`sentinel dispatch ${post.status}: ${await post.text().then((s) => s.slice(0, 200))}`);
+    throw new Error(
+      `sentinel dispatch ${post.status}: ${await post.text().then((s) => s.slice(0, 200))}`,
+    );
   }
   const dispatched = (await post.json()) as { eval_id: string };
   const evalId = dispatched.eval_id;

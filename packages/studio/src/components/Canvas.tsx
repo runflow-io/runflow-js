@@ -6,9 +6,9 @@
 // bounding box (no off-by-letterbox drift on pin clicks).
 
 import { type ReactNode, type Ref, useState } from "react";
-import { Icon } from "./icons";
-import { displayBucket, aspectRatioLabel } from "../lib/resolution";
+import { aspectRatioLabel, displayBucket } from "../lib/resolution";
 import { usePendingPhrase } from "../lib/workflow-progress";
+import { Icon } from "./icons";
 
 export type Pin = { x: number; y: number };
 
@@ -147,7 +147,9 @@ export function StudioCanvas({
                 <span className="rfs-canvas-pending-phrase">
                   {pendingPhrase}
                   <span className="rfs-canvas-pending-dots" aria-hidden>
-                    <span /><span /><span />
+                    <span />
+                    <span />
+                    <span />
                   </span>
                 </span>
               </div>
@@ -188,9 +190,18 @@ export function StudioCanvas({
   }
 
   return (
-    <div className={`rfs-canvas${isPinning ? " is-pinning" : ""}${isPainting ? " is-painting" : ""}`}>
+    <div
+      className={`rfs-canvas${isPinning ? " is-pinning" : ""}${isPainting ? " is-painting" : ""}`}
+    >
       <div className="rfs-image-frame">
-        <img ref={imgRef} src={imageUrl} alt={imageTitle} draggable={false} onClick={onImageClick} />
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: pin placement is pointer-coordinate-driven; the keyboard path is the chat agent's pin flow */}
+        <img
+          ref={imgRef}
+          src={imageUrl}
+          alt={imageTitle}
+          draggable={false}
+          onClick={onImageClick}
+        />
         {pin && isPinning ? (
           <div
             className="rfs-pin"
@@ -218,6 +229,7 @@ export function StudioCanvas({
             studio's headline moments. Persistent top-right floating
             button on the canvas, subtle when idle, clear on hover. */}
         <button
+          type="button"
           className="rfs-canvas-compare-btn"
           title={compareEnabled ? "Compare versions" : "Need at least 2 versions to compare"}
           onClick={onOpenCompare}
@@ -236,6 +248,7 @@ export function StudioCanvas({
             <summary className="rfs-canvas-info-btn" aria-label="Show image details">
               ?
             </summary>
+            {/* biome-ignore lint/a11y/useSemanticElements: role="status" on a styled div; <output> carries form semantics and inline display */}
             <div className="rfs-canvas-info-popover" role="status">
               {(() => {
                 const bucket = displayBucket(imageWidth, imageHeight, requestedResolution);
@@ -245,7 +258,9 @@ export function StudioCanvas({
                   </span>
                 );
               })()}
-              <span className="rfs-canvas-info-pill">{aspectRatioLabel(imageWidth, imageHeight)}</span>
+              <span className="rfs-canvas-info-pill">
+                {aspectRatioLabel(imageWidth, imageHeight)}
+              </span>
               <span className="rfs-canvas-info-dim">
                 {imageWidth}×{imageHeight}
               </span>
@@ -275,6 +290,7 @@ export function StudioCanvas({
             </>
           ) : null}
           <button
+            type="button"
             className="rfs-iconbtn"
             title={copied ? "Copied!" : "Copy image link"}
             onClick={handleCopyLink}
@@ -282,15 +298,26 @@ export function StudioCanvas({
           >
             {copied ? Icon.check : Icon.link}
           </button>
-          <a className="rfs-iconbtn" href={imageUrl} target="_blank" rel="noreferrer" title="Download this version">
+          <a
+            className="rfs-iconbtn"
+            href={imageUrl}
+            target="_blank"
+            rel="noreferrer"
+            title="Download this version"
+          >
             {Icon.download}
           </a>
           {onDownloadAll ? (
             <button
+              type="button"
               className="rfs-iconbtn"
               onClick={onDownloadAll}
               disabled={!canDownloadAll}
-              title={canDownloadAll ? "Download all versions as .zip" : "Need at least 2 versions to bundle"}
+              title={
+                canDownloadAll
+                  ? "Download all versions as .zip"
+                  : "Need at least 2 versions to bundle"
+              }
               aria-label="Download all versions as .zip"
             >
               {Icon.downloadAll}
@@ -307,11 +334,12 @@ export function StudioCanvas({
             min={10}
             max={120}
             value={brushSize}
-            onChange={(e) => onBrushSize(parseInt(e.target.value, 10))}
+            onChange={(e) => onBrushSize(Number.parseInt(e.target.value, 10))}
             className="rfs-brush-range"
           />
           <span className="rfs-brush-size">{brushSize}px</span>
           <button
+            type="button"
             className="rfs-brush-clear"
             onClick={onClearMask}
             disabled={maskCoverage === 0}
@@ -322,13 +350,14 @@ export function StudioCanvas({
             <>
               <span className="rfs-brush-divider" />
               <button
+                type="button"
                 className="rfs-brush-confirm"
                 onClick={onConfirmChatMask}
                 disabled={maskCoverage < 0.08}
               >
                 Confirm mask
               </button>
-              <button className="rfs-brush-clear" onClick={onCancelChatMask}>
+              <button type="button" className="rfs-brush-clear" onClick={onCancelChatMask}>
                 Cancel
               </button>
             </>
@@ -337,6 +366,7 @@ export function StudioCanvas({
       ) : null}
       {chatPinMode ? (
         <button
+          type="button"
           className="rfs-brush-clear"
           onClick={onCancelChatPin}
           style={{
@@ -363,6 +393,7 @@ export function StudioCanvas({
       ) : null}
 
       {pending ? (
+        // biome-ignore lint/a11y/useSemanticElements: role="status" on a styled div; <output> carries form semantics and inline display
         <div className="rfs-canvas-pending" role="status">
           <span className="rfs-canvas-pending-spinner" aria-hidden />
           <span className="rfs-canvas-pending-phrase">

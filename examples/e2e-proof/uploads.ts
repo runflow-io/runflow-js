@@ -79,7 +79,9 @@ export async function uploadAndPresign(
   const signedHeaderKeys = Object.keys(putHeaders).sort();
   const signedHeaders = signedHeaderKeys.join(";");
   const canonicalHeaders = signedHeaderKeys.map((k) => `${k}:${putHeaders[k]}\n`).join("");
-  const canonicalRequest = ["PUT", path, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const canonicalRequest = ["PUT", path, "", canonicalHeaders, signedHeaders, payloadHash].join(
+    "\n",
+  );
   const scope = `${shortDate}/${REGION}/s3/aws4_request`;
   const stringToSign = ["AWS4-HMAC-SHA256", dateStamp, scope, sha256(canonicalRequest)].join("\n");
   const kDate = hmacSha256(`AWS4${secretKey}`, shortDate);
@@ -95,7 +97,8 @@ export async function uploadAndPresign(
     headers: { ...putHeaders, authorization },
     body: new Uint8Array(body) as unknown as BodyInit,
   });
-  if (!res.ok) throw new Error(`R2 upload ${res.status}: ${await res.text().then((s) => s.slice(0, 200))}`);
+  if (!res.ok)
+    throw new Error(`R2 upload ${res.status}: ${await res.text().then((s) => s.slice(0, 200))}`);
 
   // Presign GET
   const params: Array<[string, string]> = [
@@ -108,7 +111,14 @@ export async function uploadAndPresign(
   params.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   const canonicalQs = params.map(([k, v]) => `${awsUriEncode(k)}=${awsUriEncode(v)}`).join("&");
   const ch = `host:${host}\n`;
-  const cr = ["GET", `/${BUCKET}/${encodeKeyPath(key)}`, canonicalQs, ch, "host", "UNSIGNED-PAYLOAD"].join("\n");
+  const cr = [
+    "GET",
+    `/${BUCKET}/${encodeKeyPath(key)}`,
+    canonicalQs,
+    ch,
+    "host",
+    "UNSIGNED-PAYLOAD",
+  ].join("\n");
   const sts = ["AWS4-HMAC-SHA256", dateStamp, scope, sha256(cr)].join("\n");
   const sig = hmacSha256(kSigning, sts).toString("hex");
   return `${ENDPOINT.replace(`/${BUCKET}`, "")}/${BUCKET}/${encodeKeyPath(key)}?${canonicalQs}&X-Amz-Signature=${sig}`;

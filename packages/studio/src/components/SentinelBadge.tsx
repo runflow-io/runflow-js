@@ -155,7 +155,12 @@ export function SentinelChip({
   if (result.state === "pending") body = <span>checking</span>;
   else if (result.state === "failed") body = <span aria-label="Quality check error">?</span>;
   else if (score !== null) body = <span>{score}%</span>;
-  else if (total > 0) body = <span>{passes}/{total}</span>;
+  else if (total > 0)
+    body = (
+      <span>
+        {passes}/{total}
+      </span>
+    );
   else body = <span>{result.state}</span>;
 
   return (
@@ -236,6 +241,7 @@ export function SentinelBadge({
   return (
     <>
       <button
+        type="button"
         className={`rfs-sentinel-badge is-${result.state}`}
         onClick={onToggle}
         aria-expanded={open}
@@ -253,7 +259,10 @@ export function SentinelBadge({
         )}
         <span>{LABEL[result.state]}</span>
         {result.state === "pending" ? (
-          <span className="rfs-sentinel-badge-elapsed" aria-label={`Elapsed ${formatElapsed(elapsedSec)}`}>
+          <span
+            className="rfs-sentinel-badge-elapsed"
+            aria-label={`Elapsed ${formatElapsed(elapsedSec)}`}
+          >
             {formatElapsed(elapsedSec)}
           </span>
         ) : null}
@@ -281,17 +290,14 @@ export function SentinelBadge({
                   : "Sentinel checks"}
             </span>
             {typeof result.score === "number" ? (
-              <span className="rfs-sentinel-panel-score">
-                {Math.round(result.score * 100)}%
-              </span>
+              <span className="rfs-sentinel-panel-score">{Math.round(result.score * 100)}%</span>
             ) : null}
           </header>
 
           {/* Hard-gate banner — appears only if a critical check failed. */}
           {result.hardGateFailures && result.hardGateFailures.length > 0 ? (
             <div className="rfs-sentinel-hardgate">
-              <strong>Critical:</strong>{" "}
-              {result.hardGateFailures.length} hard-gate{" "}
+              <strong>Critical:</strong> {result.hardGateFailures.length} hard-gate{" "}
               {result.hardGateFailures.length === 1 ? "failure" : "failures"}
             </div>
           ) : null}
@@ -313,9 +319,9 @@ export function SentinelBadge({
             <div className="rfs-sentinel-panel-empty">
               {result.error ? (
                 <>
-                  Couldn&apos;t reach Sentinel: <code>{result.error}</code>. The image still works
-                  — only the quality score is missing. If this keeps happening, ping Ziad
-                  (ML) with the error above.
+                  Couldn&apos;t reach Sentinel: <code>{result.error}</code>. The image still works —
+                  only the quality score is missing. If this keeps happening, ping Ziad (ML) with
+                  the error above.
                 </>
               ) : (
                 "Sentinel returned no judges for this run."
@@ -370,14 +376,13 @@ export function SentinelBadge({
 // shows detected_issues (specific findings) + reasoning text.
 function JudgeRow({ judge }: { judge: Judge }) {
   const [expanded, setExpanded] = useState(false);
-  const hasDetail =
-    !!judge.reasoning || (judge.detectedIssues && judge.detectedIssues.length > 0);
-  const conf =
-    typeof judge.confidence === "number" ? Math.round(judge.confidence * 100) : null;
+  const hasDetail = !!judge.reasoning || (judge.detectedIssues && judge.detectedIssues.length > 0);
+  const conf = typeof judge.confidence === "number" ? Math.round(judge.confidence * 100) : null;
 
   return (
     <div className={`rfs-sentinel-judge${judge.pass ? " is-pass" : " is-fail"}`}>
       <button
+        type="button"
         className="rfs-sentinel-judge-header"
         onClick={() => hasDetail && setExpanded((v) => !v)}
         disabled={!hasDetail}
@@ -407,7 +412,9 @@ function JudgeRow({ judge }: { judge: Judge }) {
                 {judge.detectedIssues.map((iss, i) => (
                   <li key={i}>
                     <span className="rfs-sentinel-judge-tag">{iss.subcategory}</span>
-                    {iss.detail ? <span className="rfs-sentinel-judge-detail"> — {iss.detail}</span> : null}
+                    {iss.detail ? (
+                      <span className="rfs-sentinel-judge-detail"> — {iss.detail}</span>
+                    ) : null}
                   </li>
                 ))}
               </ul>
@@ -440,7 +447,11 @@ function CollapsibleSummary({
   const [open, setOpen] = useState(false);
   return (
     <div className={`rfs-sentinel-summary rfs-sentinel-summary-${kind}`}>
-      <button className="rfs-sentinel-summary-header" onClick={() => setOpen((v) => !v)}>
+      <button
+        type="button"
+        className="rfs-sentinel-summary-header"
+        onClick={() => setOpen((v) => !v)}
+      >
         <span className="rfs-sentinel-summary-icon" aria-hidden>
           {kind === "strength" ? "✓" : "!"}
         </span>

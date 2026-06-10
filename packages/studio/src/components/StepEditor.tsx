@@ -109,7 +109,9 @@ export function StepParamsForm({
                 onChange={(e) => setValue(e.target.value)}
               >
                 {inp.options.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
               {inp.help ? <div className="rfs-help">{inp.help}</div> : null}

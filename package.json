@@ -9,10 +9,7 @@
     "type": "git",
     "url": "https://github.com/runflow-io/runflow-js.git"
   },
-  "workspaces": [
-    "packages/*",
-    "examples/*"
-  ],
+  "workspaces": ["packages/*", "examples/*"],
   "scripts": {
     "build": "cd packages/sdk && bun run build && cd ../proxy && bun run build && cd ../studio && bun run build",
     "test": "bun run --filter='./packages/*' test",

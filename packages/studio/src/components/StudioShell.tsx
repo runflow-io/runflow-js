@@ -18,45 +18,46 @@
 // selected. Two canvases sync (visible coral + hidden B&W) just like
 // the retaillabs version, but scoped to this shell.
 
-import { useEffect, useMemo, useRef, useState } from "react";
 import JSZip from "jszip";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { SAMPLES } from "../data/samples";
 import {
-  WORKFLOWS,
-  type Workflow,
+  type PackageCreativeDirection,
   type PackageRecipeStep,
   type PackageVariant,
-  type PackageCreativeDirection,
+  WORKFLOWS,
+  type Workflow,
 } from "../data/workflows";
-import { SAMPLES } from "../data/samples";
-import { runWorkflow, uploadFile, type RunProgress } from "../lib/runflow";
-import { Toasts, type StudioToast } from "./Toasts";
-import { ComparePanel } from "./ComparePanel";
-import { evaluate as sentinelEvaluate, taskDescription as sentinelTaskDescription, type SentinelResult } from "../lib/sentinel";
+import type { CustomWorkflow } from "../lib/custom-workflows";
+import { type GenerationResolution, dispatchGeneration } from "../lib/generation";
 import {
-  probeImageDims,
+  type ResBucket,
+  TOPAZ_MAX_OUTPUT_MP,
   displayBucket,
-  resBucket,
   isUpscale,
+  probeImageDims,
+  resBucket,
   topazExceedsCap,
   topazOutputMP,
-  TOPAZ_MAX_OUTPUT_MP,
-  type ResBucket,
 } from "../lib/resolution";
-import { compactSummary } from "../lib/version-summary";
-import { getStudioSettings } from "../lib/studio-settings";
-import type { CustomWorkflow } from "../lib/custom-workflows";
-import type { PartialStudioHandle } from "../lib/studio-handle";
-import { StudioCanvas, type Pin } from "./Canvas";
-import { StepParamsForm, StepPicker, defaultStepValues } from "./StepEditor";
-import { GeneratePanel } from "./GeneratePanel";
+import { type RunProgress, runWorkflow, uploadFile } from "../lib/runflow";
 import {
-  dispatchGeneration,
-  type GenerationResolution,
-} from "../lib/generation";
-import { WorkflowsPanel, type Version, type VersionRequest } from "./WorkflowsPanel";
+  type SentinelResult,
+  evaluate as sentinelEvaluate,
+  taskDescription as sentinelTaskDescription,
+} from "../lib/sentinel";
+import type { PartialStudioHandle } from "../lib/studio-handle";
+import { getStudioSettings } from "../lib/studio-settings";
+import { compactSummary } from "../lib/version-summary";
+import { type Pin, StudioCanvas } from "./Canvas";
+import { ComparePanel } from "./ComparePanel";
+import { GeneratePanel } from "./GeneratePanel";
+import { ReferenceGallery } from "./ReferenceGallery";
 import { SentinelBadge, SentinelChip } from "./SentinelBadge";
 import { SettingsMenu } from "./SettingsMenu";
-import { ReferenceGallery } from "./ReferenceGallery";
+import { StepParamsForm, StepPicker, defaultStepValues } from "./StepEditor";
+import { type StudioToast, Toasts } from "./Toasts";
+import { type Version, type VersionRequest, WorkflowsPanel } from "./WorkflowsPanel";
 import { Icon } from "./icons";
 
 type AssetState = {
@@ -129,10 +130,10 @@ export function StudioShell() {
   // ("custom" when the user typed their own); `value` is the actual
   // prompt that gets injected into the matching prep step at apply
   // time. Both reset when the user switches workflows.
-  const [editedPackageCreativePickId, setEditedPackageCreativePickId] =
-    useState<string | null>(null);
-  const [editedPackageCreativeValue, setEditedPackageCreativeValue] =
-    useState<string>("");
+  const [editedPackageCreativePickId, setEditedPackageCreativePickId] = useState<string | null>(
+    null,
+  );
+  const [editedPackageCreativeValue, setEditedPackageCreativeValue] = useState<string>("");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [pin, setPin] = useState<Pin | null>(null);
   const [editText, setEditText] = useState("");
@@ -264,10 +265,10 @@ export function StudioShell() {
       return s;
     });
     if (assets[wantAsset]) setActiveId(wantAsset);
-  // We only run this once on mount — `assets` is captured for the
-  // membership check; running it again on `assets` change would clobber
-  // user navigation back into the URL on every state update.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // We only run this once on mount — `assets` is captured for the
+    // membership check; running it again on `assets` change would clobber
+    // user navigation back into the URL on every state update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // On change: write asset + version into the URL via replaceState so
@@ -483,10 +484,12 @@ export function StudioShell() {
   const onAddReferenceFiles = (files: File[]) => {
     if (files.length === 0) return;
     const remaining = files.slice();
-    if (!reference && remaining.length > 0) {
-      const head = remaining.shift()!;
-      setReference(head);
-      setReferencePreview(URL.createObjectURL(head));
+    if (!reference) {
+      const head = remaining.shift();
+      if (head) {
+        setReference(head);
+        setReferencePreview(URL.createObjectURL(head));
+      }
     }
     if (remaining.length === 0) return;
     const room = MAX_REFERENCES - 1 - extraReferences.length;
@@ -506,7 +509,7 @@ export function StudioShell() {
   };
   const clearAllReferences = () => {
     onReferenceFile(null);
-    extraReferencePreviews.forEach((u) => URL.revokeObjectURL(u));
+    for (const u of extraReferencePreviews) URL.revokeObjectURL(u);
     setExtraReferences([]);
     setExtraReferencePreviews([]);
   };
@@ -550,9 +553,7 @@ export function StudioShell() {
     if (!trimmedPrompt) return;
     const assetId = `gen-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const title =
-      trimmedPrompt.length > 50
-        ? `${trimmedPrompt.slice(0, 50).trim()}…`
-        : trimmedPrompt;
+      trimmedPrompt.length > 50 ? `${trimmedPrompt.slice(0, 50).trim()}…` : trimmedPrompt;
 
     // Build N pending versions up front — the version stripe + canvas
     // skeleton render off these immediately so the user sees "we're
@@ -566,19 +567,16 @@ export function StudioShell() {
       },
     };
     const baseTs = Date.now();
-    const initialVersions: Version[] = Array.from(
-      { length: params.count },
-      (_, i) => ({
-        id: `v${i}`,
-        url: "",
-        label: `Variation ${i + 1}`,
-        ts: baseTs + i,
-        pending: true,
-        pendingKind: "generation",
-        progressMessage: "Drafting…",
-        request: versionRequest,
-      }),
-    );
+    const initialVersions: Version[] = Array.from({ length: params.count }, (_, i) => ({
+      id: `v${i}`,
+      url: "",
+      label: `Variation ${i + 1}`,
+      ts: baseTs + i,
+      pending: true,
+      pendingKind: "generation",
+      progressMessage: "Drafting…",
+      request: versionRequest,
+    }));
 
     const asset: AssetState = {
       id: assetId,
@@ -634,9 +632,7 @@ export function StudioShell() {
               [assetId]: {
                 ...a,
                 versions: a.versions.map((v, i) =>
-                  i === idx
-                    ? { ...v, pending: false, error: result.error }
-                    : v,
+                  i === idx ? { ...v, pending: false, error: result.error } : v,
                 ),
               },
             };
@@ -681,10 +677,7 @@ export function StudioShell() {
         // Sentinel evaluation — same per-version pattern the workflow
         // runs use. Task description is the user's prompt verbatim,
         // exactly what the judges should be scoring against.
-        const sentinelResult = await sentinelEvaluate(
-          result.outputUrl,
-          trimmedPrompt,
-        );
+        const sentinelResult = await sentinelEvaluate(result.outputUrl, trimmedPrompt);
         setAssets((s) => {
           const a = s[assetId];
           if (!a) return s;
@@ -777,9 +770,7 @@ export function StudioShell() {
     // so up/down/delete/toggle in the action panel doesn't mutate the
     // workflow definition.
     if (wf.kind === "package" && wf.package) {
-      setEditedPackagePrep(
-        wf.package.prep.map((s) => ({ ...s, params: { ...s.params } })),
-      );
+      setEditedPackagePrep(wf.package.prep.map((s) => ({ ...s, params: { ...s.params } })));
       setEditedPackageVariants(
         (wf.package.variants ?? []).map((v) => ({
           variant: {
@@ -854,8 +845,7 @@ export function StudioShell() {
       suppressErrorToast?: boolean;
     },
   ): Promise<
-    | { ok: true; versionId: string; outputUrl: string; label: string }
-    | { ok: false; error: string }
+    { ok: true; versionId: string; outputUrl: string; label: string } | { ok: false; error: string }
   > => {
     // Unique version id generated up front so concurrent runs can't
     // collide on `v${versions.length}`.
@@ -867,14 +857,12 @@ export function StudioShell() {
     // without having to remember.
     const request: VersionRequest = {
       workflowId: wf.id,
-      ...(dispatch.prompt && dispatch.prompt.trim() ? { prompt: dispatch.prompt.trim() } : {}),
+      ...(dispatch.prompt?.trim() ? { prompt: dispatch.prompt.trim() } : {}),
       ...(dispatch.values && Object.keys(dispatch.values).length
         ? { values: { ...dispatch.values } }
         : {}),
       ...(dispatch.pin ? { pin: dispatch.pin } : {}),
-      ...(typeof dispatch.maskCoverage === "number"
-        ? { maskCoverage: dispatch.maskCoverage }
-        : {}),
+      ...(typeof dispatch.maskCoverage === "number" ? { maskCoverage: dispatch.maskCoverage } : {}),
       ...(dispatch.referenceFile ? { referenceFileName: dispatch.referenceFile.name } : {}),
       sourceUrl,
     };
@@ -885,7 +873,7 @@ export function StudioShell() {
       if (!a) return s;
       const v: Version = {
         id: newVid,
-        url: sourceUrl,            // show source while waiting
+        url: sourceUrl, // show source while waiting
         label: wf.name,
         ts: startedAt,
         pending: true,
@@ -988,9 +976,7 @@ export function StudioShell() {
             [targetAssetId]: {
               ...a,
               versions: a.versions.map((ver) =>
-                ver.id === newVid
-                  ? { ...ver, width: dims.width, height: dims.height }
-                  : ver,
+                ver.id === newVid ? { ...ver, width: dims.width, height: dims.height } : ver,
               ),
             },
           };
@@ -1082,9 +1068,7 @@ export function StudioShell() {
             ...s,
             [targetAssetId]: {
               ...a,
-              versions: a.versions.map((ver) =>
-                ver.id === newVid ? { ...ver, sentinel } : ver,
-              ),
+              versions: a.versions.map((ver) => (ver.id === newVid ? { ...ver, sentinel } : ver)),
             },
           };
         });
@@ -1142,9 +1126,7 @@ export function StudioShell() {
             ...s,
             [targetAssetId]: {
               ...a,
-              versions: a.versions.map((ver) =>
-                ver.id === newVid ? { ...ver, sentinel } : ver,
-              ),
+              versions: a.versions.map((ver) => (ver.id === newVid ? { ...ver, sentinel } : ver)),
             },
           };
         });
@@ -1290,9 +1272,7 @@ export function StudioShell() {
           ...s,
           [targetAssetId]: {
             ...a,
-            versions: a.versions.map((v) =>
-              v.id === versionId ? { ...v, sentinel } : v,
-            ),
+            versions: a.versions.map((v) => (v.id === versionId ? { ...v, sentinel } : v)),
           },
         };
       });
@@ -1348,7 +1328,11 @@ export function StudioShell() {
   ) => {
     const targetAssetId = activeIdRef.current;
     if (!targetAssetId) {
-      addToast({ kind: "error", title: "Pick a photo first", body: "No active asset to replay onto." });
+      addToast({
+        kind: "error",
+        title: "Pick a photo first",
+        body: "No active asset to replay onto.",
+      });
       return;
     }
     if (isMobileRef.current) setRightOpenMobile(false);
@@ -1376,7 +1360,11 @@ export function StudioShell() {
       const asset = assetsRef.current[targetAssetId];
       const sourceUrl = asset?.versions.find((v) => v.id === asset.currentVersionId)?.url;
       if (!sourceUrl) {
-        addToast({ kind: "error", title: `${custom.name} halted`, body: "Lost the current version URL between steps." });
+        addToast({
+          kind: "error",
+          title: `${custom.name} halted`,
+          body: "Lost the current version URL between steps.",
+        });
         return;
       }
       // Apply overrides only to the final step (per UX spec). Other
@@ -1454,9 +1442,7 @@ export function StudioShell() {
     // enabled, all prep steps run intermediate=true since the actual
     // Sentinel-scored outputs are the variants downstream.
     let prepUrl = sourceUrl;
-    let prepFinal:
-      | { versionId: string; outputUrl: string; label: string }
-      | null = null;
+    let prepFinal: { versionId: string; outputUrl: string; label: string } | null = null;
     for (let i = 0; i < prep.length; i++) {
       const step = prep[i];
       const stepWf = WORKFLOWS.find((w) => w.id === step.workflowId);
@@ -1624,9 +1610,8 @@ export function StudioShell() {
   // Pending versions are skipped: landing on one shows the source image
   // until the run completes, which is confusing.
   const versionList = active?.versions ?? [];
-  const versionIndex = active && currentVersion
-    ? versionList.findIndex((v) => v.id === currentVersion.id)
-    : -1;
+  const versionIndex =
+    active && currentVersion ? versionList.findIndex((v) => v.id === currentVersion.id) : -1;
   const stepVersion = (dir: -1 | 1): Version | null => {
     if (versionIndex < 0) return null;
     let i = versionIndex + dir;
@@ -1802,8 +1787,7 @@ export function StudioShell() {
     // creative-direction picker require the user to have picked or
     // typed a value (campaign-pack today).
     if (selectedWf.kind === "package") {
-      const hasSteps =
-        editedPackagePrep.length > 0 || editedPackageVariants.some((v) => v.enabled);
+      const hasSteps = editedPackagePrep.length > 0 || editedPackageVariants.some((v) => v.enabled);
       if (!hasSteps) return false;
       if (selectedWf.package?.creativeDirection) {
         return editedPackageCreativeValue.trim().length > 0;
@@ -1816,7 +1800,7 @@ export function StudioShell() {
     if (selectedWf.id === "topaz-upscale") {
       const w = currentVersion?.width;
       const h = currentVersion?.height;
-      const factor = parseFloat(inputs.upscale_factor || "2");
+      const factor = Number.parseFloat(inputs.upscale_factor || "2");
       if (w && h && topazExceedsCap(w, h, factor)) return false;
     }
     return true;
@@ -1964,9 +1948,7 @@ export function StudioShell() {
           // prep step. If neither is present, return a structured
           // error the agent can recover from by calling request_text.
           const direction = wf.package?.creativeDirection;
-          const directionPrompt = direction
-            ? (params.prompt || captured.text || "").trim()
-            : "";
+          const directionPrompt = direction ? (params.prompt || captured.text || "").trim() : "";
           if (direction && !directionPrompt) {
             return {
               ok: false,
@@ -1974,10 +1956,7 @@ export function StudioShell() {
             };
           }
           const presetPrep = (wf.package?.prep ?? []).map((step) => {
-            if (
-              direction &&
-              step.workflowId === direction.injectAt.workflowIdMatch
-            ) {
+            if (direction && step.workflowId === direction.injectAt.workflowIdMatch) {
               return {
                 ...step,
                 params: {
@@ -2069,10 +2048,15 @@ export function StudioShell() {
 
   const selectedActionFooter = selectedWf ? (
     <>
-      <button className="rfs-btn" onClick={resetSelection}>
+      <button type="button" className="rfs-btn" onClick={resetSelection}>
         Cancel
       </button>
-      <button className="rfs-btn rfs-btn-primary" onClick={onApply} disabled={!canApply}>
+      <button
+        type="button"
+        className="rfs-btn rfs-btn-primary"
+        onClick={onApply}
+        disabled={!canApply}
+      >
         Apply
       </button>
     </>
@@ -2085,6 +2069,7 @@ export function StudioShell() {
       <header className="rfs-header">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <button
+            type="button"
             className="rfs-iconbtn"
             onClick={() => setLeftCollapsed((v) => !v)}
             title={leftCollapsed ? "Show assets" : "Hide assets"}
@@ -2128,6 +2113,7 @@ export function StudioShell() {
               />
             ) : (
               <button
+                type="button"
                 className="rfs-project-name"
                 onClick={() => {
                   if (!active) return;
@@ -2144,6 +2130,7 @@ export function StudioShell() {
         </div>
         <div className="rfs-header-right">
           <button
+            type="button"
             className="rfs-iconbtn"
             onClick={onUndo}
             disabled={!undoTarget}
@@ -2153,6 +2140,7 @@ export function StudioShell() {
             {Icon.undo}
           </button>
           <button
+            type="button"
             className="rfs-iconbtn"
             onClick={onRedo}
             disabled={!redoTarget}
@@ -2162,11 +2150,18 @@ export function StudioShell() {
             {Icon.redo}
           </button>
           <SettingsMenu />
-          <button className="rfs-btn" onClick={onShare} disabled={!active} title="Copy link to this view">
+          <button
+            type="button"
+            className="rfs-btn"
+            onClick={onShare}
+            disabled={!active}
+            title="Copy link to this view"
+          >
             {Icon.share}
             Share
           </button>
           <button
+            type="button"
             className="rfs-btn rfs-btn-primary"
             disabled={!currentVersion}
             onClick={onExport}
@@ -2188,18 +2183,12 @@ export function StudioShell() {
             // again. Surface count + prompt so the GeneratePanel's
             // summary can show "Generating 4 variations: <prompt>".
             const generatingActive = !!(
-              active &&
-              active.tags?.includes("generated") &&
-              active.versions.some((v) => v.pending)
+              active?.tags?.includes("generated") && active.versions.some((v) => v.pending)
             );
             const inFlightCount =
-              generatingActive && active
-                ? active.versions.filter((v) => v.pending).length
-                : 0;
+              generatingActive && active ? active.versions.filter((v) => v.pending).length : 0;
             const inFlightPrompt =
-              generatingActive && active
-                ? active.versions[0]?.request?.prompt ?? ""
-                : "";
+              generatingActive && active ? (active.versions[0]?.request?.prompt ?? "") : "";
             return (
               <GeneratePanel
                 onClose={() => setGenerateOpen(false)}
@@ -2214,7 +2203,10 @@ export function StudioShell() {
           <>
             <div className="rfs-left-header">
               <span className="rfs-left-title">Assets</span>
-              <span className="rfs-left-title" style={{ letterSpacing: 0, textTransform: "none", fontWeight: 500 }}>
+              <span
+                className="rfs-left-title"
+                style={{ letterSpacing: 0, textTransform: "none", fontWeight: 500 }}
+              >
                 {order.length}
               </span>
             </div>
@@ -2256,12 +2248,11 @@ export function StudioShell() {
                 // walk back-to-front and grab the first non-empty url.
                 // Falls back to baseUrl, then empty.
                 const thumbUrl =
-                  [...a.versions].reverse().find((v) => v.url)?.url ??
-                  a.baseUrl ??
-                  "";
+                  [...a.versions].reverse().find((v) => v.url)?.url ?? a.baseUrl ?? "";
                 const allPending = a.versions.every((v) => v.pending);
                 return (
                   <button
+                    type="button"
                     key={id}
                     className={`rfs-asset${id === activeId ? " is-current" : ""}${allPending ? " is-pending" : ""}`}
                     onClick={() => onSelectAsset(id)}
@@ -2273,7 +2264,10 @@ export function StudioShell() {
                       <span className="rfs-asset-skeleton" aria-hidden />
                     )}
                     {a.versions.length > 1 ? (
-                      <span className="rfs-asset-count" aria-label={`${a.versions.length} versions`}>
+                      <span
+                        className="rfs-asset-count"
+                        aria-label={`${a.versions.length} versions`}
+                      >
                         {a.versions.length}
                       </span>
                     ) : null}
@@ -2330,9 +2324,7 @@ export function StudioShell() {
                 onToggle={() => setSentinelOpen((v) => !v)}
                 versionId={currentVersion.id}
                 onRetry={
-                  currentVersion.request
-                    ? () => onRetrySentinel(currentVersion.id)
-                    : undefined
+                  currentVersion.request ? () => onRetrySentinel(currentVersion.id) : undefined
                 }
                 retryInFlight={!!sentinelRetrying[currentVersion.id]}
               />
@@ -2340,7 +2332,10 @@ export function StudioShell() {
               // Intermediate step that bypassed Sentinel — surface a
               // muted badge so the user knows quality wasn't checked
               // (rather than the badge silently disappearing).
-              <div className="rfs-sentinel-badge is-skipped" title="Sentinel skipped on this intermediate step. Toggle “Run Sentinel between steps” in Settings to gate every step.">
+              <div
+                className="rfs-sentinel-badge is-skipped"
+                title="Sentinel skipped on this intermediate step. Toggle “Run Sentinel between steps” in Settings to gate every step."
+              >
                 <span className="rfs-sentinel-dot is-failed" />
                 <span>Sentinel skipped</span>
               </div>
@@ -2369,10 +2364,10 @@ export function StudioShell() {
               // Intermediate steps that bypassed Sentinel (gating off,
               // not the final step) end up with no sentinel + no error.
               // Original v0 has no `request` and shouldn't get a chip.
-              const isIntermediateSkipped =
-                !v.pending && !v.error && !v.sentinel && !!v.request;
+              const isIntermediateSkipped = !v.pending && !v.error && !v.sentinel && !!v.request;
               return (
                 <button
+                  type="button"
                   key={v.id}
                   className={`rfs-version-thumb${v.id === active.currentVersionId ? " is-current" : ""}${v.pending ? " is-pending" : ""}${v.error ? " is-error" : ""}${v.sentinel && !v.pending ? ` sentinel-${v.sentinel.state}` : ""}`}
                   onClick={() => onPickVersion(v.id)}
@@ -2402,11 +2397,7 @@ export function StudioShell() {
                   ) : null}
                   {v.sentinel || isIntermediateSkipped ? (
                     <span className="rfs-version-thumb-sentinel">
-                      <SentinelChip
-                        result={v.sentinel}
-                        skipped={isIntermediateSkipped}
-                        size="xs"
-                      />
+                      <SentinelChip result={v.sentinel} skipped={isIntermediateSkipped} size="xs" />
                     </span>
                   ) : null}
                   {v.pending ? (
@@ -2481,7 +2472,17 @@ export function StudioShell() {
             aria-label="Close edits panel"
             onClick={() => setRightOpenMobile(false)}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -2595,7 +2596,7 @@ function renderSelectedActionContent({
           title={pin ? "Spot pinned" : "Click the spot you want to edit"}
           sub={
             pin ? (
-              <button className="rfs-link" onClick={onClearPin}>
+              <button type="button" className="rfs-link" onClick={onClearPin}>
                 Click again on the image to move the pin
               </button>
             ) : (
@@ -2631,7 +2632,7 @@ function renderSelectedActionContent({
           }
           sub={
             maskCoverage >= 0.08 ? (
-              <button className="rfs-link" onClick={onClearMask}>
+              <button type="button" className="rfs-link" onClick={onClearMask}>
                 Clear and start over
               </button>
             ) : (
@@ -2651,10 +2652,14 @@ function renderSelectedActionContent({
           n="1"
           done={hasMask}
           active={!hasMask}
-          title={hasMask ? `Mask painted — ${maskCoverage.toFixed(1)}% covered` : "Brush the area to inpaint"}
+          title={
+            hasMask
+              ? `Mask painted — ${maskCoverage.toFixed(1)}% covered`
+              : "Brush the area to inpaint"
+          }
           sub={
             hasMask ? (
-              <button className="rfs-link" onClick={onClearMask}>
+              <button type="button" className="rfs-link" onClick={onClearMask}>
                 Clear and start over
               </button>
             ) : (
@@ -2689,7 +2694,8 @@ function renderSelectedActionContent({
           active={hasMask && hasReference}
           title={
             <>
-              Direction <span style={{ color: "var(--rfs-ink-3)", fontWeight: 500 }}>(optional)</span>
+              Direction{" "}
+              <span style={{ color: "var(--rfs-ink-3)", fontWeight: 500 }}>(optional)</span>
             </>
           }
           sub="Tell the model what to emphasize or how to apply the reference."
@@ -2728,7 +2734,7 @@ function renderSelectedActionContent({
         {referencePreview ? (
           <div className="rfs-ref-preview">
             <img src={referencePreview} alt="Logo" />
-            <button className="rfs-link" onClick={() => onReferenceFile(null)}>
+            <button type="button" className="rfs-link" onClick={() => onReferenceFile(null)}>
               Remove
             </button>
           </div>
@@ -2767,11 +2773,15 @@ function renderSelectedActionContent({
             <label className="rfs-label">{resolutionInput.label}</label>
             <select
               className="rfs-select"
-              value={inputs.resolution ?? resolutionInput.default ?? resolutionInput.options[0].value}
+              value={
+                inputs.resolution ?? resolutionInput.default ?? resolutionInput.options[0].value
+              }
               onChange={(e) => onInputChange("resolution", e.target.value)}
             >
               {resolutionInput.options.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </select>
             {resolutionInput.help ? <div className="rfs-help">{resolutionInput.help}</div> : null}
@@ -2782,7 +2792,11 @@ function renderSelectedActionContent({
   }
   // simple / prompt — render generic inputs from wf.inputs
   if (!wf.inputs?.length) {
-    return <div className="rfs-help">No parameters needed. Click <b>Apply</b> to run.</div>;
+    return (
+      <div className="rfs-help">
+        No parameters needed. Click <b>Apply</b> to run.
+      </div>
+    );
   }
   return (
     <>
@@ -2793,7 +2807,11 @@ function renderSelectedActionContent({
             <div key={inp.key} className="rfs-input-group">
               <label className="rfs-label">{inp.label}</label>
               <div className="rfs-color-row">
-                <input type="color" value={value} onChange={(e) => onInputChange(inp.key, e.target.value)} />
+                <input
+                  type="color"
+                  value={value}
+                  onChange={(e) => onInputChange(inp.key, e.target.value)}
+                />
                 <span className="rfs-color-hex">{value.toUpperCase()}</span>
               </div>
               {inp.help ? <div className="rfs-help">{inp.help}</div> : null}
@@ -2835,29 +2853,25 @@ function renderSelectedActionContent({
           // own resolution is known, annotate the label with the source's
           // bucket and warn if the chosen option would force an upscale —
           // models can't truly invent detail beyond what's in the source.
-          const isResolutionSelect = inp.options.every((o) =>
-            ["1K", "2K", "4K"].includes(o.value),
-          );
+          const isResolutionSelect = inp.options.every((o) => ["1K", "2K", "4K"].includes(o.value));
           const sourceBucket: ResBucket | null =
             isResolutionSelect && sourceWidth && sourceHeight
               ? resBucket(sourceWidth, sourceHeight)
               : null;
-          const currentValue =
-            inputs[inp.key] ?? inp.default ?? inp.options[0].value;
+          const currentValue = inputs[inp.key] ?? inp.default ?? inp.options[0].value;
           const showUpscaleWarn =
             sourceBucket && isUpscale(sourceBucket, currentValue as ResBucket);
           // Topaz upscale_factor — annotate options/warning with the
           // 24 MP output cap. Source × factor² has to stay under 24 MP
           // or the API rejects.
-          const isTopazFactor =
-            wf.id === "topaz-upscale" && inp.key === "upscale_factor";
+          const isTopazFactor = wf.id === "topaz-upscale" && inp.key === "upscale_factor";
           const topazExceeds =
             isTopazFactor && sourceWidth && sourceHeight
-              ? topazExceedsCap(sourceWidth, sourceHeight, parseFloat(currentValue))
+              ? topazExceedsCap(sourceWidth, sourceHeight, Number.parseFloat(currentValue))
               : false;
           const topazProjectedMP =
             isTopazFactor && sourceWidth && sourceHeight
-              ? topazOutputMP(sourceWidth, sourceHeight, parseFloat(currentValue))
+              ? topazOutputMP(sourceWidth, sourceHeight, Number.parseFloat(currentValue))
               : 0;
           return (
             <div key={inp.key} className="rfs-input-group">
@@ -2866,9 +2880,7 @@ function renderSelectedActionContent({
                 {sourceBucket ? (
                   <span className="rfs-label-meta">
                     source is {sourceBucket}
-                    {sourceWidth && sourceHeight
-                      ? ` · ${sourceWidth}×${sourceHeight}`
-                      : ""}
+                    {sourceWidth && sourceHeight ? ` · ${sourceWidth}×${sourceHeight}` : ""}
                   </span>
                 ) : null}
                 {isTopazFactor && sourceWidth && sourceHeight ? (
@@ -2883,11 +2895,10 @@ function renderSelectedActionContent({
                 onChange={(e) => onInputChange(inp.key, e.target.value)}
               >
                 {inp.options.map((o) => {
-                  const isUp =
-                    sourceBucket && isUpscale(sourceBucket, o.value as ResBucket);
+                  const isUp = sourceBucket && isUpscale(sourceBucket, o.value as ResBucket);
                   const exceedsTopaz =
                     isTopazFactor && sourceWidth && sourceHeight
-                      ? topazExceedsCap(sourceWidth, sourceHeight, parseFloat(o.value))
+                      ? topazExceedsCap(sourceWidth, sourceHeight, Number.parseFloat(o.value))
                       : false;
                   return (
                     <option key={o.value} value={o.value}>
@@ -2900,15 +2911,13 @@ function renderSelectedActionContent({
               </select>
               {showUpscaleWarn ? (
                 <div className="rfs-help rfs-help-warn">
-                  Heads up — your source is {sourceBucket}. Generating at{" "}
-                  {currentValue} means upscaling; the model can't add detail
-                  that isn't there.
+                  Heads up — your source is {sourceBucket}. Generating at {currentValue} means
+                  upscaling; the model can't add detail that isn't there.
                 </div>
               ) : topazExceeds ? (
                 <div className="rfs-help rfs-help-warn">
-                  At {currentValue}× this source would output{" "}
-                  {topazProjectedMP.toFixed(1)} MP — over the {TOPAZ_MAX_OUTPUT_MP} MP
-                  output cap. Pick a smaller factor to apply.
+                  At {currentValue}× this source would output {topazProjectedMP.toFixed(1)} MP —
+                  over the {TOPAZ_MAX_OUTPUT_MP} MP output cap. Pick a smaller factor to apply.
                 </div>
               ) : inp.help ? (
                 <div className="rfs-help">{inp.help}</div>
@@ -2943,14 +2952,20 @@ function packageStepSummary(step: PackageRecipeStep): string {
   if (step.params.aspect_ratio) paramBits.push(step.params.aspect_ratio);
   if (step.params.resolution) paramBits.push(step.params.resolution);
   if (step.params.upscale_factor) paramBits.push(`${step.params.upscale_factor}×`);
-  if (step.params.prompt) paramBits.push(`"${step.params.prompt.slice(0, 30)}${step.params.prompt.length > 30 ? "…" : ""}"`);
+  if (step.params.prompt)
+    paramBits.push(
+      `"${step.params.prompt.slice(0, 30)}${step.params.prompt.length > 30 ? "…" : ""}"`,
+    );
   return paramBits.length > 0 ? `${name} · ${paramBits.join(" · ")}` : name;
 }
 
 // Outpaint runtime expansion percentages (mirror of staticBody in
 // _data/workflows.ts). Multiplied against the source dim so the user
 // can see the canvas they'll get back before hitting Apply.
-const OUTPAINT_EXPAND: Record<string, { top: number; bottom: number; left: number; right: number }> = {
+const OUTPAINT_EXPAND: Record<
+  string,
+  { top: number; bottom: number; left: number; right: number }
+> = {
   "4:5": { top: 13, bottom: 12, left: 0, right: 0 },
   "9:16": { top: 39, bottom: 39, left: 0, right: 0 },
   "16:9": { top: 0, bottom: 0, left: 39, right: 39 },
@@ -2997,7 +3012,9 @@ function Step({
 }) {
   return (
     <div className="rfs-step">
-      <div className={`rfs-step-num${done ? " is-done" : active ? " is-active" : ""}`}>{done ? "" : n}</div>
+      <div className={`rfs-step-num${done ? " is-done" : active ? " is-active" : ""}`}>
+        {done ? "" : n}
+      </div>
       <div className="rfs-step-text">
         <div className="rfs-step-title">{title}</div>
         {sub ? <div className="rfs-step-sub">{sub}</div> : null}
@@ -3107,9 +3124,7 @@ function PackageEditor({
 
   const updateStepParam = (i: number, key: string, value: string) => {
     setPrep((prev) =>
-      prev.map((s, idx) =>
-        idx === i ? { ...s, params: { ...s.params, [key]: value } } : s,
-      ),
+      prev.map((s, idx) => (idx === i ? { ...s, params: { ...s.params, [key]: value } } : s)),
     );
   };
 
@@ -3131,9 +3146,7 @@ function PackageEditor({
 
   const toggleVariant = (variantId: string) => {
     setVariants((prev) =>
-      prev.map((v) =>
-        v.variant.id === variantId ? { ...v, enabled: !v.enabled } : v,
-      ),
+      prev.map((v) => (v.variant.id === variantId ? { ...v, enabled: !v.enabled } : v)),
     );
   };
 
@@ -3205,16 +3218,37 @@ function PackageEditor({
               ? "The product gets cleaned, dropped into your scene, then sized for each channel."
               : "Prep runs once, then each enabled channel runs its own smart-resize in parallel."}
             {isModified ? (
-              <> You've edited this run — <button className="rfs-link" onClick={onReset}>reset</button> to defaults.</>
+              <>
+                {" "}
+                You've edited this run —{" "}
+                <button type="button" className="rfs-link" onClick={onReset}>
+                  reset
+                </button>{" "}
+                to defaults.
+              </>
             ) : null}
           </>
         ) : prep.length === 0 ? (
-          <>No steps remaining. <button className="rfs-link" onClick={onReset}>Reset</button> to bring back the default chain.</>
+          <>
+            No steps remaining.{" "}
+            <button type="button" className="rfs-link" onClick={onReset}>
+              Reset
+            </button>{" "}
+            to bring back the default chain.
+          </>
         ) : (
           <>
-            {prep.length} step{prep.length === 1 ? "" : "s"} will run head-to-tail on this image. Reorder, edit, or remove anything you don't need.
+            {prep.length} step{prep.length === 1 ? "" : "s"} will run head-to-tail on this image.
+            Reorder, edit, or remove anything you don't need.
             {isModified ? (
-              <> You've edited the chain — <button className="rfs-link" onClick={onReset}>reset</button> to defaults.</>
+              <>
+                {" "}
+                You've edited the chain —{" "}
+                <button type="button" className="rfs-link" onClick={onReset}>
+                  reset
+                </button>{" "}
+                to defaults.
+              </>
             ) : null}
           </>
         )}
@@ -3310,10 +3344,7 @@ function PackageEditor({
           doesn't edit each variant's internal mini-chain). */}
       {hasVariants ? (
         <>
-          <div
-            className="rfs-package-section-header"
-            style={{ marginTop: "1rem" }}
-          >
+          <div className="rfs-package-section-header" style={{ marginTop: "1rem" }}>
             <span className="rfs-package-section-title">Where it ships</span>
             <span className="rfs-package-section-meta">
               {enabledVariantCount} of {variants.length} selected
@@ -3337,12 +3368,14 @@ function PackageEditor({
             ))}
           </div>
           <div className="rfs-help" style={{ marginTop: "0.625rem" }}>
-            Each variant runs smart-resize to its channel ratio, scored by Sentinel. Prep stays unscored.
+            Each variant runs smart-resize to its channel ratio, scored by Sentinel. Prep stays
+            unscored.
           </div>
         </>
       ) : (
         <div className="rfs-help" style={{ marginTop: "0.75rem" }}>
-          The final step's output is what Sentinel grades. Intermediate steps are skipped (or gated, if you've turned that on in settings).
+          The final step's output is what Sentinel grades. Intermediate steps are skipped (or gated,
+          if you've turned that on in settings).
         </div>
       )}
     </>

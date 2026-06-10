@@ -47,7 +47,7 @@ export function ReferenceGallery({
         </div>
       ) : null}
       {extraReferencePreviews.map((url, i) => (
-        <div className="rfs-ref-tile" key={i}>
+        <div className="rfs-ref-tile" key={`${url}-${i}`}>
           <img src={url} alt={`Reference ${i + 2}`} />
           <button
             type="button"

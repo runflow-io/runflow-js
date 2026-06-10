@@ -110,8 +110,8 @@ export type RuntimeInputValues<T extends Record<string, AnyInput>> =
       : T[K]["optional"] extends true
         ? never
         : K]: InputValue<T[K]>;
-  } & // optional: source !== "preset" AND optional === true
-  {
+  } & {
+    // optional: source !== "preset" AND optional === true
     [K in keyof T as T[K]["source"] extends "preset"
       ? never
       : T[K]["optional"] extends true

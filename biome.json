@@ -27,6 +27,26 @@
       }
     }
   },
+  "overrides": [
+    {
+      "include": ["packages/studio/src/components/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noLabelWithoutControl": "warn",
+            "noAutofocus": "warn",
+            "useSemanticElements": "warn"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "warn"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "warn"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double",

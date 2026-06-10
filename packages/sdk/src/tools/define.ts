@@ -78,10 +78,9 @@ export interface ToolDef<
  *   }),
  * });
  */
-export function defineTool<
-  I extends Record<string, AnyInput>,
-  O extends Record<string, AnyOutput>,
->(def: ToolDef<I, O>): ToolDef<I, O> {
+export function defineTool<I extends Record<string, AnyInput>, O extends Record<string, AnyOutput>>(
+  def: ToolDef<I, O>,
+): ToolDef<I, O> {
   return def;
 }
 

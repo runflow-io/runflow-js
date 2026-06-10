@@ -63,10 +63,7 @@ export function getStudioSettings(): StudioSettings {
 type Listener = (s: StudioSettings) => void;
 const listeners = new Set<Listener>();
 
-export function setStudioSetting<K extends keyof StudioSettings>(
-  key: K,
-  value: StudioSettings[K],
-) {
+export function setStudioSetting<K extends keyof StudioSettings>(key: K, value: StudioSettings[K]) {
   cached = { ...cached, [key]: value };
   write(cached);
   for (const l of listeners) l(cached);

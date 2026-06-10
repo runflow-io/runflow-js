@@ -53,8 +53,7 @@ export function ComparePanel({
     [versions, leftId],
   );
   const right = useMemo(
-    () =>
-      versions.find((v) => v.id === rightId) ?? versions[versions.length - 1],
+    () => versions.find((v) => v.id === rightId) ?? versions[versions.length - 1],
     [versions, rightId],
   );
 
@@ -94,15 +93,19 @@ export function ComparePanel({
     <div className="rfs-compare-shell" role="dialog" aria-label="Compare versions">
       <header className="rfs-compare-header">
         <div className="rfs-compare-title">
-          <span className="rfs-compare-title-mark" aria-hidden>{Icon.compare}</span>
+          <span className="rfs-compare-title-mark" aria-hidden>
+            {Icon.compare}
+          </span>
           <span>Compare versions</span>
           <span className="rfs-compare-title-meta">
             {versions.length} version{versions.length === 1 ? "" : "s"}
           </span>
         </div>
         <div className="rfs-compare-header-actions">
-          <button className="rfs-btn" onClick={reset}>Reset</button>
-          <button className="rfs-iconbtn" onClick={onClose} aria-label="Close">
+          <button type="button" className="rfs-btn" onClick={reset}>
+            Reset
+          </button>
+          <button type="button" className="rfs-iconbtn" onClick={onClose} aria-label="Close">
             {Icon.close}
           </button>
         </div>
@@ -194,13 +197,14 @@ function ComparePane({
     };
   };
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.x;
-    const dy = e.clientY - dragRef.current.y;
+    const drag = dragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
     onTransform((prev) => ({
       ...prev,
-      panX: dragRef.current!.px + dx,
-      panY: dragRef.current!.py + dy,
+      panX: drag.px + dx,
+      panY: drag.py + dy,
     }));
   };
   const onMouseUp = () => {
@@ -229,9 +233,7 @@ function ComparePane({
         ) : (
           <span className="rfs-compare-pane-label">{version.label}</span>
         )}
-        <span className="rfs-compare-pane-zoom">
-          {Math.round(transform.zoom * 100)}%
-        </span>
+        <span className="rfs-compare-pane-zoom">{Math.round(transform.zoom * 100)}%</span>
       </div>
       <div
         ref={stageRef}
