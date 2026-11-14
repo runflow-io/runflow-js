@@ -119,6 +119,45 @@ describe("models.run + runs.wait", () => {
       expect((err as RunflowError).status).toBe(429);
     }
   });
+
+  it("keeps polling through a dropped connection and a 429", async () => {
+    let polls = 0;
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      fetch: mockFetch(() => {
+        polls++;
+        if (polls === 1) return Promise.reject(new TypeError("fetch failed"));
+        if (polls === 2) return new Response("slow down", { status: 429 });
+        return new Response(JSON.stringify({ id: "run_3", status_code: "succeeded" }), {
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
+    });
+    const final = await rf.runs.wait("run_3", { pollIntervalMs: 1 });
+    expect(final.status_code).toBe("succeeded");
+    expect(polls).toBe(3);
+  });
+
+  it("times out when the response body stalls after the headers", async () => {
+    const rf = new Runflow({
+      apiKey: "rf_live_x",
+      requestTimeoutMs: 20,
+      fetch: mockFetch((req) => {
+        const body = new ReadableStream({
+          start(controller) {
+            req.signal.addEventListener("abort", () => controller.error(req.signal.reason));
+          },
+        });
+        return new Response(body, { headers: { "Content-Type": "application/json" } });
+      }),
+    });
+    try {
+      await rf.runs.get("run_4");
+      throw new Error("should have thrown");
+    } catch (err) {
+      expect((err as RunflowError).code).toBe("request_timeout");
+    }
+  });
 });
 
 describe("models.run + runs.get — path encoding", () => {
