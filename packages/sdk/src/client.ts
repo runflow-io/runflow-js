@@ -120,8 +120,10 @@ export class Runflow {
 
     const controller = mergeAbort(init.signal, this.requestTimeoutMs);
     let res: Response;
+    let text: string;
     try {
       res = await this.fetcher(url, { method, headers, body, signal: controller.signal });
+      text = await res.text();
     } catch (err) {
       if (controller.timedOut()) {
         throw new RunflowError(
@@ -141,7 +143,6 @@ export class Runflow {
     }
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
       // Two error body shapes flow through here: the API's nested
       // { error: { message, code } } and the proxy's flat
       // { error: string, code: string }.
@@ -171,9 +172,9 @@ export class Runflow {
     if (res.status === 204) return undefined as T;
     const ct = res.headers.get("Content-Type") ?? "";
     if (ct.includes("application/json")) {
-      return (await res.json()) as T;
+      return JSON.parse(text) as T;
     }
-    return (await res.text()) as unknown as T;
+    return text as unknown as T;
   }
 }
 
@@ -226,7 +227,7 @@ export class RunsResource {
       try {
         run = await this.get(id, { signal: opts.signal });
       } catch (err) {
-        if (err instanceof RunflowError && (err.status ?? 0) >= 500) {
+        if (isTransient(err) && !opts.signal?.aborted) {
           await sleep(interval);
           continue;
         }
@@ -327,6 +328,17 @@ function encodeRunId(id: string): string {
     });
   }
   return encodeURIComponent(id);
+}
+
+function isTransient(err: unknown): boolean {
+  if (!(err instanceof RunflowError)) return false;
+  const status = err.status ?? 0;
+  return (
+    status >= 500 ||
+    status === 429 ||
+    err.code === "network_error" ||
+    err.code === "request_timeout"
+  );
 }
 
 function sleep(ms: number): Promise<void> {
